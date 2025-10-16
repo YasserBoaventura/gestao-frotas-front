@@ -1,0 +1,39 @@
+<div class="dashboard">
+  <h1>Bem-vindo ao Sistema de Gestão de Frotas</h1>
+
+  <div class="cards">
+    <div class="card" (click)="navigateTo('vehicles')">
+      <div class="icon">🚚</div>
+      <h3>Veículos Disponíveis</h3>
+      <p class="count">{{ vehiclesAvailable }}</p>
+    </div>
+
+    <div class="card" (click)="navigateTo('vehicles')">
+      <div class="icon">🛠️</div>
+      <h3>Em Manutenção</h3>
+      <p class="count">{{ vehiclesMaintenance }}</p>
+    </div>
+
+    <div class="card" (click)="navigateTo('routes')">
+      <div class="icon">🗺️</div>
+      <h3>Rotas Próximas</h3>
+      <p class="count">{{ upcomingRoutes }}</p>
+    </div>
+
+    <div class="card" (click)="navigateTo('vehicles')">
+      <div class="icon">🟢</div>
+      <h3>Veículos em Uso</h3>
+      <p class="count">{{ vehiclesInUse }}</p>
+    </div>
+  </div>
+
+  <div class="quick-links">
+    <h2>Ações Rápidas</h2>
+    <div class="links">
+      <button (click)="navigateTo('vehicles')">Gerenciar Veículos</button>
+      <button (click)="navigateTo('drivers')">Gerenciar Motoristas</button>
+      <button (click)="navigateTo('routes')">Rotas</button>
+      <button (click)="navigateTo('reports')">Relatórios</button>
+    </div>
+  </div>
+</div>
