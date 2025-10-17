@@ -25,6 +25,13 @@
       <h3>Veículos em Uso</h3>
       <p class="count">{{ vehiclesInUse }}</p>
     </div>
+
+    <div class="card fuel-card" (click)="navigateTo('fuel')">
+      <div class="icon">⛽</div>
+      <h3>Abastecimentos Hoje</h3>
+      <p class="count">{{ fuelEntriesToday }} registros</p>
+      <p>Total: {{ fuelTotalLiters }} L</p>
+    </div>
   </div>
 
   <div class="quick-links">
@@ -33,6 +40,7 @@
       <button (click)="navigateTo('vehicles')">Gerenciar Veículos</button>
       <button (click)="navigateTo('drivers')">Gerenciar Motoristas</button>
       <button (click)="navigateTo('routes')">Rotas</button>
+      <button (click)="navigateTo('fuel')">Gerenciar Abastecimentos</button>
       <button (click)="navigateTo('reports')">Relatórios</button>
     </div>
   </div>

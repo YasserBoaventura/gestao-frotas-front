@@ -3,8 +3,9 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
-
+import { LoginService } from '../auth/login.service';
 import { MdbFormsModule } from 'mdb-angular-ui-kit/forms';
+import { Login } from '../auth/login';
 
 @Component({
   selector: 'app-login',
@@ -17,23 +18,28 @@ import { MdbFormsModule } from 'mdb-angular-ui-kit/forms';
 })
 export class LoginComponent  {
 
-    router=inject(Router)
+constructor(){}  
+  
+   router=inject(Router)
 
-
-  login = {
-    username: '',
-    password: ''
-  };
+    login: Login =new Login();
+  
+  LoginService = inject (LoginService);
 
   logar() {
-  if(this.login.username=="admin" && this.login.password=="admin"){
-
+   this.LoginService.logar(this.login).subscribe({
+   next: token =>{
+   if(token){
+      this.LoginService.addToken(token);
     this.router.navigate(['dashboard']);
-   }else{
-    alert("Usuario e senha nao encontrados");
-   }
+      }}, 
+   error: erro =>{
+     alert("erro ao logar"+ erro);
+     console.log(erro);
+     
+   } 
 
-  }
+  })}
 
   forgotPassword() {
     console.log('Recuperar senha');

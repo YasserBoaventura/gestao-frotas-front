@@ -74,3 +74,12 @@ h1 {
   background-color: #0056b3;
   transform: scale(1.05);
 }
+
+.fuel-card {
+  background: linear-gradient(135deg, #ff8c00, #ffc107); /* cor diferente para abastecimento */
+}
+
+/* opcional: animação diferente para abastecimento */
+.fuel-card .count {
+  animation: fadeInUp 1s ease forwards;
+}
