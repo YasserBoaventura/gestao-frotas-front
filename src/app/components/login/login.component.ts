@@ -18,12 +18,12 @@ import { Login } from '../auth/login';
 })
 export class LoginComponent  {
 
-constructor(){}  
-  
+constructor(){}
+
    router=inject(Router)
 
     login: Login =new Login();
-  
+
   LoginService = inject (LoginService);
 
   logar() {
@@ -32,12 +32,12 @@ constructor(){}
    if(token){
       this.LoginService.addToken(token);
     this.router.navigate(['dashboard']);
-      }}, 
+      }},
    error: erro =>{
      alert("erro ao logar"+ erro);
      console.log(erro);
-     
-   } 
+
+   }
 
   })}
 

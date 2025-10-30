@@ -26,6 +26,9 @@ export class DashboardComponent {
 
   ngOnInit(): void {
   }
+
+
+  
 // implementar componentes para essa rotas 
   navigateTo(path: string) {
     this.router.navigate([path]);

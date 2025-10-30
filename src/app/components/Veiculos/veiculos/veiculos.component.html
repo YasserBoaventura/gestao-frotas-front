@@ -1,0 +1,208 @@
+<div class="vehicles-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <mat-icon class="title-icon">directions_car</mat-icon>
+      <h2>Gerenciamento de Veículos</h2>
+    </div>
+    <button class="btn-add" (click)="openModal()">
+      <mat-icon>add_circle</mat-icon>
+      Novo Veículo
+    </button>
+  </div>
+
+  <!-- Debug Info -->
+  <div class="debug-info" *ngIf="showDebug">
+    <p>Veículos: {{ veiculos?.length }}</p>
+    <p>Show Modal: {{ showModal }}</p>
+    <p>Form Valid: {{ veiculoForm?.valid }}</p>
+  </div>
+
+  <!-- Tabela de Veículos -->
+  <div class="table-container" *ngIf="veiculos && veiculos.length > 0; else empty">
+    <table class="vehicles-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Modelo</th>
+          <th>Placa</th>
+          <th>Ano</th>
+          <th>Tipo</th>
+          <th>Marca</th>
+          <th>Motorista</th>
+          <th class="actions-header">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let v of veiculos" class="table-row">
+          <td class="id-cell">{{ v.id }}</td>
+          <td class="modelo-cell">{{ v.modelo }}</td>
+          <td class="placa-cell">
+            <span class="placa-badge">{{ v.placa }}</span>
+          </td>
+          <td class="ano-cell">{{ v.ano }}</td>
+          <td class="tipo-cell">
+            <span [class]="'tipo-badge ' + getTipoClass(v.tipo)">{{ v.tipo }}</span>
+          </td>
+          <td class="marca-cell">{{ v.marca?.nome }}</td>
+          <td class="motorista-cell">{{ v.motorista?.nome || 'Sem motorista' }}</td>
+          <td class="actions-cell">
+            <button mat-icon-button color="primary"
+                    class="btn-edit"
+                    (click)="openModal(v)"
+                    matTooltip="Editar veículo">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn"
+                    class="btn-delete"
+                    (click)="deleteVeiculo(v.id)"
+                    matTooltip="Excluir veículo">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Estado vazio -->
+  <ng-template #empty>
+    <div class="empty-state">
+      <mat-icon class="empty-icon">directions_car</mat-icon>
+      <h3>Nenhum veículo cadastrado</h3>
+      <p>Comece adicionando seu primeiro veículo à frota</p>
+      <button class="btn-add-empty" (click)="openModal()">
+        <mat-icon>add_circle</mat-icon>
+        Adicionar Primeiro Veículo
+      </button>
+    </div>
+  </ng-template>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()"></div>
+
+  <div class="modal" *ngIf="showModal">
+    <div class="modal-header">
+      <h3>
+        <mat-icon>{{ selectedVeiculo ? 'edit' : 'add_circle' }}</mat-icon>
+        {{ selectedVeiculo ? 'Editar Veículo' : 'Novo Veículo' }}
+      </h3>
+      <button class="close-btn" (click)="closeModal()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="veiculoForm" class="veiculo-form">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Modelo *</label>
+            <input type="text" formControlName="modelo" placeholder="Ex: Civic, Corolla...">
+            <div class="error" *ngIf="veiculoForm.get('modelo')?.invalid && veiculoForm.get('modelo')?.touched">
+              Modelo é obrigatório
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Placa *</label>
+            <input type="text" formControlName="placa" placeholder="Ex: ABC-1234">
+            <div class="error" *ngIf="veiculoForm.get('placa')?.invalid && veiculoForm.get('placa')?.touched">
+              Placa é obrigatória
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ano *</label>
+            <input type="number" formControlName="ano" placeholder="Ex: 2023">
+            <div class="error" *ngIf="veiculoForm.get('ano')?.invalid && veiculoForm.get('ano')?.touched">
+              Ano é obrigatório
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo *</label>
+            <select formControlName="tipo">
+              <option value="">Selecione o tipo</option>
+              <option value="SEDAN">Sedan</option>
+              <option value="HATCH">Hatch</option>
+              <option value="SUV">SUV</option>
+              <option value="PICKUP">Pickup</option>
+              <option value="MOTO">Moto</option>
+            </select>
+            <div class="error" *ngIf="veiculoForm.get('tipo')?.invalid && veiculoForm.get('tipo')?.touched">
+              Tipo é obrigatório
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Marca *</label>
+            <select formControlName="marca">
+              <option value="">Selecione a marca</option>
+              <option *ngFor="let marca of marcas" [value]="marca.id">
+                {{ marca.nome }}
+              </option>
+            </select>
+            <div class="error" *ngIf="veiculoForm.get('marca')?.invalid && veiculoForm.get('marca')?.touched">
+              Marca é obrigatória
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Motorista</label>
+            <select formControlName="motorista">
+              <option value="">Selecione o motorista</option>
+              <option *ngFor="let motorista of motoristas" [value]="motorista.id">
+                {{ motorista.nome }} - {{ motorista.categoriaHabilitacao }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()">
+        <mat-icon>cancel</mat-icon>
+        Cancelar
+      </button>
+      <button class="btn-save"
+              (click)="saveVeiculo()"
+              [disabled]="!veiculoForm.valid">
+        <mat-icon>{{ selectedVeiculo ? 'save' : 'add_circle' }}</mat-icon>
+        {{ selectedVeiculo ? 'Atualizar' : 'Cadastrar' }} Veículo
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal -->
+<ng-template #modalVeiculoDetalhes>
+  <div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">Cadastro Acessorios</h5>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="modalRef.close()">
+    </button>
+  </div>
+  <div class="modal-body">
+ <!--Modal para cadastrar veiculos-->
+ <app-veiculosdetalis> </app-veiculosdetalis>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modalRef.close()">
+      Fechar
+    </button>
+    <button type="button" class="btn btn-primary">
+      Salvar
+    </button>
+  </div>
+</ng-template>

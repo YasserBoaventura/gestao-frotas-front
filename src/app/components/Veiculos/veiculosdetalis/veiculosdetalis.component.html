@@ -1,0 +1,169 @@
+<div class="container">
+  <div class="row">
+    <div class="col-lg-12 centralizar topo">
+      <div class="card">
+        <div class="card-body">
+          <h3>Cadastrar Veículo</h3>
+          <br>
+
+          <!-- Formulário do Veículo -->
+          <form [formGroup]="veiculoForm">
+
+            <!-- Dados Básicos do Veículo -->
+            <div class="row">
+              <div class="col-md-6">
+                <mdb-form-control>
+                  <input mdbInput type="text" id="modelo" class="form-control" formControlName="modelo"/>
+                  <label mdbLabel class="form-label" for="modelo">Modelo do Veículo *</label>
+                </mdb-form-control>
+                <div class="error-text" *ngIf="veiculoForm.get('modelo')?.invalid && veiculoForm.get('modelo')?.touched">
+                  Modelo é obrigatório
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <mdb-form-control>
+                  <input mdbInput type="text" id="placa" class="form-control" formControlName="placa"/>
+                  <label mdbLabel class="form-label" for="placa">Placa *</label>
+                </mdb-form-control>
+                <div class="error-text" *ngIf="veiculoForm.get('placa')?.invalid && veiculoForm.get('placa')?.touched">
+                  Placa é obrigatória
+                </div>
+              </div>
+            </div>
+
+            <br>
+
+            <div class="row">
+              <div class="col-md-6">
+                <mdb-form-control>
+                  <input mdbInput type="number" id="ano" class="form-control" formControlName="ano"/>
+                  <label mdbLabel class="form-label" for="ano">Ano *</label>
+                </mdb-form-control>
+                <div class="error-text" *ngIf="veiculoForm.get('ano')?.invalid && veiculoForm.get('ano')?.touched">
+                  Ano é obrigatório (1990-2030)
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <mdb-form-control>
+                  <select mdbInput id="tipo" class="form-control" formControlName="tipo">
+                    <option value="">Selecione o tipo</option>
+                    <option value="SEDAN">Sedan</option>
+                    <option value="HATCH">Hatch</option>
+                    <option value="SUV">SUV</option>
+                    <option value="PICKUP">Pickup</option>
+                    <option value="MOTO">Moto</option>
+                  </select>
+                  <label mdbLabel class="form-label" for="tipo">Tipo do Veículo *</label>
+                </mdb-form-control>
+                <div class="error-text" *ngIf="veiculoForm.get('tipo')?.invalid && veiculoForm.get('tipo')?.touched">
+                  Tipo é obrigatório
+                </div>
+              </div>
+            </div>
+
+            <br>
+
+            <!-- Seleção de Marca -->
+            <div class="marca-section">
+              <h5>Marca do Veículo</h5>
+              @if (marcaSelecionada.marca==null) {
+                <button type="button" class="btn btn-primary btn-rounded" mdbRipple (click)="buscarMarca()">
+                  Selecionar Marca
+                </button>
+              } @else {
+                <div class="selected-item">
+                  <span class="text-primary">Marca Selecionada: {{  marcaSelecionada.marca.nome }}</span>
+                  <button type="button" class="btn btn-warning btn-rounded ms-2" mdbRipple (click)="buscarMarca()">
+                    Trocar Marca
+                  </button>
+                </div>
+              }
+            </div>
+
+            <br>
+
+            <!-- Seleção de Motorista -->
+            <div class="motorista-section">
+              <h5>Motorista</h5>
+              @if (!veiculoForm.get('motoristaId')?.value) {
+                <button type="button" class="btn btn-primary btn-rounded" mdbRipple (click)="buscarMotorista()">
+                  Selecionar Motorista
+                </button>
+              } @else {
+                <div class="selected-item">
+                  <span class="text-success">Motorista: {{ motoristaSelecionado?.nome }} - {{ motoristaSelecionado?.categoriaHabilitacao }}</span>
+                  <button type="button" class="btn btn-warning btn-rounded ms-2" mdbRipple (click)="buscarMotorista()">
+                    Trocar Motorista
+                  </button>
+                </div>
+              }
+            </div>
+
+            <br>
+
+            <!-- Botão Salvar -->
+            <div class="text-center">
+              <button
+                type="button"
+                class="btn btn-success btn-rounded btn-lg"
+                mdbRipple
+                (click)="salvarVeiculo()"
+                [disabled]="!veiculoForm.valid || !veiculoForm.get('marcaId')?.value">
+                <i class="fas fa-save me-2"></i>Cadastrar Veículo
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Seleção de Marca -->
+<ng-template #modalMarcas>
+  <div class="modal-header">
+    <h5 class="modal-title">Selecionar Marca</h5>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="fecharModal()">
+    </button>
+  </div>
+  <div class="modal-body">
+    <!-- Componente de listagem de marcas -->
+
+    <app-marcalist   [esconderBotao]="true" (retornoMarca)="retornoMarca($event)"></app-marcalist>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="fecharModal()">
+      Fechar
+    </button>
+  </div>
+</ng-template>
+
+<!-- Modal para Seleção de Motorista -->
+<ng-template #modalMotoristas>
+  <div class="modal-header">
+    <h5 class="modal-title">Selecionar Motorista</h5>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="fecharModal()">
+    </button>
+  </div>
+  <div class="modal-body">
+    <!-- Componente de listagem de motoristas -->
+
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="fecharModal()">
+      Fechar
+    </button>
+  </div>
+</ng-template>

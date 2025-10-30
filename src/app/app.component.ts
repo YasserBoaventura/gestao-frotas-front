@@ -8,9 +8,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
-
+import { CommonModule } from '@angular/common';
+import { MatCommonModule } from '@angular/material/core';
+import { VeiculosComponent } from './components/Veiculos/veiculos/veiculos.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations'; // ← IMPORTE ESTE
+import { MdbModalModule } from 'mdb-angular-ui-kit/modal';
 // Seu componente de login
 //import { LoginComponent } from './components/login/login.component';
 
@@ -19,10 +23,10 @@ import { BrowserModule } from '@angular/platform-browser';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, MatIconModule, MatButtonModule, MatInputModule, MatFormFieldModule, MatCardModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,    MatCommonModule,        CommonModule,   MdbModalModule
 
-  ,
-    ],
+
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

@@ -1,0 +1,37 @@
+<div class="brand-form-container" @fadeIn>
+
+  <div class="header">
+    <h4 class="text-center text-primary">
+  {{ marca?.id ? 'Editar Marca' : 'Cadastrar Nova Marca' }}
+</h4>
+    <button class="btn-back" (click)="voltar('veiculos')">
+      <mat-icon>arrow_back</mat-icon> Voltar
+    </button>
+  </div>
+
+  <div class="form-card">
+    <div class="form-body">
+      <label for="nome" class="form-label">Nome da Marca</label>
+      <input
+        id="nome"
+        type="text"
+        [(ngModel)]="marca.nome"
+        placeholder="Ex: Toyota, Nissan, Volvo..."
+        class="form-input"
+      />
+        @if(veiculo.marca==null){
+       
+        } @else {
+          <span class="selected-brand">Marca Selecionada: {{ veiculo.marca?.nome }}</span>
+        }
+
+      <div class="actions">
+        <button class="btn-cancel" (click)="voltar('veiculos')">Cancelar</button>
+        <button class="btn-save" (click)="save()">
+          <mat-icon>save</mat-icon> Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
