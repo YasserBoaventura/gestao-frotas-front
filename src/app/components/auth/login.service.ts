@@ -11,14 +11,14 @@ import { Usuario } from './usuario';
 export class LoginService {
 
   http = inject(HttpClient);
-  API = "http://localhost:9000/api/login";
+  API = "http://localhost:9000/api";
 
 
   constructor() { }
 
 
   logar(login: Login): Observable<string> {
-    return this.http.post<string>(this.API, login, {responseType: 'text' as 'json'});
+    return this.http.post<string>(this.API+'/login', login, {responseType: 'text' as 'json'});
   }
 
   addToken(token: string) {
@@ -48,10 +48,15 @@ export class LoginService {
     else
       return false;
   }
-  
+
   getUsuarioLogado() {
     return this.jwtDecode() as Usuario;
   }
+  // Método para registrar um novo usuário na API
+  register(user: any): Observable<string> {
+    return this.http.post<string>(this.API + "/register", user, { responseType: 'text' as 'json'});
+  }
+
 
 
 }

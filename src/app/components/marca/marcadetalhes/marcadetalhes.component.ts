@@ -2,18 +2,20 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { Input } from '@angular/core';
-import { Marca, Veiculo } from '../../Veiculos/veiculos.model';
+
 import { Output , EventEmitter } from '@angular/core';
 import { MarcaServicService } from '../marca-servic.service';
 import Swal from 'sweetalert2'
 import { MdbFormsModule } from 'mdb-angular-ui-kit/forms';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { Marca } from '../marca';
+import { Veiculo } from '../../Veiculos/veiculos.model';
 @Component({
   selector: 'app-marcadetalhes',
   standalone: true,
   imports: [MdbFormsModule,
-          FormsModule,      // 👈 necessário para ngModel
+          FormsModule,      //  necessário para ngModel
           MdbFormsModule,MatIconModule],
   templateUrl: './marcadetalhes.component.html',
   styleUrl: './marcadetalhes.component.css'
@@ -21,7 +23,7 @@ import { MatIconModule } from '@angular/material/icon';
 export class MarcadetalhesComponent {
 
   router= inject(Router);
-  
+
     lista: Marca[]=[];
     veiculo: Veiculo=new Veiculo();
 MarcaService= inject(MarcaServicService)
@@ -39,12 +41,9 @@ MarcaService= inject(MarcaServicService)
       confirmButtonText: 'OK'
     })
      return;
-
-        }
-
-        if (this.marca.id > 0) {
-
-          this.MarcaService.update(this.marca , this.marca.id).subscribe({
+}
+    if (this.marca.id > 0) {
+ this.MarcaService.update(this.marca , this.marca.id).subscribe({
             next: messagem =>{
                  Swal.fire({
             title: messagem,
@@ -54,10 +53,8 @@ MarcaService= inject(MarcaServicService)
           this.router.navigate(['adim/marcas'], { state: { marcaEditada: this.marca } });
              this.retorno.emit(this.marca);
          }, error: erro =>{
-
-     Swal.fire({
-
-          text: "Ocorreu um erro.",
+      Swal.fire({
+       text: "Ocorreu um erro.",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
           cancelButtonColor: "#d33",
@@ -71,7 +68,7 @@ MarcaService= inject(MarcaServicService)
         this.MarcaService.save(this.marca).subscribe({
       next: mensagem => {
         Swal.fire({
-          title: mensagem, // ✅ vem direto do backend
+          title: mensagem, //  vem direto do backend
           icon: 'success',
           confirmButtonText: 'Ok'
         });
@@ -88,7 +85,6 @@ MarcaService= inject(MarcaServicService)
     });
      }
   }
-
   voltar(path: string){
     this.router.navigate([path]);
   }

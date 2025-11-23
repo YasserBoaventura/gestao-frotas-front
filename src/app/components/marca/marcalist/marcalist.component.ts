@@ -6,12 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Input, Output, EventEmitter } from '@angular/core';
-import { Marca } from '../../Veiculos/veiculos.model';
 import { MdbModalRef } from 'mdb-angular-ui-kit/modal';
 import { inject } from '@angular/core';
 import { MdbModalService } from 'mdb-angular-ui-kit/modal';
 import { MarcaServicService } from '../marca-servic.service';
 import Swal from 'sweetalert2';
+import { Marca } from '../marca';
 @Component({
   selector: 'app-marcalist',
   standalone: true,
@@ -20,9 +20,10 @@ import Swal from 'sweetalert2';
   styleUrl: './marcalist.component.css'
 })
 export class MarcalistComponent {
+
   marcaEdit: Marca = new Marca();
-  
-  
+
+
 
 
   constructor(){
@@ -112,7 +113,7 @@ this.MarcaService.delete(marca.id).subscribe({
 
   Select(marca: Marca){
     this.retornoMarca.emit(marca);
-    
+
     this.modalRef.close();
 
   }

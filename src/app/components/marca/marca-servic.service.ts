@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Marca } from '../Veiculos/veiculos.model';
+;
 import { inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Marca } from './marca';
 @Injectable({
   providedIn: 'root'
 })
@@ -18,7 +19,6 @@ export class MarcaServicService {
   findAll(): Observable<Marca[]> {
     return this.http.get<Marca[]>(`${this.API}/findAll`);
   }
-
 delete(id: number): Observable<string>{
   return this.http.delete<string>(this.API+"/deleteById/"+id ,{responseType :'text' as 'json'});
 }

@@ -13,53 +13,58 @@
 
   <!-- Debug Info -->
   <div class="debug-info" *ngIf="showDebug">
-    <p>Veículos: {{ veiculos?.length }}</p>
+    <p>Veículos: {{ lista?.length }}</p>
     <p>Show Modal: {{ showModal }}</p>
     <p>Form Valid: {{ veiculoForm?.valid }}</p>
   </div>
 
   <!-- Tabela de Veículos -->
-  <div class="table-container" *ngIf="veiculos && veiculos.length > 0; else empty">
+  <div class="table-container" *ngIf="lista && lista.length > 0; else empty">
     <table class="vehicles-table">
       <thead>
         <tr>
           <th>ID</th>
           <th>Modelo</th>
-          <th>Placa</th>
+          <th>matricula</th>
           <th>Ano</th>
-          <th>Tipo</th>
+          <th>capacidadeTanque</th>
           <th>Marca</th>
-          <th>Motorista</th>
+          <th>kilometragemAtual</th>
           <th class="actions-header">Ações</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let v of veiculos" class="table-row">
+        <tr *ngFor="let v of lista" class="table-row">
           <td class="id-cell">{{ v.id }}</td>
           <td class="modelo-cell">{{ v.modelo }}</td>
           <td class="placa-cell">
-            <span class="placa-badge">{{ v.placa }}</span>
+            <span class="placa-badge">{{ v.matricula }}</span>
           </td>
-          <td class="ano-cell">{{ v.ano }}</td>
-          <td class="tipo-cell">
-            <span [class]="'tipo-badge ' + getTipoClass(v.tipo)">{{ v.tipo }}</span>
-          </td>
-          <td class="marca-cell">{{ v.marca?.nome }}</td>
-          <td class="motorista-cell">{{ v.motorista?.nome || 'Sem motorista' }}</td>
+          <td class="ano-cell">{{ v.anoFabricacao }}</td>
+          <td class="modelo-cell">{{v.capacidadeTanque}}  </td>
+       <td class="marca-cell">{{  v.marca?.nome }}</td>
+           <td class="modelo-cell">{{v.kilometragemAtual}}</td>
+
           <td class="actions-cell">
-            <button mat-icon-button color="primary"
-                    class="btn-edit"
-                    (click)="openModal(v)"
-                    matTooltip="Editar veículo">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button color="warn"
-                    class="btn-delete"
-                    (click)="deleteVeiculo(v.id)"
-                    matTooltip="Excluir veículo">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </td>
+
+
+
+        <button
+          type="button"
+          class="btn btn-primary btn-rounded"
+          mdbRipple
+          (click)="openModal(v)">
+          Editar
+        </button>
+          <button
+          type="button"
+          class="btn btn-danger btn-rounded"
+          mdbRipple
+          (click)="deleteVeiculo(v)">
+          deltar
+        </button>
+      </td>
+
         </tr>
       </tbody>
     </table>

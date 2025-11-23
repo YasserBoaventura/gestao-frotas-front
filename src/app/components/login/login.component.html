@@ -48,13 +48,13 @@
           </button>
 
           <div class="text-center">
-            <a href="#" class="text-decoration-none me-2" (click)="forgotPassword()">
+            <a href="#" class="text-decoration-none me-2" (click)="forgotPassword('resetSenha')">
               Esqueceu a senha?
             </a> |
-            <a href="#" class="text-decoration-none ms-2" (click)="register()">
-              Criar conta
-            </a>
-          </div>
+        <a href="#" class="text-decoration-none ms-2" (click)="register($event)">
+  Criar conta
+  </a>
+        </div>
 
         </div>
       </div>

@@ -16,7 +16,7 @@
     </thead>
 
     <tbody>
-      <tr *ngFor="let marca of lista" @fadeIn>
+      <tr *ngFor="let marca of lista" >
         <td>{{ marca.id }}</td>
         <td>{{ marca.nome }}</td>
         <td class="actions">
@@ -61,7 +61,7 @@
   <div class="modal-body">
  <!--Modal para cadastrar veiculos-->
  <app-marcadetalhes   [marca]="marcaEdit" ></app-marcadetalhes>
-  </div>                                                 
+  </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" (click)="modalRef.close()">
       Fechar

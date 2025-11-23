@@ -1,36 +1,19 @@
+import { Marca } from "../marca/marca";
 
-
-  export  class Marca {
-  id!: number;
-  nome!: string;
-
- constructor(){
-  
- }
-}
-
-export class Motorista {
-  id!: number;
-  nome!: string;
-}
-
-export class Manutencao {
-  id!: number;
-  descricao!: string;
-  data!: string;
-  custo!: number;
-}
 
 export class Veiculo {
 
-  id?: number;
-  placa!: string;
+  id!: number;
   modelo!: string;
-  ano!: number;
-  tipo!: string;
+  matricula!: string;
+  anoFabricacao!: number;
+  capacidadeTanque!: number;
+  kilometragemAtual!: number;
   marca!: Marca;
-  motorista?: Motorista;
 
+  abastecimentoss?: any[];
+  manutencoes?: any[];
+  viagens?: any[];
   constructor(){
 
   }
