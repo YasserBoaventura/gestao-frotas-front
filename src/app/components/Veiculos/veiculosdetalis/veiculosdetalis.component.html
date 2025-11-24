@@ -40,7 +40,7 @@
                 <mdb-form-control>
                   <input mdbInput type="number" id="anoFabricacao" class="form-control" formControlName="anoFabricacao"
                          min="1990" max="2030" placeholder="Ex: 2020"/>
-                  <label mdbLabel class="form-label" for="anoFabricacao"><p id="ano">  Ano de Fabricação </p> </label>
+                  <label mdbLabel class="form-label" for="anoFabricacao"><p i>  Ano de Fabricação </p> </label>
                 </mdb-form-control>
                 <div class="error-text" *ngIf="veiculoForm.get('anoFabricacao')?.invalid && veiculoForm.get('anoFabricacao')?.touched">
                   Ano é obrigatório (1990-2030)

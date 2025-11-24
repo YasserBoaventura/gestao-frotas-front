@@ -45,7 +45,7 @@ constructor(){}
             text:  errorMessage ,
             icon: 'error',
             confirmButtonText: 'OK'
-          })   
+          })
            return;
       //alert('Erro ao criar conta: ' + errorMessage);
     }
@@ -55,8 +55,9 @@ constructor(){}
 
   })}
 
-  forgotPassword(path:string) {
-    this.router.navigate([path]);
+  forgotPassword(event: Event) {
+    event.preventDefault();
+    this.router.navigate(['/reset-senha']);
     console.log('Recuperar senha');
     // lógica de recuperação de senha
   }

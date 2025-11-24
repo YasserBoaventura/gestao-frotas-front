@@ -71,7 +71,7 @@ export class VeiculosComponent {
   }
 
   openModal(veiculo?: any) {
-    console.log('🎯 ABRIR MODAL - Clique funcionando!', veiculo);
+    console.log(' ABRIR MODAL - Clique funcionando!', veiculo);
 
     this.showModal=true;
     this.modalServic.open(this.modalVeiculoDetalhes);
@@ -79,7 +79,7 @@ export class VeiculosComponent {
   }
 
   closeModal() {
-    console.log('❌ FECHAR MODAL');
+    console.log(' FECHAR MODAL');
     this.showModal = false;
     this.selectedVeiculo = null;
     this.veiculoForm.reset();
@@ -170,10 +170,10 @@ private showErrorMessage(error: any) {
         this.lista.push(newVeiculo);
       }
 
-      alert('✅ Veículo salvo com sucesso!');
+      alert(' Veículo salvo com sucesso!');
       this.closeModal();
     } else {
-      alert('❌ Por favor, preencha todos os campos obrigatórios!');
+      alert(' Por favor, preencha todos os campos obrigatórios!');
       this.veiculoForm.markAllAsTouched();
     }
   }

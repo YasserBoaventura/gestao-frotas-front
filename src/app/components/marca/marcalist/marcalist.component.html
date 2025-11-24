@@ -6,7 +6,7 @@
     </button>
   </div>
 
-  <table class="brands-table" *ngIf="lista.length > 0; else empty">
+  <table   class="vehicles-table" *ngIf="lista.length > 0; else empty">
     <thead>
       <tr>
         <th>ID</th>
@@ -16,7 +16,7 @@
     </thead>
 
     <tbody>
-      <tr *ngFor="let marca of lista" >
+      <tr *ngFor="let marca of lista"  class="table-row" >
         <td>{{ marca.id }}</td>
         <td>{{ marca.nome }}</td>
         <td class="actions">
@@ -28,9 +28,12 @@
             <mat-icon>delete</mat-icon>
           </button>
 
-          <button mat-raised-button color="accent" *ngIf="esconderBotao" (click)="Select(marca)">
+          <button type="button"
+          class="btn btn-primary btn-rounded"
+          mdbRipple *ngIf="esconderBotao" (click)="Select(marca)">
             Selecionar
           </button>
+
         </td>
       </tr>
     </tbody>

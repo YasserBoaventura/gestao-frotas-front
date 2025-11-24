@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, FormGroupDirective, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { MatCommonModule } from '@angular/material/core';
@@ -23,7 +23,7 @@ import { MdbModalModule } from 'mdb-angular-ui-kit/modal';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, MatIconModule, MatButtonModule, MatInputModule, MatFormFieldModule, MatCardModule,
-    ReactiveFormsModule,    MatCommonModule,        CommonModule,   MdbModalModule, 
+    ReactiveFormsModule,    MatCommonModule,           MdbModalModule,    ReactiveFormsModule, // <-- Adicione esta linha
 
 
   ],

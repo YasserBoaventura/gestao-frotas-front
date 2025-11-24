@@ -44,3 +44,20 @@ a:hover {
   color: #0056b3;
   text-decoration: underline;
 }
+.loading-state {
+  text-align: center;
+  padding: 20px;
+}
+
+.loading-state mat-spinner {
+  margin: 0 auto 10px;
+}
+
+.success-transition {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

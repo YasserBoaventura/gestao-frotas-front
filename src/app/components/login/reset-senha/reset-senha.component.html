@@ -1,0 +1,152 @@
+<div class="password-recovery-container">
+  <div class="recovery-card">
+
+    <!-- Step 1: Solicitar Token -->
+    <div *ngIf="currentStep === 1" class="step-container">
+      <div class="recovery-header">
+        <mat-icon class="recovery-icon">lock_reset</mat-icon>
+        <h2>Recuperar Senha</h2>
+        <p>Digite seu username para receber o token de redefinição</p>
+      </div>
+
+      <!-- Verifique se o form existe antes de usar -->
+      <form *ngIf="requestForm" [formGroup]="requestForm" class="recovery-form" (ngSubmit)="onRequestToken()">
+
+        <div class="form-group">
+          <label for="username">Username *</label>
+          <div class="input-container">
+            <mat-icon class="input-icon">person</mat-icon>
+            <input
+              type="text"
+              id="username"
+              formControlName="username"
+              placeholder="Digite seu username"
+              class="form-input">
+          </div>
+          <div class="error-message" *ngIf="requestForm.get('username')?.invalid && requestForm.get('username')?.touched">
+            Username é obrigatório
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="!requestForm?.valid || isLoading">
+          <mat-icon *ngIf="!isLoading">send</mat-icon>
+          <span *ngIf="isLoading" class="loading-text">⏳</span>
+          {{ isLoading ? 'Enviando...' : 'Enviar Token' }}
+        </button>
+      </form>
+
+      <!-- Mensagem se form não carregar -->
+      <div *ngIf="!requestForm" class="error-message">
+        Erro ao carregar formulário. Recarregue a página.
+      </div>
+    </div>
+
+    <!-- Step 2: Redefinir Senha com Token -->
+    <div *ngIf="currentStep === 2" class="step-container">
+      <div class="recovery-header">
+        <mat-icon class="recovery-icon">password</mat-icon>
+        <h2>Redefinir Senha</h2>
+        <p>Digite o token recebido e sua nova senha</p>
+      </div>
+
+      <!-- Verifique se o form existe antes de usar -->
+      <form *ngIf="resetForm" [formGroup]="resetForm" class="recovery-form" (ngSubmit)="onResetPassword()">
+
+        <!-- Token -->
+        <div class="form-group">
+          <label for="token">Token de Verificação *</label>
+          <div class="input-container">
+            <mat-icon class="input-icon">vpn_key</mat-icon>
+            <input
+              type="text"
+              id="token"
+              formControlName="token"
+              placeholder="Digite o token recebido"
+              class="form-input">
+          </div>
+          <div class="error-message" *ngIf="resetForm.get('token')?.invalid && resetForm.get('token')?.touched">
+            Token é obrigatório
+          </div>
+        </div>
+
+        <!-- Nova Senha -->
+        <div class="form-group">
+          <label for="newPassword">Nova Senha *</label>
+          <div class="input-container">
+            <mat-icon class="input-icon">lock</mat-icon>
+            <input
+              [type]="showNewPassword ? 'text' : 'password'"
+              id="newPassword"
+              formControlName="newPassword"
+              placeholder="Digite a nova senha"
+              class="form-input">
+            <button type="button" class="toggle-password" (click)="toggleNewPasswordVisibility()">
+              <mat-icon>{{ showNewPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="resetForm.get('newPassword')?.invalid && resetForm.get('newPassword')?.touched">
+            <span *ngIf="resetForm.get('newPassword')?.errors?.['required']">
+              Nova senha é obrigatória
+            </span>
+            <span *ngIf="resetForm.get('newPassword')?.errors?.['minlength']">
+              A senha deve ter pelo menos 6 caracteres
+            </span>
+          </div>
+        </div>
+
+        <!-- Confirmar Senha -->
+        <div class="form-group">
+          <label for="confirmPassword">Confirmar Nova Senha *</label>
+          <div class="input-container">
+            <mat-icon class="input-icon">lock</mat-icon>
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              id="confirmPassword"
+              formControlName="confirmPassword"
+              placeholder="Confirme a nova senha"
+              class="form-input">
+            <button type="button" class="toggle-password" (click)="toggleConfirmPasswordVisibility()">
+              <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="resetForm.get('confirmPassword')?.invalid && resetForm.get('confirmPassword')?.touched">
+            <span *ngIf="resetForm.get('confirmPassword')?.errors?.['required']">
+              Confirmação de senha é obrigatória
+            </span>
+            <span *ngIf="resetForm.hasError('passwordsMismatch')">
+              As senhas não coincidem
+            </span>
+          </div>
+        </div>
+
+        <!-- Botões -->
+        <div class="form-buttons">
+          <button
+            type="button"
+            class="back-btn"
+            (click)="currentStep = 1">
+            <mat-icon>arrow_back</mat-icon>
+            Voltar
+          </button>
+
+          <button
+            type="submit"
+            class="submit-btn"
+            [disabled]="!resetForm?.valid || isLoading">
+            <mat-icon *ngIf="!isLoading">lock_reset</mat-icon>
+            <span *ngIf="isLoading" class="loading-text">⏳</span>
+            {{ isLoading ? 'Redefinindo...' : 'Redefinir Senha' }}
+          </button>
+        </div>
+      </form>
+
+      <!-- Mensagem se form não carregar -->
+      <div *ngIf="!resetForm" class="error-message">
+        Erro ao carregar formulário. Recarregue a página.
+      </div>
+    </div>
+  </div>
+</div>

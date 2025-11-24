@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { Marca } from '../marca';
 import { Veiculo } from '../../Veiculos/veiculos.model';
+import { MarcalistComponent } from '../marcalist/marcalist.component';
 @Component({
   selector: 'app-marcadetalhes',
   standalone: true,
@@ -23,7 +24,7 @@ import { Veiculo } from '../../Veiculos/veiculos.model';
 export class MarcadetalhesComponent {
 
   router= inject(Router);
-
+  marcalista=inject(MarcalistComponent);
     lista: Marca[]=[];
     veiculo: Veiculo=new Veiculo();
 MarcaService= inject(MarcaServicService)
@@ -72,6 +73,7 @@ MarcaService= inject(MarcaServicService)
           icon: 'success',
           confirmButtonText: 'Ok'
         });
+        this.marcalista.findAll();
           this.router.navigate(['adim/marcas'], { state: { marcaNova: this.marca } });
           this.retorno.emit(this.marca);
       },
