@@ -10,7 +10,7 @@ export class VeiculosService {
 
 
 
-   private apiUrl = 'http://localhost:9000/api/veiculos';
+   private apiUrl = 'http://localhost:9001/api/veiculos';
 
   constructor(private http: HttpClient) {}
 
@@ -22,9 +22,9 @@ export class VeiculosService {
   return this.http.post(this.apiUrl+"/salvar", vehicle);
   // Não especifique responseType, deixe o Angular detectar como JSON (padrão)
 }
-  updateVehicle(vehicle: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${vehicle.id}`, vehicle);
-  }
+ update(veiculo: any, id: number): Observable<string>{
+   return this.http.put<string>(this.apiUrl+"/update/"+id , veiculo,{responseType: 'text' as 'json'});
+ }
 
   deleteVehicle(id: number): Observable<String> {
     return this.http.delete(this.apiUrl+"/delete/"+id,{responseType: 'json' as 'text'});

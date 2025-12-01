@@ -12,12 +12,21 @@ import { MdbModalService } from 'mdb-angular-ui-kit/modal';
 import { MarcaServicService } from '../marca-servic.service';
 import Swal from 'sweetalert2';
 import { Marca } from '../marca';
+import { animate, style, transition, trigger } from '@angular/animations';
 @Component({
   selector: 'app-marcalist',
   standalone: true,
   imports: [MarcadetalhesComponent,  CommonModule, FormsModule, MatIconModule, MdbModalModule],
   templateUrl: './marcalist.component.html',
-  styleUrl: './marcalist.component.css'
+  styleUrl: './marcalist.component.css',
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('500ms', style({ opacity: 1 }))
+      ])
+    ])
+  ]
 })
 export class MarcalistComponent {
 

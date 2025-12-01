@@ -1,5 +1,5 @@
 
-export class Usuario {
+export class Usuarios {
   id!: number;
   username!: string;
   password!: string;

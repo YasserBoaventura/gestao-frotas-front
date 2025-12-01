@@ -160,3 +160,47 @@
 mat-spinner {
   margin: 0 auto;
 }
+
+.pergunta-container {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.pergunta-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pergunta-icon {
+  color: #007bff;
+  margin-right: 8px;
+}
+
+.pergunta-header h3 {
+  margin: 0;
+  color: #495057;
+  font-size: 16px;
+}
+
+.pergunta-texto {
+  color: #212529;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.token-info {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.token-info mat-icon {
+  font-size: 14px;
+  margin-right: 4px;
+}

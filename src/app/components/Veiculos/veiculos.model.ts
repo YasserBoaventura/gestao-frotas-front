@@ -1,4 +1,5 @@
 import { Marca } from "../marca/marca";
+import { Motorista } from "../motorista/motorista";
 
 
 export class Veiculo {
@@ -10,8 +11,8 @@ export class Veiculo {
   capacidadeTanque!: number;
   kilometragemAtual!: number;
   marca!: Marca;
-
-  abastecimentoss?: any[];
+  motoristas: Motorista[]=[];
+  //abastecimentoss!: any[];
   manutencoes?: any[];
   viagens?: any[];
   constructor(){

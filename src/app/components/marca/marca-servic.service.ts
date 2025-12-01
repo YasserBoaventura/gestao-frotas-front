@@ -11,7 +11,7 @@ export class MarcaServicService {
 
   constructor() { }
 
- API ="http://localhost:9000/api/marca"
+ API ="http://localhost:9001/api/marca"
 
   http = inject(HttpClient);
 
@@ -34,5 +34,6 @@ update(marca: Marca, id: number): Observable<string>{
 findById(id: number): Observable<Marca>{
   return this.http.get<Marca>(this.API+"/findById/"+id);
 }
+
 
 }

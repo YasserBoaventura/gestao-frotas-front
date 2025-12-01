@@ -23,10 +23,7 @@ import { MdbModalModule } from 'mdb-angular-ui-kit/modal';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, MatIconModule, MatButtonModule, MatInputModule, MatFormFieldModule, MatCardModule,
-    ReactiveFormsModule,    MatCommonModule,           MdbModalModule,    ReactiveFormsModule, // <-- Adicione esta linha
-
-
-  ],
+    ReactiveFormsModule,    MatCommonModule,               MdbModalModule,    ReactiveFormsModule,],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

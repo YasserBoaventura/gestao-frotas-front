@@ -1,0 +1,82 @@
+<div class="cadastro-container">
+  <div class="cadastro-card">
+    <h2>Cadastro de Novo Usuário</h2>
+    <form [formGroup]="cadastroForm" (ngSubmit)="onSubmit()">
+
+      <div class="form-group">
+        <label for="username">Username *</label>
+        <input type="text" id="username" formControlName="username" class="form-control">
+        <div *ngIf="cadastroForm.get('username')?.invalid && cadastroForm.get('username')?.touched">
+          <small class="text-danger">Username é obrigatório.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input type="email" id="email" formControlName="email" class="form-control">
+        <div *ngIf="cadastroForm.get('email')?.invalid && cadastroForm.get('email')?.touched">
+          <small class="text-danger">Email inválido.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Senha *</label>
+        <input type="password" id="password" formControlName="password" class="form-control">
+        <div *ngIf="cadastroForm.get('password')?.invalid && cadastroForm.get('password')?.touched">
+          <small class="text-danger">Senha deve ter pelo menos 6 caracteres.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar Senha *</label>
+        <input type="password" id="confirmPassword" formControlName="confirmPassword" class="form-control">
+        <div *ngIf="cadastroForm.hasError('mismatch') && cadastroForm.get('confirmPassword')?.touched">
+          <small class="text-danger">As senhas não coincidem.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="telefone">Telefone</label>
+        <input type="text" id="telefone" formControlName="telefone" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="nuit">NUIT *</label>
+        <input type="text" id="nuit" formControlName="nuit" class="form-control">
+        <div *ngIf="cadastroForm.get('nuit')?.invalid && cadastroForm.get('nuit')?.touched">
+          <small class="text-danger">NUIT é obrigatório.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="dataNascimento">Data de Nascimento</label>
+        <input type="date" id="dataNascimento" formControlName="dataNascimento" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="perguntaSeguranca">Pergunta de Segurança *</label>
+        <select id="perguntaSeguranca" formControlName="perguntaSeguranca" class="form-control">
+          <option value="">Selecione uma pergunta</option>
+          <option value="Qual o nome do seu primeiro animal de estimação?">Qual o nome do seu primeiro animal de estimação?</option>
+          <option value="Qual o nome da sua mãe?">Qual o nome da sua mãe?</option>
+          <option value="Qual sua cidade natal?">Qual sua cidade natal?</option>
+          <option value="Qual seu filme favorito?">Qual seu filme favorito?</option>
+          <option value="Qual o nome do seu melhor amigo de infância?">Qual o nome do seu melhor amigo de infância?</option>
+        </select>
+        <div *ngIf="cadastroForm.get('perguntaSeguranca')?.invalid && cadastroForm.get('perguntaSeguranca')?.touched">
+          <small class="text-danger">Por favor, selecione uma pergunta de segurança.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="respostaSeguranca">Resposta de Segurança *</label>
+        <input type="text" id="respostaSeguranca" formControlName="respostaSeguranca" class="form-control">
+        <div *ngIf="cadastroForm.get('respostaSeguranca')?.invalid && cadastroForm.get('respostaSeguranca')?.touched">
+          <small class="text-danger">Resposta de segurança é obrigatória.</small>
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="cadastroForm.invalid" class="btn btn-primary">Cadastrar</button>
+    </form>
+  </div>
+</div>

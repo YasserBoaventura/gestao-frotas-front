@@ -4,8 +4,12 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { VeiculosComponent } from './components/Veiculos/veiculos/veiculos.component';
 import { MarcalistComponent } from './components/marca/marcalist/marcalist.component';
 import { MarcadetalhesComponent } from './components/marca/marcadetalhes/marcadetalhes.component';
-import { RegisterComponent } from './components/login/register/register.component';
+
 import { ResetSenhaComponent } from './components/login/reset-senha/reset-senha.component';
+import { MotoristadetalisComponent } from './components/motorista/motoristadetalis/motoristadetalis.component';
+import { MotoristalistComponent } from './components/motorista/motoristalist/motoristalist.component';
+import { UsuarioDetalisComponent } from './components/Usuario/usuario-detalis/usuario-detalis.component';
+import { UsuarioListComponent } from './components/Usuario/usuario-list/usuario-list.component';
 
 export const routes: Routes = [
 
@@ -15,7 +19,8 @@ export const routes: Routes = [
 {path:"veiculos", component: VeiculosComponent},
 {path: "marcaslist", component: MarcalistComponent},
 {path: "marcas", component: MarcadetalhesComponent},
-{path: "register", component: RegisterComponent},
-{path: "reset-senha", component: ResetSenhaComponent}
+{path: "register", component: UsuarioDetalisComponent},
+{path: "reset-senha", component: ResetSenhaComponent},
+{path:"drivers", component: MotoristalistComponent}
 
 ];
