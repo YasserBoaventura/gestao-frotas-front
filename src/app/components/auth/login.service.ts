@@ -1,10 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, tap, throwError } from 'rxjs';
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { Login } from './login';
-import { Usuario } from './usuario';
+
 import { response } from 'express';
+import { Usuarios } from './usuario';
 
 @Injectable({
   providedIn: 'root'
@@ -12,11 +13,10 @@ import { response } from 'express';
 export class LoginService {
 
   http = inject(HttpClient);
-  API = "http://localhost:9000/api";
+  API = "http://localhost:9001/api";
 
 
   constructor() { }
-
 
   logar(login: Login): Observable<string> {
     return this.http.post<string>(this.API+'/login', login, {responseType: 'text' as 'json'});
@@ -43,7 +43,7 @@ export class LoginService {
   }
 
   hasRole(role: string) {
-    let user = this.jwtDecode() as Usuario;
+    let user = this.jwtDecode() as Usuarios;
     if (user.role == role)
       return true;
     else
@@ -51,31 +51,30 @@ export class LoginService {
   }
 
   getUsuarioLogado() {
-    return this.jwtDecode() as Usuario;
+    return this.jwtDecode() as Usuarios;
   }
-  // Método para registrar um novo usuário na API
-  register(user: any): Observable<string> {
-    return this.http.post<string>(this.API + "/register", user, { responseType: 'text' as 'json'});
+  // Método para registrar um novo usuário na AP
+  autoCadastro(dados: any): Observable<any> {
+    return this.http.post(`${this.API}/auto-cadastro`, dados ,
+        { responseType: 'text' }
+    );
+  }
+//Metodo para alter a senha do usuario // Método para validar usuário e email - COM responseType: 'text'
+  validateUserForPasswordReset(validationData: any): Observable<any> {
+    return this.http.post(
+      `${this.API}/auth/solicitar-recuperacao`,
+      validationData
+    )
   }
 
-//Metodo para alter a senha do usuario
-requestPasswordReset(username: string): Observable<any> {
-  return this.http.post(
-    `${this.API}/password/request`,
-    { username },  // Envia como JSON
-    {
-      responseType: 'text'
-    }
-  );
-}
+  // Método para resetar senha - COM responseType: 'text'
+  resetPassword(resetData: any): Observable<string> {
+    return this.http.post(
+      `${this.API}/auth/redefinir-senha-verificacao`,
+      resetData,
+      { responseType: 'text' }
+    );
+  }
+} // Método para validar usuário e email
 
-resetPassword(token: string, newPassword: string): Observable<any> {
-  return this.http.post(
-    `${this.API}/password/reset`,
-    { token, newPassword },
-    {
-      responseType: 'text'
-    }
-  );
-}
-}
+

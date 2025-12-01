@@ -1,0 +1,136 @@
+<div class="container">
+  <div class="row">
+    <div class="col-lg-12 centralizar topo">
+      <div class="card">
+        <div class="card-body">
+          <h3>{{ isEdit ? 'Editar Motorista' : 'Cadastrar Motorista' }}</h3>
+          <br>
+
+          <!-- Formulário do Motorista -->
+          <form [formGroup]="motoristaForm">
+
+            <!-- Dados Pessoais -->
+            <div class="row">
+              <div class="col-md-6">
+                <mdb-form-control>
+                  <input mdbInput type="text" id="nome" class="form-control" formControlName="nome"/>
+                  <label mdbLabel class="form-label" for="nome">Nome Completo *</label>
+                </mdb-form-control>
+                <div class="error-text" *ngIf="motoristaForm.get('nome')?.invalid && motoristaForm.get('nome')?.touched">
+                  <span *ngIf="motoristaForm.get('nome')?.errors?.['required']">Nome é obrigatório</span>
+                  <span *ngIf="motoristaForm.get('nome')?.errors?.['minlength']">Nome deve ter pelo menos 3 caracteres</span>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <mdb-form-control>
+                  <input mdbInput type="email" id="email" class="form-control" formControlName="email"
+                         placeholder="Ex: motorista@email.com"/>
+                  <label mdbLabel class="form-label" for="email">Email *</label>
+                </mdb-form-control>
+                <div class="error-text" *ngIf="motoristaForm.get('email')?.invalid && motoristaForm.get('email')?.touched">
+                  <span *ngIf="motoristaForm.get('email')?.errors?.['required']">Email é obrigatório</span>
+                  <span *ngIf="motoristaForm.get('email')?.errors?.['email']">Email inválido</span>
+                </div>
+              </div>
+            </div>
+
+            <br>
+
+            <div class="row">
+              <div class="col-md-4">
+                <mdb-form-control>
+                  <input mdbInput type="text" id="numeroCarta" class="form-control" formControlName="numeroCarta"
+                         placeholder="Ex: 123456789"/>
+                  <label mdbLabel class="form-label" for="numeroCarta">Número da Carta de Condução *</label>
+                </mdb-form-control>
+                <div class="error-text" *ngIf="motoristaForm.get('numeroCarta')?.invalid && motoristaForm.get('numeroCarta')?.touched">
+                  <span *ngIf="motoristaForm.get('numeroCarta')?.errors?.['required']">Número da carta é obrigatório</span>
+                  <span *ngIf="motoristaForm.get('numeroCarta')?.errors?.['pattern']">Formato inválido (5-15 caracteres alfanuméricos)</span>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <mdb-form-control>
+                  <input mdbInput type="tel" id="telefone" class="form-control" formControlName="telefone"
+                         placeholder="Ex: +351 912 345 678"/>
+                  <label mdbLabel class="form-label" for="telefone">Telefone *</label>
+                </mdb-form-control>
+                <div class="error-text" *ngIf="motoristaForm.get('telefone')?.invalid && motoristaForm.get('telefone')?.touched">
+                  <span *ngIf="motoristaForm.get('telefone')?.errors?.['required']">Telefone é obrigatório</span>
+                  <span *ngIf="motoristaForm.get('telefone')?.errors?.['pattern']">Formato de telefone inválido</span>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <mdb-form-control>
+                  <input mdbInput type="date" id="dataNascimento" class="form-control" formControlName="dataNascimento"/>
+                  <label mdbLabel class="form-label" for="dataNascimento">Data de Nascimento *</label>
+                </mdb-form-control>
+                <div class="error-text" *ngIf="motoristaForm.get('dataNascimento')?.invalid && motoristaForm.get('dataNascimento')?.touched">
+                  <span *ngIf="motoristaForm.get('dataNascimento')?.errors?.['required']">Data de nascimento é obrigatória</span>
+                  <span *ngIf="motoristaForm.get('dataNascimento')?.errors?.['idadeInvalida']">Idade mínima de 18 anos é necessária</span>
+                </div>
+              </div>
+            </div>
+
+            <br>
+
+            <!-- Categoria de Habilitação -->
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">Categoria de Habilitação *</label>
+                <select class="form-select" formControlName="categoriaHabilitacao">
+                  <option value="">Selecione uma categoria</option>
+                  <option value="Motociclos">A - Motociclos</option>
+                  <option value="Automóveis">B - Automóveis</option>
+                  <option value="Veículos pesados">C - Veículos pesados</option>
+                  <option value="Autocarros">D - Autocarros</option>
+                  <option value="Reboque">BE - Reboque</option>
+                </select>
+                <div class="error-text" *ngIf="motoristaForm.get('categoriaHabilitacao')?.invalid && motoristaForm.get('categoriaHabilitacao')?.touched">
+                  Categoria é obrigatória
+                </div>
+              </div>
+            </div>
+
+            <!--Status do Motoristas-->
+
+       <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">Status Motorista *</label>
+                <select class="form-select" formControlName="statusMotorista">
+                  <option value="">Selecione o status do Motorista</option>
+                  <option value="ATIVO">Ativo</option>
+                  <option value="INATIVO">INATIVO</option>
+                  <option value="FERIAS">FERIAS</option>
+                  <option value="AFASTADO">AFASTADO</option>
+        
+                </select>
+                   <div class="error-text" *ngIf="motoristaForm.get('categoriaHabilitacao')?.invalid && motoristaForm.get('categoriaHabilitacao')?.touched">
+                  Categoria é obrigatória
+                </div>
+            </div>
+                </div>
+            <br>
+
+            <!-- Botão Salvar -->
+            <div class="text-center">
+              <button
+                type="button"
+                class="btn btn-success btn-rounded btn-lg"
+                mdbRipple
+                (click)="salvarMotorista()"
+                [disabled]="!motoristaForm.valid">
+                <i class="fas fa-save me-2"></i>
+                {{ isEdit ? 'Atualizar Motorista' : 'Cadastrar Motorista' }}
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

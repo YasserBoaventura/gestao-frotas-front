@@ -1,0 +1,205 @@
+<div class="motoristas-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <mat-icon class="title-icon">people</mat-icon>
+      <h2>Gerenciamento de Motoristas</h2>
+    </div>
+    <div class="header-actions">
+      <button class="btn-reload" (click)="recarregarLista()" title="Recarregar lista">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button class="btn-add" (click)="openModal()">
+        <mat-icon>person_add</mat-icon>
+        Novo Motorista
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de Carregamento -->
+  <div *ngIf="carregando" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Carregando...</span>
+    </div>
+    <h3>Carregando motoristas...</h3>
+    <p>Aguarde enquanto carregamos a lista de motoristas</p>
+  </div>
+
+  <!-- Conteúdo Principal (quando não está carregando) -->
+  <div *ngIf="!carregando">
+    <!-- Seção de Pesquisa -->
+    <div class="search-section">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">
+            <mat-icon class="me-2">search</mat-icon>
+            Pesquisar Motoristas
+          </h4>
+          <p class="card-text">Pesquise motoristas pelo nome</p>
+
+          <div class="row">
+            <div class="col-md-8">
+              <div class="input-group">
+                <span class="input-group-text">
+                  <mat-icon>search</mat-icon>
+                </span>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Digite o nome do motorista..."
+                  [(ngModel)]="termoPesquisa"
+                  (input)="onPesquisaChange()"
+                  [disabled]="pesquisando">
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  (click)="limparPesquisa()"
+                  [disabled]="!termoPesquisa">
+                  <mat-icon>clear</mat-icon>
+                </button>
+              </div>
+              <small class="form-text text-muted">
+                Digite pelo menos 2 caracteres para pesquisar
+              </small>
+            </div>
+          </div>
+
+          <!-- Loading da Pesquisa -->
+          <div *ngIf="pesquisando" class="mt-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Pesquisando...</span>
+            </div>
+            <span class="ms-2">Pesquisando motoristas...</span>
+          </div>
+
+          <!-- Informações da Pesquisa -->
+          <div *ngIf="pesquisaRealizada && !pesquisando" class="mt-3">
+            <div class="alert alert-info" role="alert">
+              <mat-icon class="me-2">info</mat-icon>
+              <span *ngIf="listaFiltrada.length > 0">
+                Encontrados <strong>{{ listaFiltrada.length }}</strong> motorista(s) para "{{ termoPesquisa }}"
+              </span>
+              <span *ngIf="listaFiltrada.length === 0">
+                Nenhum motorista encontrado para "{{ termoPesquisa }}"
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela com *ngFor -->
+    <div class="table-container" *ngIf="listaFiltrada && listaFiltrada.length > 0; else emptyState">
+      <div class="table-header-info">
+        <span class="total-registros">
+          Total de motoristas: <strong>{{ listaFiltrada.length }}</strong>
+          <span *ngIf="pesquisaRealizada" class="text-muted">
+            (de {{ lista.length }} no total)
+          </span>
+        </span>
+      </div>
+      <table class="motoristas-table">
+        <thead>
+          <tr class="table-header">
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Nº Carta Condução</th>
+            <th>Email</th>
+            <th>Telefone</th>
+            <th>Data Nascimento</th>
+            <th>Categoria</th>
+            <th>Status</th>
+            <th class="actions-header">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let motorista of listaFiltrada; " class="table-row">
+            <!-- Coluna ID -->
+            <td class="id-cell">{{ motorista.id || 'N/A' }}</td>
+
+            <!-- Coluna Nome -->
+            <td class="nome-cell">{{ motorista.nome || 'N/A' }}</td>
+
+            <!-- Coluna Número da Carta -->
+            <td class="numero-carta-cell">
+              <span class="carta-badge">{{ motorista.numeroCarta || 'N/A' }}</span>
+            </td>
+
+            <!-- Coluna Email -->
+            <td class="email-cell">{{ motorista.email || 'N/A' }}</td>
+
+            <!-- Coluna Telefone -->
+            <td class="telefone-cell">{{ motorista.telefone || 'N/A' }}</td>
+
+            <!-- Coluna Data Nascimento -->
+            <td class="data-cell">
+              {{ formatarData(motorista.dataNascimento) }}
+            </td>
+
+            <!-- Coluna Categoria -->
+            <td class="categoria-cell">
+              <span >
+        {{ motorista.categoriaHabilitacao }}
+              </span>
+            </td>
+            <td class="status-cell">{{ motorista.statusMotorista || 'N/A' }}</td>
+
+            <!-- Coluna Ações -->
+            <td class="actions-cell">
+              <button class="btn-edit"
+                      (click)="editar(motorista)"
+                      title="Editar motorista">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button class="btn-delete"
+                      (click)="deleteMotorista(motorista)"
+                      title="Eliminar motorista">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <mat-icon class="empty-icon">people_outline</mat-icon>
+        <h3 *ngIf="pesquisaRealizada">Nenhum motorista encontrado</h3>
+        <h3 *ngIf="!pesquisaRealizada">Nenhum motorista cadastrado</h3>
+        <p *ngIf="pesquisaRealizada">
+          Não foram encontrados motoristas para "{{ termoPesquisa }}"
+        </p>
+        <p *ngIf="!pesquisaRealizada">
+          Comece adicionando seu primeiro motorista à equipa
+        </p>
+        <button class="btn-add-empty" (click)="openModal()">
+          <mat-icon>person_add</mat-icon>
+          {{ pesquisaRealizada ? 'Cadastrar Novo Motorista' : 'Adicionar Primeiro Motorista' }}
+        </button>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Modal -->
+<ng-template #modalMotoristasDetalhes>
+  <div class="modal-header">
+    <h5 class="modal-title">{{ isEdit ? 'Editar Motorista' : 'Cadastrar Motorista' }}</h5>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="closeModal()">
+    </button>
+  </div>
+  <div class="modal-body">
+    <!-- Componente de detalhes do motorista -->
+    <app-motoristadetalis
+      [motoristaParaEditar]="selectedMotorista"
+      (motoristaSalvo)="closeModal()"
+      (fecharModal)="closeModal()">
+    </app-motoristadetalis>
+  </div>
+</ng-template>

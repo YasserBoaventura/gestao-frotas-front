@@ -27,13 +27,13 @@ constructor(){}
   LoginService = inject (LoginService);
 
   logar() {
-   this.LoginService.logar(this.login).subscribe({
+     this.LoginService.logar(this.login).subscribe({
    next: (token : string) =>{
    if(token){
       this.LoginService.addToken(token);
     this.router.navigate(['dashboard']);
       }},
- error: (error: any) => {
+     error: (error: any) => {
       // A resposta de erro é uma string, então error.error é a string completa.
       let errorMessage = error.error;
       // Remove o prefixo "Erro ao salvar: " se existir

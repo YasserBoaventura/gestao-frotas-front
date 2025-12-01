@@ -3,7 +3,7 @@
     <div class="col-lg-12 centralizar topo">
       <div class="card">
         <div class="card-body">
-          <h3>Cadastrar Veículo</h3>
+          <h3>{{ isEdit ? 'Editar Veículo' : 'Cadastrar Veículo' }}</h3>
           <br>
 
           <!-- Formulário do Veículo -->
@@ -40,10 +40,10 @@
                 <mdb-form-control>
                   <input mdbInput type="number" id="anoFabricacao" class="form-control" formControlName="anoFabricacao"
                          min="1990" max="2030" placeholder="Ex: 2020"/>
-                  <label mdbLabel class="form-label" for="anoFabricacao"><p i>  Ano de Fabricação </p> </label>
+                  <label mdbLabel class="form-label" for="anoFabricacao">Ano de Fabricação *</label>
                 </mdb-form-control>
                 <div class="error-text" *ngIf="veiculoForm.get('anoFabricacao')?.invalid && veiculoForm.get('anoFabricacao')?.touched">
-                  Ano é obrigatório (1990-2030)
+                  Ano é   (1990-2030)
                 </div>
               </div>
 
@@ -61,7 +61,7 @@
               <div class="col-md-4">
                 <mdb-form-control>
                   <input mdbInput type="number" id="kilometragemAtual" class="form-control" formControlName="kilometragemAtual"
-                         step="0.1" min="0" value="0" placeholder="Ex: 15000.5"/>
+                         step="0.1" min="0" placeholder="Ex: 15000.5"/>
                   <label mdbLabel class="form-label" for="kilometragemAtual">Kilometragem Atual *</label>
                 </mdb-form-control>
                 <div class="error-text" *ngIf="veiculoForm.get('kilometragemAtual')?.invalid && veiculoForm.get('kilometragemAtual')?.touched">
@@ -97,24 +97,6 @@
 
             <br>
 
-            <!-- Seleção de Motorista -->
-            <div class="motorista-section">
-              <h5>Motorista (Opcional)</h5>
-              @if (!motoristaSelecionado) {
-
-              } @else {
-                <div class="selected-item">
-                  <span class="text-success">
-                    <i class="fas fa-check-circle me-2"></i>
-                    Motorista: <strong>{{ motoristaSelecionado.nome }}</strong> - {{ motoristaSelecionado.categoriaHabilitacao }}
-                  </span>
-
-                </div>
-              }
-            </div>
-
-            <br>
-
             <!-- Botão Salvar -->
             <div class="text-center">
               <button
@@ -123,7 +105,17 @@
                 mdbRipple
                 (click)="salvarVeiculo()"
                 [disabled]="!veiculoForm.valid || !marcaSelecionada.marca">
-                <i class="fas fa-save me-2"></i>Cadastrar Veículo
+                <i class="fas fa-save me-2"></i>
+                {{ isEdit ? 'Atualizar Veículo' : 'Cadastrar Veículo' }}
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-secondary btn-rounded btn-lg ms-2"
+                mdbRipple
+                (click)="cancelar()">
+                <i class="fas fa-times me-2"></i>
+                Cancelar
               </button>
             </div>
 
@@ -143,33 +135,14 @@
       type="button"
       class="btn-close"
       aria-label="Close"
-      (click)="fecharModal()">
+      (click)="fecharModalInterno()"> <!-- Mudado para fecharModalInterno -->
     </button>
   </div>
   <div class="modal-body">
     <app-marcalist [esconderBotao]="true" (retornoMarca)="retornoMarca($event)"></app-marcalist>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="fecharModal()">
-      Fechar
-    </button>
-  </div>
-</ng-template>
-
-<!-- Modal para Seleção de Motorista -->
-<ng-template #modalMotoristas>
-  <div class="modal-header">
-    <h5 class="modal-title">Selecionar Motorista</h5>
-    <button
-      type="button"
-      class="btn-close"
-      aria-label="Close"
-      (click)="fecharModal()">
-    </button>
-  </div>
-
-  <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="fecharModal()">
+    <button type="button" class="btn btn-secondary" (click)="fecharModalInterno()"> <!-- Mudado para fecharModalInterno -->
       Fechar
     </button>
   </div>

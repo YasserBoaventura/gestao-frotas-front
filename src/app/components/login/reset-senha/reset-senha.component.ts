@@ -18,40 +18,46 @@ import { CommonModule, NgIf } from '@angular/common';
 })
 export class ResetSenhaComponent {
 
-    // Declare os forms como públicas
-  requestForm!: FormGroup;
+    validationForm!: FormGroup;
   resetForm!: FormGroup;
-  formGroup !: FormGroup;
-  // UI State
+
   currentStep = 1;
   isLoading = false;
-  showTokenMessage = false;
-  showSuccessModal = false;
   showNewPassword = false;
   showConfirmPassword = false;
+
+  // Novas propriedades para armazenar a pergunta e token
+  perguntaSeguranca: string = '';
+  tokenGerado: string = '';
+
+  // Armazenar dados da validação
+  private validatedUserData: any = {};
 
   constructor(
     private fb: FormBuilder,
     private authService: LoginService,
     private router: Router
   ) {
-    this.requestForm = this.createRequestForm();
+    this.validationForm = this.createValidationForm();
     this.resetForm = this.createResetForm();
   }
 
-  // Form para solicitar token
-  createRequestForm(): FormGroup {
+  // Form para validação inicial
+  createValidationForm(): FormGroup {
     return this.fb.group({
-      username: ['', [Validators.required]]
+      username: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]]
     });
   }
 
-  // Form para redefinir senha
+  // Form para redefinição de senha - AGORA INCLUI TOKEN
   createResetForm(): FormGroup {
     return this.fb.group({
-      token: ['', [Validators.required]],
-      newPassword: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]]
+      token: ['', [Validators.required]], // ← CAMPO TOKEN ADICIONADO
+      respostaSeguranca: ['', [Validators.required]],
+      nuit: ['', [Validators.required]],
+      novaSenha: ['', [Validators.required, Validators.minLength(6)]],
+      confirmarSenha: ['', [Validators.required]]
     }, {
       validators: this.passwordMatchValidator
     });
@@ -59,78 +65,98 @@ export class ResetSenhaComponent {
 
   // Validador para verificar se as senhas coincidem
   passwordMatchValidator(control: AbstractControl) {
-    const newPassword = control.get('newPassword');
-    const confirmPassword = control.get('confirmPassword');
+    const novaSenha = control.get('novaSenha');
+    const confirmarSenha = control.get('confirmarSenha');
 
-    if (!newPassword || !confirmPassword) {
+    if (!novaSenha || !confirmarSenha) {
       return null;
     }
 
-    return newPassword.value === confirmPassword.value ? null : { passwordsMismatch: true };
+    return novaSenha.value === confirmarSenha.value ? null : { passwordsMismatch: true };
   }
 
-// Step 1: Solicitar token
-onRequestToken(): void {
-  if (this.requestForm.valid) {
-    this.isLoading = true;
+  // Step 1: Validar usuário e email - AGORA RECEBE PERGUNTA E TOKEN
+  onValidateUser(): void {
+    if (this.validationForm.valid) {
+      this.isLoading = true;
 
-    const username = this.requestForm.get('username')?.value;
+      const validationData = this.validationForm.value;
 
-    console.log(' Solicitando token para:', username);
+      console.log('📤 Validando usuário:', validationData.username);
 
-    this.authService.requestPasswordReset(username).subscribe({
-      next: (token: string) => {
-        this.isLoading = false;
-        console.log('✅ Token recebido com sucesso:', token);
+      this.authService.validateUserForPasswordReset(validationData).subscribe({
+        next: (response: any) => {
+          this.isLoading = false;
+          console.log('✅ Resposta do servidor:', response);
 
-        // Vai para o passo 2
-        this.currentStep = 2;
+          if (response.status === 'sucesso') {
+            console.log('✅ Usuário validado com sucesso');
 
-        // Preenche automaticamente o token (opcional)
-        this.resetForm.patchValue({
-          token: token.trim()
-        });
+            // Armazena os dados validados
+            this.validatedUserData = validationData;
 
-        console.log('🔄 Indo para passo 2...');
-      },
-      error: (error) => {
-        this.isLoading = false;
-        console.error('❌ Erro final ao solicitar token:', error);
+            // Armazena a pergunta e token
+            this.perguntaSeguranca = response.perguntaSeguranca;
+            this.tokenGerado = response.token;
 
-        let errorMessage = 'Erro ao solicitar token de redefinição.';
+            // Preenche automaticamente o token no formulário
+            this.resetForm.patchValue({
+              token: this.tokenGerado
+            });
 
-        if (error.status === 404) {
-          errorMessage = 'Username não encontrado.';
-        } else if (error.status === 415) {
-          errorMessage = 'Erro de formato. Tente novamente.';
-        } else if (error.error) {
-          errorMessage = error.error;
+            // Avança para o passo 2
+            this.currentStep = 2;
+          }else if(response.status==='Usuario nao pode fazer altercoes. sua conta esta inativa')  {
+            alert(response.mensagem || 'Usuario nao pode fazer altercoes. sua conta esta inativa');
+          }else{
+        alert(response.mensagem==='Usuario nao pode fazer altercoes. sua conta esta inativa');
+          }
+          }
+
+        ,
+        error: (error) => {
+          this.isLoading = false;
+          console.error(' Erro na validação:', error);
+
+          let errorMessage = 'Erro ao validar usuário.';
+
+          if (error.status === 404) {
+            errorMessage = 'Usuário ou email não encontrados.';
+          } else if (error.error) {
+            errorMessage = error.error;
+          }
+
+          alert(errorMessage);
         }
-
-        alert(errorMessage);
-      }
-    });
-  } else {
-    this.markFormGroupTouched(this.requestForm);
+      });
+    } else {
+      this.markFormGroupTouched(this.validationForm);
+    }
   }
-}
 
-// Step 2: Redefinir senha com token
+  // Step 2: Redefinir senha
+// Step 2: Redefinir senha - ATUALIZADO
 onResetPassword(): void {
   if (this.resetForm.valid) {
     this.isLoading = true;
 
+    // Cria o objeto no formato desejado, similar ao motoristaData
     const resetData = {
-      token: this.resetForm.get('token')?.value,
-      newPassword: this.resetForm.get('newPassword')?.value
+      username: this.validatedUserData.username,
+      email: this.validatedUserData.email,
+      token: this.tokenGerado,
+      nuit: this.resetForm.get('nuit')?.value,
+      respostaSeguranca: this.resetForm.get('respostaSeguranca')?.value,
+      novaSenha: this.resetForm.get('novaSenha')?.value
     };
 
-    console.log(' Redefinindo senha com token:', resetData.token);
+    console.log(' Dados enviados para reset:', resetData);
 
-    this.authService.resetPassword(resetData.token, resetData.newPassword).subscribe({
-      next: (response: string) => { // ← Agora é string
+    this.authService.resetPassword(resetData).subscribe({
+      next: (response: string) => {
         this.isLoading = false;
         console.log(' Senha redefinida com sucesso:', response);
+
 
         alert('Senha redefinida com sucesso!');
         this.router.navigate(['/login']);
@@ -142,7 +168,7 @@ onResetPassword(): void {
         let errorMessage = 'Erro ao redefinir senha.';
 
         if (error.status === 400) {
-          errorMessage = 'Token inválido ou expirado.';
+          errorMessage = 'Dados inválidos. Verifique as informações.';
         } else if (error.error) {
           errorMessage = error.error;
         }
@@ -155,9 +181,7 @@ onResetPassword(): void {
   }
 }
 
-  // Step 1: Solicitar token
-  // Step 1: Solicitar token
-// Toggle password visibility
+  // Métodos auxiliares
   toggleNewPasswordVisibility(): void {
     this.showNewPassword = !this.showNewPassword;
   }
@@ -166,9 +190,11 @@ onResetPassword(): void {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  closeSuccessModal(): void {
-    this.showSuccessModal = false;
-    this.router.navigate(['/login']);
+  goBackToStep1(): void {
+    this.currentStep = 1;
+    this.resetForm.reset();
+    this.perguntaSeguranca = '';
+    this.tokenGerado = '';
   }
 
   private markFormGroupTouched(formGroup: FormGroup) {
@@ -177,11 +203,4 @@ onResetPassword(): void {
       control?.markAsTouched();
     });
   }
-
-  goBackToStep1(): void {
-  console.log('🟡 Voltando para passo 1');
-  this.currentStep = 1;
-  // Opcional: limpar o formulário de reset
-  this.resetForm.reset();
-}
 }

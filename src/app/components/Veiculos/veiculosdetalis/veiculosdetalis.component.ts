@@ -1,69 +1,56 @@
-import { Component } from '@angular/core';
-import { Input, Output, EventEmitter } from '@angular/core';
-import Swal from 'sweetalert2';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, OnInit, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MdbFormsModule } from "mdb-angular-ui-kit/forms";
 import { MdbModalRef, MdbModalService } from 'mdb-angular-ui-kit/modal';
 import { ViewChild, TemplateRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MdbFormsModule } from 'mdb-angular-ui-kit/forms';
-import { DashboardComponent } from "../../dashboard/dashboard.component";
-import { MarcalistComponent } from "../../marca/marcalist/marcalist.component";
+import { CommonModule } from '@angular/common';
+import Swal from 'sweetalert2';
 import { VeiculosService } from '../veiculos.service';
 import { MarcaServicService } from '../../marca/marca-servic.service';
 import { Veiculo } from '../veiculos.model';
 import { Marca } from '../../marca/marca';
-import { VeiculosComponent } from '../veiculos/veiculos.component';
+import { MarcalistComponent } from "../../marca/marcalist/marcalist.component";
+
 @Component({
   selector: 'app-veiculosdetalis',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MdbFormsModule, DashboardComponent, MarcalistComponent],
+  imports: [CommonModule, ReactiveFormsModule, MdbFormsModule, MarcalistComponent],
   templateUrl: './veiculosdetalis.component.html',
   styleUrl: './veiculosdetalis.component.css'
 })
-export class VeiculosdetalisComponent implements OnInit  {
+export class VeiculosdetalisComponent implements OnInit, OnDestroy {
 
-
+  @Input() veiculoParaEditar?: Veiculo;
+  @Output() veiculoSalvo = new EventEmitter<void>();
+  @Output() fecharModal = new EventEmitter<void>();
 
   veiculoForm: FormGroup;
-
   modalServic = inject(MdbModalService);
-      modalRef!: MdbModalRef<any>;
-//componente  pra poder usar o loadVeiculos pois a cadastrado
-veiculoLista = inject(VeiculosComponent);
-
-  @Input('veiculos')  veiculo: Veiculo = new Veiculo();
-
+  modalRef!: MdbModalRef<any>;
 
   @ViewChild("modalMarcas") modalMarcas!: TemplateRef<any>;
-
   @ViewChild("modalMotoristas") modalMotoristas!: TemplateRef<any>;
-  // Dados selecionados
-  marcaSelecionada: Veiculo= new Veiculo();
+
+  marcaSelecionada: any = { marca: null };
   motoristaSelecionado: any = null;
+  isEdit = false;
 
+  private veiculoService = inject(VeiculosService);
+  private marcaService = inject(MarcaServicService);
+  private fb = inject(FormBuilder);
 
-
-
-
-  // Listas para seleção
-  marcas: Marca[] = [];
- // motoristas: Motorista[] = [];
-
-  constructor(
-    private fb: FormBuilder,
-    private modalService: MdbModalService,
-    private veiculoService: VeiculosService,
-    private marcaService: MarcaServicService,
-
-  ) {
+  constructor() {
     this.veiculoForm = this.criarForm();
   }
 
   ngOnInit(): void {
-    this.carregarDadosIniciais();
+    if (this.veiculoParaEditar) {
+      this.carregarDadosVeiculo(this.veiculoParaEditar);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.veiculoParaEditar = undefined;
   }
 
   criarForm(): FormGroup {
@@ -74,141 +61,169 @@ veiculoLista = inject(VeiculosComponent);
       capacidadeTanque: ['', [Validators.required, Validators.min(0)]],
       kilometragemAtual: [0, [Validators.required, Validators.min(0)]],
       marcaId: ['', Validators.required],
-
     });
   }
 
-  carregarDadosIniciais(): void {
+  carregarDadosVeiculo(veiculo: Veiculo): void {
+    this.isEdit = true;
+    this.veiculoParaEditar = veiculo;
 
+    if (veiculo.marca) {
+      this.marcaSelecionada.marca = veiculo.marca;
+    }
 
+    this.veiculoForm.patchValue({
+      modelo: veiculo.modelo,
+      matricula: veiculo.matricula,
+      anoFabricacao: veiculo.anoFabricacao,
+      capacidadeTanque: veiculo.capacidadeTanque,
+      kilometragemAtual: veiculo.kilometragemAtual,
+      marcaId: veiculo.marca?.id
+    });
+
+    console.log(' Dados do veículo carregados para edição:', veiculo);
   }
 
-
-
-
-
-
-  // Modal para seleção de marca
-   buscarMarca() {
-    this.modalRef = this.modalService.open(this.modalMarcas, {
+  buscarMarca() {
+    this.modalRef = this.modalServic.open(this.modalMarcas, {
       modalClass: 'modal-lg'
     });
-
-
-  // Modal para seleção de motorista
-
   }
 
-  // Retorno da seleção de marca
   retornoMarca(marca: Marca): void {
     this.marcaSelecionada.marca = marca;
     this.veiculoForm.patchValue({
       marcaId: marca.id
     });
-    this.fecharModal();
+    this.fecharModalInterno(); // Mudado para fecharModalInterno
   }
 
-  // Selecionar motorista
   selecionarMotorista(motorista: any): void {
     this.motoristaSelecionado = motorista;
     this.veiculoForm.patchValue({
       motoristaId: motorista.id
     });
-    this.fecharModal();
+    this.fecharModalInterno(); // Mudado para fecharModalInterno
   }
 
-  // Fechar modal
-  fecharModal(): void {
+  // Método para fechar modais internos (marca, motorista)
+  fecharModalInterno(): void {
     if (this.modalRef) {
       this.modalRef.close();
     }
   }
 
-  // Salvar veículo
+  // Método para fechar o modal principal - CORRIGIDO
+  fecharModalPrincipal(): void {
+    this.fecharModal.emit(); // Isso notifica o componente pai para fechar o modal
+  }
+
+  salvarVeiculo(): void {
+    if (this.veiculoForm.valid && this.marcaSelecionada.marca) {
+      Swal.fire({
+        title: this.isEdit ? 'Atualizando...' : 'Salvando...',
+        text: 'Por favor aguarde',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const veiculoData = {
+        modelo: this.veiculoForm.get('modelo')?.value,
+        matricula: this.veiculoForm.get('matricula')?.value,
+        anoFabricacao: this.veiculoForm.get('anoFabricacao')?.value,
+        capacidadeTanque: this.veiculoForm.get('capacidadeTanque')?.value,
+        kilometragemAtual: this.veiculoForm.get('kilometragemAtual')?.value || 0,
+        marca: {
+          id: this.marcaSelecionada.marca.id,
+          nome: this.marcaSelecionada.marca.nome
+        }
+      };
+
+      console.log('✅ DADOS ENVIADOS:', veiculoData);
+
+      if (this.isEdit && this.veiculoParaEditar?.id) {
+        // CORREÇÃO: Usar updateVehicle em vez de update
+        this.veiculoService.update(veiculoData  ,this.veiculoParaEditar.id ).subscribe({
 
 
-// ✅ CORRIGIDO: Salvar veículo
-salvarVeiculo(): void {
-  if (this.veiculoForm.valid && this.marcaSelecionada) {
+          next: (response: any) => {
+            Swal.close();
+            console.log(' Veículo atualizado:', response);
 
-    Swal.fire({
-      title: 'Salvando...',
-      text: 'Por favor aguarde',
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
+            Swal.fire({
+              title: "Sucesso!",
+              text: "Veículo atualizado com sucesso",
+              icon: "success",
+              confirmButtonText: "Ok"
+            });
+
+            this.veiculoSalvo.emit();
+            this.limparFormulario();
+          },
+          error: (error) => {
+            Swal.close();
+            this.handleCreateError(error);
+          }
+        });
+      } else {
+        // Criar novo veículo
+        this.veiculoService.createVehicle(veiculoData).subscribe({
+          next: (response: any) => {
+            Swal.close();
+            console.log(' Veículo criado:', response);
+
+            Swal.fire({
+              title: "Sucesso!",
+              text: "Veículo cadastrado com sucesso",
+              icon: "success",
+              confirmButtonText: "Ok"
+            });
+
+            this.veiculoSalvo.emit();
+            this.limparFormulario();
+          },
+          error: (error) => {
+            Swal.close();
+            this.handleCreateError(error);
+          }
+        });
       }
-    });
-
-    const veiculoData = {
-      modelo: this.veiculoForm.get('modelo')?.value,
-      matricula: this.veiculoForm.get('matricula')?.value,
-      anoFabricacao: this.veiculoForm.get('anoFabricacao')?.value,
-      capacidadeTanque: this.veiculoForm.get('capacidadeTanque')?.value,
-      kilometragemAtual: this.veiculoForm.get('kilometragemAtual')?.value || 0,
-      marca: {
-        id: this.marcaSelecionada.marca.id,
-        nome: this.marcaSelecionada.marca.nome
-      }
-    };
-
-    console.log('✅ DADOS ENVIADOS:', veiculoData);
-
-    this.veiculoService.createVehicle(veiculoData).subscribe({
-      next: (response: any) => {
-        Swal.close();
-
-        console.log('✅ RESPOSTA PROCESSADA:', response);
-
-        // SEMPRE mostre sucesso se o veículo foi salvo no banco
-        // independente do que o backend retornou
+    } else {
+      this.marcarCamposComoTouched();
+      if (!this.marcaSelecionada.marca) {
         Swal.fire({
-          title: "Sucesso!",
-          text: "Veículo cadastrado com sucesso",
-          icon: "success",
+          title: "Atenção!",
+          text: "Por favor, selecione uma marca.",
+          icon: "warning",
           confirmButtonText: "Ok"
         });
-
-        this.limparFormulario();
-
-        // Recarregue a lista para ver o novo veículo
-        setTimeout(() => {
-          this.veiculoLista.loadVeiculos(); // ou o método que atualiza sua lista
-        }, 1000);
       }
-      // REMOVA o bloco error - tudo vai pelo next agora
-    });
-
-  } else {
-    this.marcarCamposComoTouched();
-    if (!this.marcaSelecionada) {
-      alert('Por favor, selecione uma marca.');
     }
   }
-}
-private handleCreateError(error: any): void {
-  let errorMessage = 'Erro ao cadastrar veículo';
 
-  if (error.status === 409) {
-    errorMessage = 'Erro: Matrícula/Placa já está em uso!';
-  } else if (error.status === 400) {
-    errorMessage = 'Erro: Dados inválidos enviados ao servidor';
-  } else if (error.status === 500) {
-    errorMessage = 'Erro interno do servidor';
-  } else if (error.error) {
-    errorMessage = typeof error.error === 'string' ? error.error : 'Erro desconhecido';
+  private handleCreateError(error: any): void {
+    let errorMessage = 'Erro ao cadastrar veículo';
+
+    if (error.status === 409) {
+      errorMessage = 'Erro: Matrícula/Placa já está em uso!';
+    } else if (error.status === 400) {
+      errorMessage = 'Erro: Dados inválidos enviados ao servidor';
+    } else if (error.status === 500) {
+      errorMessage = 'Erro interno do servidor';
+    } else if (error.error) {
+      errorMessage = typeof error.error === 'string' ? error.error : 'Erro desconhecido';
+    }
+
+    Swal.fire({
+      title: "Erro",
+      text: errorMessage,
+      icon: "error",
+      confirmButtonText: "Ok"
+    });
   }
 
-  Swal.fire({
-    title: "Erro",
-    text: errorMessage,
-    icon: "error",
-    confirmButtonText: "Ok"
-  });
-}
-
-
-  // Marcar todos os campos como touched para mostrar erros
   marcarCamposComoTouched(): void {
     Object.keys(this.veiculoForm.controls).forEach(key => {
       const control = this.veiculoForm.get(key);
@@ -216,14 +231,20 @@ private handleCreateError(error: any): void {
     });
   }
 
-  // Limpar formulário após cadastro
   limparFormulario(): void {
     this.veiculoForm.reset({
       kilometragemAtual: 0,
       capacidadeTanque: ''
     });
-
+    this.marcaSelecionada = { marca: null };
     this.motoristaSelecionado = null;
+    this.isEdit = false;
+    this.veiculoParaEditar = undefined;
+  }
+
+  cancelar(): void {
+    this.fecharModalPrincipal(); // Mudado para fecharModalPrincipal
+    this.limparFormulario();
   }
 
   // Getters para facilitar o acesso no template
@@ -231,38 +252,6 @@ private handleCreateError(error: any): void {
   get matricula() { return this.veiculoForm.get('matricula'); }
   get anoFabricacao() { return this.veiculoForm.get('anoFabricacao'); }
   get capacidadeTanque() { return this.veiculoForm.get('capacidadeTanque'); }
-  get marca(){ return this.veiculoForm.get('marca');}
+  get marca() { return this.veiculoForm.get('marca'); }
   get kilometragemAtual() { return this.veiculoForm.get('kilometragemAtual'); }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // MARCA
-
-
-
-
-
-
-
-  // SALVAR VEÍCULO
-
-
-
-
-
-
-
