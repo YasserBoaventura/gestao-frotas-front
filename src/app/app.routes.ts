@@ -20,6 +20,7 @@ export const routes: Routes = [
 {path: "marcaslist", component: MarcalistComponent},
 {path: "marcas", component: MarcadetalhesComponent},
 {path: "register", component: UsuarioDetalisComponent},
+{path: "userlist", component: UsuarioListComponent},
 {path: "reset-senha", component: ResetSenhaComponent},
 {path:"drivers", component: MotoristalistComponent}
 

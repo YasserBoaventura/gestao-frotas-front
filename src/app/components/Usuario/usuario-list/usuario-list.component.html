@@ -1,1 +1,411 @@
-<p>usuario-list works!</p>
+<div class="container">
+
+  <!-- Cabeçalho -->
+  <div class="header">
+    <div>
+      <h1 class="title">
+        <mat-icon class="title-icon">people</mat-icon>
+        Gerenciamento de Usuários
+      </h1>
+      <p class="subtitle">Gerencie contas de usuários do sistema</p>
+    </div>
+
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="carregarUsuarios()" [disabled]="carregando">
+        <mat-icon>refresh</mat-icon>
+        Atualizar
+      </button>
+
+      <button mat-raised-button color="accent" (click)="abrirEdicao()" [disabled]="carregando">
+        <mat-icon>person_add</mat-icon>
+        Novo Usuário
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulário de Edição (Overlay) -->
+  <div *ngIf="editando" class="edit-overlay">
+    <mat-card class="edit-card">
+      <div class="edit-header">
+        <h2>
+          <mat-icon>{{ usuarioEditando ? 'edit' : 'person_add' }}</mat-icon>
+          {{ usuarioEditando ? 'Editar Usuário' : 'Novo Usuário' }}
+        </h2>
+        <button mat-icon-button (click)="fecharEdicao()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <form [formGroup]="usuarioForm" (ngSubmit)="salvarUsuario()">
+        <div class="form-content">
+
+          <!-- ID (apenas leitura para edição) -->
+          <div *ngIf="usuarioEditando" class="form-row">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>ID</mat-label>
+              <input matInput formControlName="id" readonly>
+              <mat-icon matSuffix>info</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Username e Email -->
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Username *</mat-label>
+              <input matInput formControlName="username" placeholder="Digite o username">
+              <mat-icon matSuffix>person</mat-icon>
+              <mat-error *ngIf="campoInvalido('username')">
+                Username é obrigatório (mínimo 3 caracteres)
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Email *</mat-label>
+              <input matInput formControlName="email" type="email" placeholder="usuario@exemplo.com">
+              <mat-icon matSuffix>email</mat-icon>
+              <mat-error *ngIf="campoInvalido('email')">
+                Email inválido
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Role e Status -->
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Cargo *</mat-label>
+              <mat-select formControlName="role">
+                <mat-option value="ADMIN">Administrador</mat-option>
+                <mat-option value="USER">Usuário</mat-option>
+              </mat-select>
+              <mat-error *ngIf="campoInvalido('role')">
+                Selecione um cargo
+              </mat-error>
+            </mat-form-field>
+
+            <div class="status-row">
+              <mat-checkbox formControlName="ativo" color="primary">
+                <div class="status-label">
+                  <mat-icon [color]="usuarioForm.get('ativo')?.value ? 'primary' : 'warn'">
+                    {{ usuarioForm.get('ativo')?.value ? 'check_circle' : 'cancel' }}
+                  </mat-icon>
+                  <span>Usuário Ativo</span>
+                </div>
+              </mat-checkbox>
+
+              <mat-checkbox formControlName="contaBloqueada" color="warn">
+                <div class="status-label">
+                  <mat-icon [color]="usuarioForm.get('contaBloqueada')?.value ? 'warn' : 'basic'">
+                    {{ usuarioForm.get('contaBloqueada')?.value ? 'lock' : 'lock_open' }}
+                  </mat-icon>
+                  <span>Conta Bloqueada</span>
+                </div>
+              </mat-checkbox>
+            </div>
+          </div>
+
+          <!-- Telefone e NUIT -->
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Telefone</mat-label>
+              <input matInput formControlName="telefone" placeholder="(+258) 8x xxx xxxx">
+              <mat-icon matSuffix>phone</mat-icon>
+              <mat-error *ngIf="campoInvalido('telefone')">
+                Formato inválido (apenas números e +)
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>NUIT</mat-label>
+              <input matInput formControlName="nuit" placeholder="Número do NUIT">
+              <mat-icon matSuffix>badge</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Observações -->
+          <div *ngIf="!usuarioEditando" class="form-info">
+            <mat-icon color="primary">info</mat-icon>
+            <p>A senha inicial será enviada por email para o usuário.</p>
+          </div>
+
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="form-actions">
+          <button mat-button type="button" (click)="fecharEdicao()">
+            Cancelar
+          </button>
+          <button mat-raised-button
+                  color="primary"
+                  type="submit"
+                  [disabled]="usuarioForm.invalid || carregando">
+            <mat-icon *ngIf="!carregando">{{ usuarioEditando ? 'save' : 'add' }}</mat-icon>
+            <mat-spinner *ngIf="carregando" diameter="20"></mat-spinner>
+            {{ usuarioEditando ? 'Salvar' : 'Criar' }}
+          </button>
+        </div>
+      </form>
+    </mat-card>
+  </div>
+
+  <!-- Filtros -->
+  <mat-card class="filters-card">
+    <div class="filters-container">
+
+      <!-- Busca -->
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar usuário</mat-label>
+        <input matInput
+               [(ngModel)]="filtroBusca"
+               (keyup)="aplicarFiltros()"
+               placeholder="Digite nome, email ou NUIT...">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <!-- Filtros em linha -->
+      <div class="row-filters">
+        <mat-form-field appearance="outline">
+          <mat-label>Cargo</mat-label>
+          <mat-select [(ngModel)]="filtroRole" (selectionChange)="aplicarFiltros()">
+            <mat-option value="TODOS">Todos os cargos</mat-option>
+            <mat-option value="ADMIN">Administrador</mat-option>
+            <mat-option value="USER">Usuário</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="filtroAtivo" (selectionChange)="aplicarFiltros()">
+            <mat-option value="TODOS">Todos os status</mat-option>
+            <mat-option value="ATIVO">Ativos</mat-option>
+            <mat-option value="INATIVO">Inativos</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button (click)="limparFiltros()">
+          <mat-icon>clear_all</mat-icon>
+          Limpar Filtros
+        </button>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Estatísticas -->
+  <div class="stats-container" *ngIf="usuarios.length > 0">
+    <mat-card class="stat-card">
+      <mat-icon class="stat-icon total">people</mat-icon>
+      <div class="stat-content">
+        <div class="stat-number">{{ totalUsuarios }}</div>
+        <div class="stat-label">Total de Usuários</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-icon class="stat-icon active">check_circle</mat-icon>
+      <div class="stat-content">
+        <div class="stat-number">{{ usuariosAtivos }}</div>
+        <div class="stat-label">Usuários Ativos</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-icon class="stat-icon admin">admin_panel_settings</mat-icon>
+      <div class="stat-content">
+        <div class="stat-number">{{ administradores }}</div>
+        <div class="stat-label">Administradores</div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="carregando && !editando" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Carregando usuários...</p>
+  </div>
+
+  <!-- Erro -->
+  <div *ngIf="erro && !carregando" class="error-container">
+    <mat-icon class="error-icon">error</mat-icon>
+    <p>{{ erro }}</p>
+    <button mat-raised-button color="warn" (click)="carregarUsuarios()">
+      Tentar Novamente
+    </button>
+  </div>
+
+  <!-- Tabela -->
+  <div *ngIf="!carregando && !erro && !editando">
+
+    <!-- Mensagem vazia -->
+    <div *ngIf="dataSource.data.length === 0" class="empty-container">
+      <mat-icon class="empty-icon">group_off</mat-icon>
+      <h3>Nenhum usuário encontrado</h3>
+      <p *ngIf="filtroBusca || filtroRole !== 'TODOS' || filtroAtivo !== 'TODOS'">
+        Tente ajustar os filtros de busca.
+      </p>
+      <p *ngIf="!filtroBusca && filtroRole === 'TODOS' && filtroAtivo === 'TODOS'">
+        Nenhum usuário cadastrado ainda.
+        <button mat-button color="primary" (click)="abrirEdicao()">
+          <mat-icon>person_add</mat-icon>
+          Criar primeiro usuário
+        </button>
+      </p>
+    </div>
+
+    <!-- Tabela com dados -->
+    <div *ngIf="dataSource.data.length > 0">
+
+      <!-- Resultados -->
+      <div class="results-info">
+        <span>Mostrando {{ dataSource.data.length }} de {{ usuarios.length }} usuários</span>
+      </div>
+
+      <!-- Tabela -->
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+
+          <!-- ID -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef>ID</th>
+            <td mat-cell *matCellDef="let usuario">{{ usuario.id }}</td>
+          </ng-container>
+
+          <!-- Username -->
+          <ng-container matColumnDef="username">
+            <th mat-header-cell *matHeaderCellDef>Username</th>
+            <td mat-cell *matCellDef="let usuario">
+              <div class="user-info">
+                <mat-icon class="user-icon">person</mat-icon>
+                <span>{{ usuario.username }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Email -->
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>Email</th>
+            <td mat-cell *matCellDef="let usuario">
+              <div class="email-info">
+                <mat-icon class="email-icon">email</mat-icon>
+                <span>{{ usuario.email }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Cargo -->
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef>Cargo</th>
+            <td mat-cell *matCellDef="let usuario">
+              <span [class]="usuario.role === 'ADMIN' ? 'badge-admin' : 'badge-user'">
+                {{ usuario.role === 'ADMIN' ? 'Administrador' : 'Usuário' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Telefone -->
+          <ng-container matColumnDef="telefone">
+            <th mat-header-cell *matHeaderCellDef>Telefone</th>
+            <td mat-cell *matCellDef="let usuario">
+              {{ usuario.telefone || '-' }}
+            </td>
+          </ng-container>
+
+          <!-- NUIT -->
+          <ng-container matColumnDef="nuit">
+            <th mat-header-cell *matHeaderCellDef>NUIT</th>
+            <td mat-cell *matCellDef="let usuario">{{ usuario.nuit || '-' }}</td>
+          </ng-container>
+
+          <!-- Ativo -->
+          <ng-container matColumnDef="ativo">
+            <th mat-header-cell *matHeaderCellDef>Ativo</th>
+            <td mat-cell *matCellDef="let usuario">
+              <div class="status-cell">
+                <mat-icon [color]="getStatusColor(usuario.ativo)">
+                  {{ getStatusIcon(usuario.ativo) }}
+                </mat-icon>
+                <span>{{ usuario.ativo ? 'Sim' : 'Não' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Bloqueado -->
+          <ng-container matColumnDef="contaBloqueada">
+            <th mat-header-cell *matHeaderCellDef>Bloqueado</th>
+            <td mat-cell *matCellDef="let usuario">
+              <div class="status-cell">
+                <mat-icon [color]="getBlockColor(usuario.contaBloqueada)">
+                  {{ getBlockIcon(usuario.contaBloqueada) }}
+                </mat-icon>
+                <span>{{ usuario.contaBloqueada ? 'Sim' : 'Não' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Ações -->
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef class="actions-header">Ações</th>
+            <td mat-cell *matCellDef="let usuario">
+              <div class="actions-container">
+
+                <!-- Editar -->
+                <button mat-icon-button
+                        color="accent"
+                        matTooltip="Editar"
+                        (click)="editarUsuario(usuario)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+
+                <!-- Ativar/Desativar -->
+                <button mat-icon-button
+                        [color]="usuario.ativo ? 'warn' : 'primary'"
+                        [matTooltip]="usuario.ativo ? 'Desativar' : 'Ativar'"
+                        (click)="ativarDesativar(usuario)">
+                  <mat-icon>{{ usuario.ativo ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                </button>
+
+                <!-- Bloquear/Desbloquear -->
+                <button mat-icon-button
+                        [color]="usuario.contaBloqueada ? 'accent' : 'warn'"
+                        [matTooltip]="usuario.contaBloqueada ? 'Desbloquear' : 'Bloquear'"
+                        (click)="bloquearDesbloquear(usuario)">
+                  <mat-icon>{{ usuario.contaBloqueada ? 'lock_open' : 'lock' }}</mat-icon>
+                </button>
+
+                <!-- Resetar Senha -->
+                <button mat-icon-button
+                        color="primary"
+                        matTooltip="Resetar Senha"
+                        (click)="resetarSenha(usuario)">
+                  <mat-icon>vpn_key</mat-icon>
+                </button>
+
+                <!-- Excluir -->
+                <button mat-icon-button
+                        color="warn"
+                        matTooltip="Excluir"
+                        (click)="excluirUsuario(usuario)"
+                        [disabled]="usuario.role === 'ADMIN'">
+                  <mat-icon>delete</mat-icon>
+                </button>
+
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Linhas -->
+          <tr mat-header-row *matHeaderRowDef="colunasExibidas"></tr>
+          <tr mat-row *matRowDef="let row; columns: colunasExibidas;"></tr>
+        </table>
+
+        <!-- Paginação -->
+        <mat-paginator [pageSizeOptions]="[10, 25, 50]"
+                       showFirstLastButtons
+                       aria-label="Selecione página">
+        </mat-paginator>
+      </div>
+
+    </div>
+  </div>
+</div>

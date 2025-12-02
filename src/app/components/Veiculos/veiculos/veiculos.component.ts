@@ -71,7 +71,7 @@ export class VeiculosComponent {
   }
 
   openModal(veiculo?: Veiculo) {
-    console.log('🔵 ABRIR MODAL - Clique funcionando!', veiculo);
+    console.log(' ABRIR MODAL - Clique funcionando!', veiculo);
 
     if (veiculo) {
       this.isEdit = true;
@@ -97,11 +97,11 @@ export class VeiculosComponent {
       this.loadVeiculos();
     });
 
-    console.log('🔵 Modal aberto:', this.showModal);
+    console.log(' Modal aberto:', this.showModal);
   }
 
   closeModal() {
-    console.log('❌ FECHAR MODAL');
+    console.log(' FECHAR MODAL');
     if (this.modalRef) {
       this.modalRef.close();
     }
@@ -185,6 +185,6 @@ export class VeiculosComponent {
       { id: 3, nome: 'Pedro Oliveira', categoriaHabilitacao: 'C' },
       { id: 4, nome: 'Ana Costa', categoriaHabilitacao: 'B' }
     ];
-    console.log('✅ Motoristas carregados:', this.motoristas.length, 'itens');
+    console.log(' Motoristas carregados:', this.motoristas.length, 'itens');
   }
 }
