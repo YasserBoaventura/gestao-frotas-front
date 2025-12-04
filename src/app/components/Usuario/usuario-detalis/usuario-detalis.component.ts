@@ -56,7 +56,12 @@ cadastroForm: FormGroup;
 
       this.loginService.autoCadastro(formValue).subscribe({
         next: (response) => {
-          alert('Cadastro realizado com sucesso. Aguarde ativação da conta por um administrador.');
+            Swal.fire({
+                    title: response, //  vem direto do backend
+                    icon: 'success',
+                    confirmButtonText: 'Ok'
+                  });
+        
           this.router.navigate(['/login']);
         },
         error: (error) => {

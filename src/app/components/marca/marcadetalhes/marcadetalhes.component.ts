@@ -45,10 +45,11 @@ MarcaService= inject(MarcaServicService)
 }
     if (this.marca.id > 0) {
  this.MarcaService.update(this.marca , this.marca.id).subscribe({
-            next: messagem =>{
-                 Swal.fire({
-            title: messagem,
-            confirmButtonText: 'Ok'
+          next: messagem =>{
+            this.marcalista.findAll();
+                Swal.fire({
+          title: messagem,
+          confirmButtonText: 'Ok'
 
           });
           this.router.navigate(['adim/marcas'], { state: { marcaEditada: this.marca } });
@@ -64,6 +65,7 @@ MarcaService= inject(MarcaServicService)
 
          }
           })
+          this.marcalista.findAll();
 
     } else {
         this.MarcaService.save(this.marca).subscribe({

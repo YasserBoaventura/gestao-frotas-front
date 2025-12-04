@@ -10,6 +10,7 @@ import { MotoristadetalisComponent } from './components/motorista/motoristadetal
 import { MotoristalistComponent } from './components/motorista/motoristalist/motoristalist.component';
 import { UsuarioDetalisComponent } from './components/Usuario/usuario-detalis/usuario-detalis.component';
 import { UsuarioListComponent } from './components/Usuario/usuario-list/usuario-list.component';
+import { RotasListComponent } from './components/Rotas/rotas-list/rotas-list.component';
 
 export const routes: Routes = [
 
@@ -22,6 +23,7 @@ export const routes: Routes = [
 {path: "register", component: UsuarioDetalisComponent},
 {path: "userlist", component: UsuarioListComponent},
 {path: "reset-senha", component: ResetSenhaComponent},
-{path:"drivers", component: MotoristalistComponent}
+{path:"drivers", component: MotoristalistComponent},
+{path: "RotasList", component: RotasListComponent}
 
 ];

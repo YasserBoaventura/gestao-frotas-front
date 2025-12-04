@@ -39,11 +39,12 @@
     <div class="links">
       <button (click)="navigateTo('veiculos')">Gerenciar Veículos</button>
       <button (click)="navigateTo('drivers')">Gerenciar Motoristas</button>
-      <button (click)="navigateTo('routes')">Rotas</button>
+      <button (click)="navigateTo('RotasList')">Rotas</button>
       <button (click)="navigateTo('fuel')">Gerenciar Abastecimentos</button>
       <button (click)="navigateTo('reports')">Relatórios</button>
+      @if(serviceLogin.hasRole("ADMIN")){
       <button (click)="navigateTo('userlist')"> gerenciamento de usuarios</button>
-
+      }
     </div>
   </div>
 </div>

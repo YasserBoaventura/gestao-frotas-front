@@ -8,6 +8,7 @@ import { MotoristadetalisComponent } from "../motoristadetalis/motoristadetalis.
 import { MdbModalRef, MdbModalService } from 'mdb-angular-ui-kit/modal';
 import { MotoristaService } from '../motorista.service';
 import Swal from 'sweetalert2';
+import { timeout } from 'rxjs';
 
 @Component({
   selector: 'app-motoristalist',
@@ -204,10 +205,10 @@ export class MotoristalistComponent implements OnInit {
               horizontalPosition: 'center',
               verticalPosition: 'top'
             });
-            console.log('✅ Resposta do backend:', response);
+            console.log(' Resposta do backend:', response);
           },
           error: (erro) => {
-            console.error('❌ Erro ao eliminar motorista:', erro);
+            console.error(' Erro ao eliminar motorista:', erro);
             let mensagemErro = "Erro ao eliminar motorista";
             if (erro.error && typeof erro.error === 'string') {
               mensagemErro = erro.error;
@@ -249,7 +250,10 @@ export class MotoristalistComponent implements OnInit {
 
   // Método para recarregar manualmente (útil para debugging)
   recarregarLista(): void {
-    console.log('🔄 Recarregando lista manualmente...');
+    console.log(' Recarregando lista manualmente...');
     this.loadMotoristas();
   }
+
+  
+
 }

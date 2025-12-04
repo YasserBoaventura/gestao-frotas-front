@@ -35,6 +35,7 @@ export class VeiculosComponent {
 
   @ViewChild("modalVeiculoDetalhes") modalVeiculoDetalhes!: TemplateRef<any>;
   @ViewChild(VeiculosdetalisComponent) veiculosDetalhesComponent!: VeiculosdetalisComponent;
+  veiculosFiltrados: Veiculo[] = [];
 
   serviceVeiculos = inject(VeiculosService);
   lista: Veiculo[] = [];
@@ -46,6 +47,14 @@ export class VeiculosComponent {
   showDebug = true;
   veiculoForm: FormGroup;
 
+
+
+    filtro = {
+    matricula: '',
+    modelo: '',
+    marca: '',
+    ano: ''
+  };
   constructor(private fb: FormBuilder) {
     console.log('🚗 CONSTRUCTOR - Componente standalone');
     this.loadVeiculos(); // carrega todos os veiculos
@@ -164,7 +173,7 @@ export class VeiculosComponent {
   loadVeiculos() {
     this.serviceVeiculos.getVehicles().subscribe({
       next: (veiculos) => {
-        this.lista = veiculos;
+        this.veiculosFiltrados = veiculos;
       },
       error: (error) => {
         console.error('Erro ao carregar veículos:', error);
@@ -187,4 +196,53 @@ export class VeiculosComponent {
     ];
     console.log(' Motoristas carregados:', this.motoristas.length, 'itens');
   }
+
+
+  aplicarFiltros(): void {
+    this.veiculosFiltrados = this.lista.filter(veiculo => {
+      const matriculaMatch = !this.filtro.matricula ||
+        veiculo.matricula.toLowerCase().includes(this.filtro.matricula.toLowerCase());
+
+      const modeloMatch = !this.filtro.modelo ||
+        veiculo.modelo.toLowerCase().includes(this.filtro.modelo.toLowerCase());
+
+      const marcaMatch = !this.filtro.marca ||
+        veiculo.marca?.id?.toString() === this.filtro.marca;
+
+      const anoMatch = !this.filtro.ano ||
+        veiculo.anoFabricacao.toString() === this.filtro.ano;
+
+      return matriculaMatch && modeloMatch && marcaMatch && anoMatch;
+    });
+  }
+
+  limparFiltros(): void {
+    this.filtro = {
+      matricula: '',
+      modelo: '',
+      marca: '',
+      ano: ''
+    };
+   // this. = [...this.lista];
+  }
+
+  getAnosDisponiveis(): number[] {
+    const anos = this.lista
+      .map(v => v.anoFabricacao)
+      .filter((ano, index, array) => array.indexOf(ano) === index)
+      .sort((a, b) => b - a);
+
+    return anos;
+  }
+
+  getCapacidadeTotal(): number {
+    return this.lista.reduce((total, veiculo) =>
+      total + (veiculo.capacidadeTanque || 0), 0);
+  }
+
+  getKmTotal(): number {
+    return this.lista.reduce((total, veiculo) =>
+      total + (veiculo.kilometragemAtual || 0), 0);
+  }
+
 }
