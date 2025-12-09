@@ -174,6 +174,7 @@ export class VeiculosComponent {
     this.serviceVeiculos.getVehicles().subscribe({
       next: (veiculos) => {
         this.veiculosFiltrados = veiculos;
+        this.lista= veiculos;
       },
       error: (error) => {
         console.error('Erro ao carregar veículos:', error);

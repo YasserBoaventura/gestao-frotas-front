@@ -1,0 +1,617 @@
+<div class="relatorios-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <mat-icon class="title-icon">assessment</mat-icon>
+      <h2>Relatórios de Viagens</h2>
+    </div>
+    <div class="header-actions">
+      <button class="btn-export" title="Exportar relatório" (click)="exportarRelatorio()">
+        <mat-icon>download</mat-icon>
+        Exportar
+      </button>
+      <button class="btn-refresh" (click)="carregarRelatorios()" title="Atualizar relatórios">
+        <mat-icon>refresh</mat-icon>
+        Atualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros-section">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">
+          <mat-icon class="me-2">filter_alt</mat-icon>
+          Filtros do Relatório
+        </h4>
+
+        <div class="filtros-grid">
+          <!-- Período -->
+          <div class="filtro-item">
+            <label class="filtro-label">Período</label>
+            <div class="periodo-grid">
+              <div class="periodo-input-group">
+                <mat-icon class="periodo-icon">date_range</mat-icon>
+                <input type="date" class="filtro-input" [(ngModel)]="filtros.dataInicio">
+              </div>
+              <span class="periodo-separator">até</span>
+              <div class="periodo-input-group">
+                <mat-icon class="periodo-icon">date_range</mat-icon>
+                <input type="date" class="filtro-input" [(ngModel)]="filtros.dataFim">
+              </div>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="filtro-item">
+            <label class="filtro-label">Status</label>
+            <div class="select-wrapper">
+              <mat-icon class="select-icon">swap_vert</mat-icon>
+              <select class="filtro-select" [(ngModel)]="filtros.status">
+                <option value="">Todos</option>
+                <option value="CONCLUIDA">Concluídas</option>
+                <option value="PLANEADA">Planeadas</option>
+                <option value="EM_ANDAMENTO">Em Andamento</option>
+                <option value="CANCELADA">Canceladas</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Motorista -->
+          <div class="filtro-item">
+            <label class="filtro-label">Motorista</label>
+            <div class="select-wrapper">
+              <mat-icon class="select-icon">person</mat-icon>
+              <select class="filtro-select" [(ngModel)]="filtros.motoristaId">
+                <option value="">Todos os Motoristas</option>
+                <option *ngFor="let motorista of motoristas" [value]="motorista.id">
+                  {{motorista.nome || motorista.name || motorista}}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Veículo -->
+          <div class="filtro-item">
+            <label class="filtro-label">Veículo</label>
+            <div class="select-wrapper">
+              <mat-icon class="select-icon">directions_car</mat-icon>
+              <select class="filtro-select" [(ngModel)]="filtros.veiculoId">
+                <option value="">Todos os Veículos</option>
+                <option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                  {{veiculo.matricula}} - {{veiculo.modelo || veiculo.marca + ' ' + veiculo.modelo}}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Botões -->
+          <div class="filtro-item filtro-buttons">
+            <div class="button-group">
+              <button class="filtro-btn-apply" (click)="aplicarFiltros()">
+                <mat-icon>search</mat-icon>
+                <span class="btn-text">Aplicar Filtros</span>
+              </button>
+              <button class="filtro-btn-clear" (click)="limparFiltros()">
+                <mat-icon>clear_all</mat-icon>
+                <span class="btn-text">Limpar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="carregando" class="loading-state">
+    <div class="loading-content">
+      <mat-spinner diameter="60"></mat-spinner>
+      <div class="loading-text">
+        <h3>Processando relatório...</h3>
+        <p>Aguarde enquanto coletamos os dados</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conteúdo quando não está carregando -->
+  <div *ngIf="!carregando">
+    <!-- Cards de Resumo -->
+    <div class="resumo-cards">
+      <div class="resumo-card total-viagens">
+        <div class="resumo-icon">
+          <mat-icon>directions_car</mat-icon>
+        </div>
+        <div class="resumo-content">
+          <div class="resumo-stats">
+            <h3>{{totalViagens}}</h3>
+            <span class="resumo-change" [ngClass]="{'positive': true}">
+              <mat-icon>trending_up</mat-icon>
+              +12%
+            </span>
+          </div>
+          <p>Total de Viagens</p>
+          <div class="resumo-period">Últimos 30 dias</div>
+        </div>
+      </div>
+
+      <div class="resumo-card distancia-total">
+        <div class="resumo-icon">
+          <mat-icon>map</mat-icon>
+        </div>
+        <div class="resumo-content">
+          <div class="resumo-stats">
+            <h3>{{totalKmPercorridos | number:'1.0-0'}}<span class="unit">km</span></h3>
+            <span class="resumo-change" [ngClass]="{'positive': true}">
+              <mat-icon>trending_up</mat-icon>
+              +8%
+            </span>
+          </div>
+          <p>Distância Total</p>
+          <div class="resumo-period">Média: {{(totalViagens > 0 ? totalKmPercorridos / totalViagens : 0) | number:'1.0-0'}} km/viagem</div>
+        </div>
+      </div>
+
+      <div class="resumo-card combustivel">
+        <div class="resumo-icon">
+          <mat-icon>local_gas_station</mat-icon>
+        </div>
+        <div class="resumo-content">
+          <div class="resumo-stats">
+            <h3>{{totalLitrosAbastecidos | number:'1.0-0'}}<span class="unit">L</span></h3>
+            <span class="resumo-change" [ngClass]="{'negative': true}">
+              <mat-icon>trending_down</mat-icon>
+              -5%
+            </span>
+          </div>
+          <p>Combustível Consumido</p>
+          <div class="resumo-period">{{totalLitrosAbastecidos / 1000 | number:'1.1-1'}} m³</div>
+        </div>
+      </div>
+
+      <div class="resumo-card media-consumo">
+        <div class="resumo-icon">
+          <mat-icon>speed</mat-icon>
+        </div>
+        <div class="resumo-content">
+          <div class="resumo-stats">
+            <h3>{{mediaConsumo | number:'1.2-2'}}<span class="unit">km/L</span></h3>
+            <span class="resumo-change" [ngClass]="{'positive': mediaConsumo > 8}">
+              <mat-icon>{{mediaConsumo > 8 ? 'trending_up' : 'trending_down'}}</mat-icon>
+              {{mediaConsumo > 8 ? '+3%' : '-2%'}}
+            </span>
+          </div>
+          <p>Média de Consumo</p>
+          <div class="resumo-period">{{totalViagens}} viagens analisadas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Abas de Relatórios -->
+    <div class="tabs-section">
+      <mat-tab-group (selectedTabChange)="onTabChange($event)" animationDuration="300">
+        <!-- Relatório por Motorista -->
+        <mat-tab label="Por Motorista">
+          <ng-template mat-tab-label>
+            <div class="tab-label-content">
+              <mat-icon class="tab-icon">people</mat-icon>
+              <span>Por Motorista</span>
+            </div>
+          </ng-template>
+
+          <div class="tab-content">
+            <div *ngIf="relatorioMotorista.length === 0" class="empty-state">
+              <mat-icon>group</mat-icon>
+              <h3>Nenhum dado encontrado</h3>
+              <p>Aplique filtros para gerar o relatório por motorista</p>
+              <button class="btn-apply-filters" (click)="limparFiltros()">
+                <mat-icon>filter_alt</mat-icon>
+                Ver todos os dados
+              </button>
+            </div>
+
+            <div *ngIf="relatorioMotorista.length > 0" class="table-container">
+              <div class="table-header">
+                <h3>Relatório por Motorista</h3>
+                <span class="table-count">{{relatorioMotorista.length}} motorista(s)</span>
+              </div>
+              <div class="table-responsive">
+                <table class="relatorio-table">
+                  <thead>
+                    <tr>
+                      <th class="col-motorista">
+                        <div class="th-content">
+                          <mat-icon>person</mat-icon>
+                          Motorista
+                        </div>
+                      </th>
+                      <th class="col-viagens">
+                        <div class="th-content">
+                          <mat-icon>list_alt</mat-icon>
+                          Viagens
+                        </div>
+                      </th>
+                      <th class="col-km">
+                        <div class="th-content">
+                          <mat-icon>map</mat-icon>
+                          Km Percorridos
+                        </div>
+                      </th>
+                      <th class="col-combustivel">
+                        <div class="th-content">
+                          <mat-icon>local_gas_station</mat-icon>
+                          Combustível
+                        </div>
+                      </th>
+                      <th class="col-media">
+                        <div class="th-content">
+                          <mat-icon>speed</mat-icon>
+                          Média
+                        </div>
+                      </th>
+                      <th class="col-acoes">
+                        <div class="th-content">
+                          <mat-icon>more_vert</mat-icon>
+                          Ações
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of relatorioMotorista; let i = index"
+                        [ngClass]="{'even-row': i % 2 === 0, 'odd-row': i % 2 === 1}">
+                      <td class="col-motorista">
+                        <div class="motorista-info">
+                          <div class="motorista-avatar">
+                            <mat-icon>account_circle</mat-icon>
+                          </div>
+                          <div class="motorista-details">
+                            <strong>{{item.nomeMotorista || 'N/A'}}</strong>
+                            <span class="motorista-id">Tel: {{item.telefone}}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="col-viagens">
+                        <div class="viagens-count">
+                          <span class="count-number">{{item.totalViagens}}</span>
+                          <span class="count-label">viagens</span>
+                        </div>
+                        <div class="viagens-percent">
+                          {{totalViagens > 0 ? (item.totalViagens / totalViagens * 100 | number:'1.0-0') : 0}}%
+                        </div>
+                      </td>
+                      <td class="col-km">
+                        <div class="km-value">
+                          {{item.totalQuilometragem | number:'1.0-0'}} km
+                        </div>
+                        <div class="km-percent">
+                          {{totalKmPercorridos > 0 ? (item.totalKm | number:'1.0-0') : 0}}%
+                        </div>
+                      </td>
+                      <td class="col-combustivel">
+                        <div class="combustivel-value">
+                          {{item.totalCombustivel| number:'1.0-0'}} L
+                        </div>
+                        <div class="combustivel-percent">
+                          {{totalLitrosAbastecidos > 0 ? (item.totalCombustivel / totalLitrosAbastecidos * 100 | number:'1.0-0') : 0}}%
+                        </div>
+                      </td>
+                      <td class="col-media">
+                        <div class="media-container">
+                          <div class="media-value" [ngClass]="{
+                            'consumo-excelente': item.totalCombustivel > 0 && (item.totalQuilometragem / item.totalCombustivel) > 12,
+                            'consumo-bom': item.totalCombustivel > 0 && (item.totalQuilometragem / item.totalCombustivel) > 8,
+                            'consumo-medio': item.totalCombustivel > 0 && (item.totalQuilometragem / item.totalCombustivel) > 6,
+                            'consumo-ruim': item.totalCombustivel > 0 && (item.totalQuilometragem / item.totalCombustivel) <= 6
+                          }">
+                            {{item.totalCombustivel > 0 ? (item.totalQuilometragem / item.totalCombustivel | number:'1.2-2') : '0.00'}} km/L
+                          </div>
+                        </div>
+                      </td>
+                      <td class="col-acoes">
+                        <div class="acoes-container">
+                          <button class="btn-detalhes" (click)="verDetalhesMotorista(item)">
+                            <mat-icon>visibility</mat-icon>
+                            <span>Detalhes</span>
+                          </button>
+                          <button class="btn-relatorio" (click)="gerarRelatorioIndividual(item)">
+                            <mat-icon>picture_as_pdf</mat-icon>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-footer">
+                <div class="table-summary">
+                  <div class="summary-item">
+                    <span class="summary-label">Total Motoristas:</span>
+                    <span class="summary-value">{{relatorioMotorista.length}}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Média km/viagem:</span>
+                    <span class="summary-value">{{(totalViagens > 0 ? totalKmPercorridos / totalViagens : 0) | number:'1.0-0'}} km</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Relatório por Veículo -->
+        <mat-tab label="Por Veículo">
+          <ng-template mat-tab-label>
+            <div class="tab-label-content">
+              <mat-icon class="tab-icon">directions_car</mat-icon>
+              <span>Por Veículo</span>
+            </div>
+          </ng-template>
+
+          <div class="tab-content">
+            <div *ngIf="relatorioVeiculo.length === 0" class="empty-state">
+              <mat-icon>directions_car</mat-icon>
+              <h3>Nenhum dado encontrado</h3>
+              <p>Aplique filtros para gerar o relatório por veículo</p>
+              <button class="btn-apply-filters" (click)="limparFiltros()">
+                <mat-icon>filter_alt</mat-icon>
+                Ver todos os dados
+              </button>
+            </div>
+
+            <div *ngIf="relatorioVeiculo.length > 0" class="table-container">
+              <div class="table-header">
+                <h3>Relatório por Veículo</h3>
+                <span class="table-count">{{relatorioVeiculo.length}} veículo(s)</span>
+              </div>
+              <div class="table-responsive">
+                <table class="relatorio-table">
+                  <thead>
+                    <tr>
+                      <th class="col-veiculo">
+                        <div class="th-content">
+                          <mat-icon>directions_car</mat-icon>
+                          Veículo
+                        </div>
+                      </th>
+                      <th class="col-modelo">
+                        <div class="th-content">
+                          <mat-icon>description</mat-icon>
+                          Modelo
+                        </div>
+                      </th>
+                      <th class="col-viagens">
+                        <div class="th-content">
+                          <mat-icon>list_alt</mat-icon>
+                          Viagens
+                        </div>
+                      </th>
+                      <th class="col-km">
+                        <div class="th-content">
+                          <mat-icon>map</mat-icon>
+                          Km Percorridos
+                        </div>
+                      </th>
+                      <th class="col-combustivel">
+                        <div class="th-content">
+                          <mat-icon>local_gas_station</mat-icon>
+                          Combustível
+                        </div>
+                      </th>
+                      <th class="col-media">
+                        <div class="th-content">
+                          <mat-icon>speed</mat-icon>
+                          Média
+                        </div>
+                      </th>
+                      <th class="col-acoes">
+                        <div class="th-content">
+                          <mat-icon>more_vert</mat-icon>
+                          Ações
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of relatorioVeiculo; let i = index"
+                        [ngClass]="{'even-row': i % 2 === 0, 'odd-row': i % 2 === 1}">
+                      <td class="col-veiculo">
+                        <div class="veiculo-info">
+                          <div class="veiculo-icon">
+                            <mat-icon>directions_car</mat-icon>
+                          </div>
+                          <div class="veiculo-details">
+                            <strong>{{item.matriculaVeiculo || item.veiculo || 'N/A'}}</strong>
+                            <span class="veiculo-status" [ngClass]="{'ativo': true}">
+                              <mat-icon>circle</mat-icon>
+                              Ativo
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="col-modelo">
+                        <div class="modelo-info">
+                          <span class="modelo-text">{{item.modelo || 'Modelo não especificado'}}</span>
+                        </div>
+                      </td>
+                      <td class="col-viagens">
+                        <div class="viagens-count">
+                          <span class="count-number">{{item.totalViagens}}</span>
+                          <span class="count-label">viagens</span>
+                        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        <div class="viagens-percent">
+                          {{totalViagens > 0 ? (item.totalViagens /item.totalViagens * 100 | number:'1.0-0') : 0}}%
+                        </div>
+                      </td>
+                      <td class="col-km">
+                        <div class="km-value">
+                          {{item.totalKm| number:'1.0-0'}} km
+                        </div>
+                    
+                      </td>
+                      <td class="col-combustivel">
+                        <div class="combustivel-value">
+                          {{item.totalCombustivel | number:'1.0-0'}} L
+                        </div>
+                        <div class="combustivel-percent">
+                          {{totalLitrosAbastecidos > 0 ? (item.totalCombustivel / totalLitrosAbastecidos * 100 | number:'1.0-0') : 0}}%
+                        </div>
+                      </td>
+                      <td class="col-media">
+                        <div class="media-container">
+                          <div class="media-value" [ngClass]="{
+                            'consumo-excelente': item.totalCombustivel > 0 && (item.totalQuilometragem / item.totalCombustivel) > 12,
+                            'consumo-bom': item.totalCombustivel > 0 && (item.totalQuilometragem / item.totalCombustivel) > 8,
+                            'consumo-medio': item.totalCombustivel > 0 && (item.totalQuilometragem / item.totalCombustivel) > 6,
+                            'consumo-ruim': item.totalCombustivel > 0 && (item.totalQuilometragem / item.totalCombustivel) <= 6
+                          }">
+                            {{item.totalCombustivel > 0 ? (item.totalQuilometragem / item.totalCombustivel | number:'1.2-2') : '0.00'}} km/L
+                          </div>
+                        </div>
+                      </td>
+                      <td class="col-acoes">
+                        <div class="acoes-container">
+                          <button class="btn-detalhes" (click)="verDetalhesVeiculo(item)">
+                            <mat-icon>visibility</mat-icon>
+                            <span>Detalhes</span>
+                          </button>
+                          <button class="btn-relatorio" (click)="gerarRelatorioVeiculo(item)">
+                            <mat-icon>picture_as_pdf</mat-icon>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-footer">
+                <div class="table-summary">
+                  <div class="summary-item">
+                    <span class="summary-label">Total Veículos:</span>
+                    <span class="summary-value">{{relatorioVeiculo.length}}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Média km/L geral:</span>
+                    <span class="summary-value">{{mediaConsumo | number:'1.2-2'}} km/L</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Gráficos -->
+        <mat-tab label="Gráficos">
+          <ng-template mat-tab-label>
+            <div class="tab-label-content">
+              <mat-icon class="tab-icon">bar_chart</mat-icon>
+              <span>Gráficos</span>
+            </div>
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="graficos-grid">
+              <div class="grafico-card">
+                <div class="grafico-header">
+                  <h4>
+                    <mat-icon>donut_large</mat-icon>
+                    Viagens por Status
+                  </h4>
+                </div>
+                <div class="grafico-container">
+                  <canvas #statusChart></canvas>
+                </div>
+              </div>
+
+              <div class="grafico-card">
+                <div class="grafico-header">
+                  <h4>
+                    <mat-icon>bar_chart</mat-icon>
+                    Consumo por Motorista (km/L)
+                  </h4>
+                  <span class="grafico-subtitle">Ordenado por eficiência</span>
+                </div>
+                <div class="grafico-container">
+                  <canvas #consumoChart></canvas>
+                </div>
+              </div>
+
+              <div class="grafico-card full-width">
+                <div class="grafico-header">
+                  <h4>
+                    <mat-icon>show_chart</mat-icon>
+                    Evolução Mensal de Quilometragem
+                  </h4>
+                </div>
+                <div class="grafico-container">
+                  <canvas #kmChart></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+
+    <!-- Exportação -->
+    <div *ngIf="relatorioMotorista.length > 0 || relatorioVeiculo.length > 0" class="export-section">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">
+            <mat-icon class="me-2">file_download</mat-icon>
+            Exportar Relatório
+          </h4>
+          <p class="card-subtitle">Selecione o formato desejado para exportar os dados</p>
+
+          <div class="export-options">
+            <button class="btn-export-option pdf" (click)="exportarPDF()">
+              <div class="export-icon">
+                <mat-icon>picture_as_pdf</mat-icon>
+              </div>
+              <div class="export-info">
+                <strong>PDF Completo</strong>
+                <span>Relatório detalhado</span>
+              </div>
+            </button>
+
+            <button class="btn-export-option excel" (click)="exportarExcel()">
+              <div class="export-icon">
+                <mat-icon>grid_on</mat-icon>
+              </div>
+              <div class="export-info">
+                <strong>Excel</strong>
+                <span>Dados brutos para análise</span>
+              </div>
+            </button>
+
+            <button class="btn-export-option csv" (click)="exportarCSV()">
+              <div class="export-icon">
+                <mat-icon>table_chart</mat-icon>
+              </div>
+              <div class="export-info">
+                <strong>CSV</strong>
+                <span>Para importar em outros sistemas</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
