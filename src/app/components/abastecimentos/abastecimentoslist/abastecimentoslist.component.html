@@ -1,1 +1,462 @@
-<p>abastecimentoslist works!</p>
+<div class="abastecimentos-container">
+  <!-- Cabeçalho -->
+  <div class="header">
+    <div class="header-content">
+      <div class="title-section">
+        <mat-icon class="title-icon">local_gas_station</mat-icon>
+        <div class="title-text">
+          <h1>Gestão de Abastecimentos</h1>
+          <p class="subtitle">Controle e monitoramento de combustível</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="exportarExcel()">
+          <mat-icon>download</mat-icon>
+          Exportar Excel
+        </button>
+        <button mat-raised-button color="accent" (click)="exportarPDF()">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Exportar PDF
+        </button>
+        <button mat-raised-button color="warn" (click)="importarAbastecimentos()">
+          <mat-icon>upload</mat-icon>
+          Importar
+        </button>
+        <input type="file" #fileInput hidden (change)="onFileSelected($event)" accept=".csv,.xlsx,.xls">
+      </div>
+    </div>
+  </div>
+
+  <!-- Cartões de Estatísticas -->
+  <div class="estatisticas-grid">
+    <mat-card class="estatistica-card total">
+      <mat-card-content>
+        <div class="estatistica-content">
+          <div class="estatistica-icon">
+            <mat-icon>payments</mat-icon>
+          </div>
+          <div class="estatistica-info">
+            <div class="estatistica-valor">{{formatarMoeda(estatisticas.totalGasto)}}</div>
+            <div class="estatistica-label">Total Gasto</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="estatistica-card litros">
+      <mat-card-content>
+        <div class="estatistica-content">
+          <div class="estatistica-icon">
+            <mat-icon>water_drop</mat-icon>
+          </div>
+          <div class="estatistica-info">
+            <div class="estatistica-valor">{{estatisticas.totalLitros | number:'1.0-0'}} L</div>
+            <div class="estatistica-label">Total de Litros</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="estatistica-card media">
+      <mat-card-content>
+        <div class="estatistica-content">
+          <div class="estatistica-icon">
+            <mat-icon>avg_pace</mat-icon>
+          </div>
+          <div class="estatistica-info">
+            <div class="estatistica-valor">{{formatarMoeda(estatisticas.mediaPreco)}}</div>
+            <div class="estatistica-label">Preço Médio/L</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="estatistica-card consumo">
+      <mat-card-content>
+        <div class="estatistica-content">
+          <div class="estatistica-icon">
+            <mat-icon>speed</mat-icon>
+          </div>
+          <div class="estatistica-info">
+            <div class="estatistica-valor">{{estatisticas.consumoMedio | number:'1.1-1'}} km/L</div>
+            <div class="estatistica-label">Consumo Médio</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Seção Principal -->
+  <div class="main-content">
+    <!-- Formulário de Registro -->
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>{{ editando ? 'edit' : 'add_circle' }}</mat-icon>
+          {{ editando ? 'Editar Abastecimento' : 'Novo Abastecimento' }}
+        </mat-card-title>
+        <mat-card-subtitle>Preencha os dados do abastecimento</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="abastecimentoForm" (ngSubmit)="salvarAbastecimento()" class="form-grid">
+          <!-- Linha 1 -->
+          <div class="form-row">
+            <!-- Veículo -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Veículo *</mat-label>
+              <mat-select formControlName="veiculoId" (selectionChange)="onVeiculoChange($event.value)">
+                <mat-option [value]="null">Selecione um veículo...</mat-option>
+                <mat-option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                  <div class="veiculo-option">
+                    <mat-icon>directions_car</mat-icon>
+                    <span>{{veiculo.matricula}} - {{veiculo.modelo}}</span>
+                  </div>
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>directions_car</mat-icon>
+              <mat-error *ngIf="abastecimentoForm.get('veiculoId')?.hasError('required')">
+                Veículo é obrigatório
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Viagem -->
+            <mat-form-field appearance="outline" class="form-field" [class.disabled]="!abastecimentoForm.get('veiculoId')?.value">
+              <mat-label>Viagem (Opcional)</mat-label>
+              <mat-select formControlName="viagemId" [disabled]="!abastecimentoForm.get('veiculoId')?.value">
+                <mat-option [value]="null">Não vinculada a viagem</mat-option>
+                <mat-option *ngFor="let viagem of viagens" [value]="viagem.id">
+                  <div class="viagem-option">
+                    <mat-icon>route</mat-icon>
+                    <span>#{{viagem.id}} - {{viagem.rota?.origem || 'Origem'}} → {{viagem.rota?.destino || 'Destino'}}</span>
+                  </div>
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>route</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Linha 2 -->
+          <div class="form-row">
+            <!-- Data e Hora -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Data e Hora *</mat-label>
+              <input matInput type="datetime-local" formControlName="dataAbastecimento">
+              <mat-icon matSuffix>calendar_today</mat-icon>
+              <mat-error *ngIf="abastecimentoForm.get('dataAbastecimento')?.hasError('required')">
+                Data é obrigatória
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Tipo Combustível -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Tipo de Combustível *</mat-label>
+              <mat-select formControlName="tipoCombustivel">
+                <mat-option *ngFor="let tipo of tiposCombustivel" [value]="tipo.value">
+                  <div class="combustivel-option" [style.color]="tipo.cor">
+                    <mat-icon>{{tipo.icon}}</mat-icon>
+                    <span>{{tipo.label}}</span>
+                  </div>
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>local_gas_station</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Linha 3 -->
+          <div class="form-row">
+            <!-- Quilometragem -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Quilometragem (km) *</mat-label>
+              <input matInput type="number" formControlName="kilometragemVeiculo"
+                     (input)="calcularValorTotal()" min="0">
+              <mat-icon matSuffix>speed</mat-icon>
+              <mat-error *ngIf="abastecimentoForm.get('kilometragemVeiculo')?.hasError('required')">
+                Quilometragem é obrigatória
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Quantidade Litros -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Quantidade (L) *</mat-label>
+              <input matInput type="number" formControlName="quantidadeLitros"
+                     (input)="calcularValorTotal()" min="0" step="0.1">
+              <mat-icon matSuffix>water_drop</mat-icon>
+              <mat-error *ngIf="abastecimentoForm.get('quantidadeLitros')?.hasError('required')">
+                Quantidade é obrigatória
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Preço por Litro -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Preço por Litro (R$) *</mat-label>
+              <input matInput type="number" formControlName="precoPorLitro"
+                     (input)="calcularValorTotal()" min="0" step="0.01">
+              <mat-icon matSuffix>attach_money</mat-icon>
+              <mat-error *ngIf="abastecimentoForm.get('precoPorLitro')?.hasError('required')">
+                Preço é obrigatório
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Valor Total -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Valor Total</mat-label>
+              <input matInput [value]="valorCalculado | currency:'BRL':'symbol':'1.2-2'" readonly>
+              <mat-icon matSuffix>payments</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Botões do Formulário -->
+          <div class="form-actions">
+            <button mat-raised-button color="primary" type="submit"
+                    [disabled]="abastecimentoForm.invalid || carregando">
+              <mat-icon *ngIf="!carregando">{{ editando ? 'save' : 'add' }}</mat-icon>
+              <mat-spinner *ngIf="carregando" diameter="20"></mat-spinner>
+              {{ editando ? 'Atualizar' : 'Registrar Abastecimento' }}
+            </button>
+
+            <button mat-stroked-button type="button" (click)="resetForm()" [disabled]="carregando">
+              <mat-icon>cancel</mat-icon>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Filtros e Controles -->
+    <div class="controls-section">
+      <mat-card>
+        <mat-card-content>
+          <div class="controls-grid">
+            <div class="filtros-toggle">
+              <button mat-stroked-button (click)="mostrarFiltros = !mostrarFiltros">
+                <mat-icon>filter_list</mat-icon>
+                {{ mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
+              </button>
+            </div>
+
+            <div class="selected-info" *ngIf="selection.selected.length > 0">
+              <span>{{ selection.selected.length }} selecionado(s)</span>
+              <button mat-mini-fab color="warn" (click)="selection.clear()">
+                <mat-icon>clear</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros Expandíveis -->
+          <div class="filtros-expandidos" *ngIf="mostrarFiltros">
+            <form [formGroup]="filtroForm" class="filtros-grid">
+              <mat-form-field appearance="outline" class="filtro-field">
+                <mat-label>Filtrar por Veículo</mat-label>
+                <mat-select formControlName="veiculoId">
+                  <mat-option [value]="null">Todos os veículos</mat-option>
+                  <mat-option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                    {{veiculo.matricula}} - {{veiculo.modelo}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="filtro-field">
+                <mat-label>Tipo de Combustível</mat-label>
+                <mat-select formControlName="tipoCombustivel">
+                  <mat-option [value]="null">Todos</mat-option>
+                  <mat-option *ngFor="let tipo of tiposCombustivel" [value]="tipo.value">
+                    {{tipo.label}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="filtro-field">
+                <mat-label>Data Início</mat-label>
+                <input matInput type="date" formControlName="dataInicio">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="filtro-field">
+                <mat-label>Data Fim</mat-label>
+                <input matInput type="date" formControlName="dataFim">
+              </mat-form-field>
+
+              <div class="filtro-actions">
+                <button mat-raised-button color="primary" (click)="aplicarFiltros()">
+                  <mat-icon>search</mat-icon>
+                  Aplicar
+                </button>
+                <button mat-stroked-button type="button" (click)="limparFiltros()">
+                  <mat-icon>clear_all</mat-icon>
+                  Limpar
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tabela de Abastecimentos -->
+    <mat-card class="table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>list_alt</mat-icon>
+          Lista de Abastecimentos
+          <span class="badge">{{totalItems}} registros</span>
+        </mat-card-title>
+        <mat-card-subtitle>Histórico completo de abastecimentos</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="table-container">
+          <table mat-table [dataSource]="getCurrentPageItems()" class="mat-elevation-z1">
+
+            <!-- Coluna de Seleção -->
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-checkbox (change)="toggleAllSelection()"
+                              [checked]="isAllSelected()"
+                              [indeterminate]="selection.selected.length > 0 && !isAllSelected()">
+                </mat-checkbox>
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <mat-checkbox (click)="$event.stopPropagation()"
+                              (change)="toggleSelection(row)"
+                              [checked]="selection.selected.includes(row)">
+                </mat-checkbox>
+              </td>
+            </ng-container>
+
+            <!-- Coluna Data -->
+            <ng-container matColumnDef="dataAbastecimento">
+              <th mat-header-cell *matHeaderCellDef> Data/Hora </th>
+              <td mat-cell *matCellDef="let abastecimento">
+                <div class="data-cell">
+                  <div class="data-dia">{{formatarDataHora(abastecimento.dataAbastecimento)}}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Coluna Veículo -->
+            <ng-container matColumnDef="veiculo">
+              <th mat-header-cell *matHeaderCellDef> Veículo </th>
+              <td mat-cell *matCellDef="let abastecimento">
+                <div class="veiculo-cell">
+                  <mat-icon class="veiculo-icon">directions_car</mat-icon>
+                  <div class="veiculo-info">
+                    <div class="veiculo-matricula">{{getVeiculoDescricao(abastecimento.veiculoId)}}</div>
+                    <div class="veiculo-viagem" *ngIf="abastecimento.viagemId">
+                      <mat-icon>route</mat-icon>
+                      {{getViagemDescricao(abastecimento.viagemId)}}
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Coluna Quilometragem -->
+            <ng-container matColumnDef="kilometragem">
+              <th mat-header-cell *matHeaderCellDef> Quilometragem </th>
+              <td mat-cell *matCellDef="let abastecimento">
+                <div class="km-cell">
+                  <mat-icon>speed</mat-icon>
+                  <span>{{abastecimento.kilometragemVeiculo | number:'1.0-0'}} km</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Coluna Combustível -->
+            <ng-container matColumnDef="combustivel">
+              <th mat-header-cell *matHeaderCellDef> Combustível </th>
+              <td mat-cell *matCellDef="let abastecimento">
+                <div class="combustivel-cell">
+                  <mat-icon [style.color]="getCorCombustivel(abastecimento.tipoCombustivel)">
+                    {{getIconCombustivel(abastecimento.tipoCombustivel)}}
+                  </mat-icon>
+                  <span>{{abastecimento.tipoCombustivel}}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Coluna Quantidade -->
+            <ng-container matColumnDef="quantidade">
+              <th mat-header-cell *matHeaderCellDef> Quantidade </th>
+              <td mat-cell *matCellDef="let abastecimento">
+                <div class="quantidade-cell">
+                  <mat-icon>water_drop</mat-icon>
+                  <span>{{abastecimento.quantidadeLitros | number:'1.1-1'}} L</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Coluna Preço -->
+            <ng-container matColumnDef="preco">
+              <th mat-header-cell *matHeaderCellDef> Preço/L </th>
+              <td mat-cell *matCellDef="let abastecimento">
+                {{formatarMoeda(abastecimento.precoPorLitro)}}
+              </td>
+            </ng-container>
+
+            <!-- Coluna Valor Total -->
+            <ng-container matColumnDef="valorTotal">
+              <th mat-header-cell *matHeaderCellDef> Valor Total </th>
+              <td mat-cell *matCellDef="let abastecimento">
+                <div class="valor-cell" [class.alto]="abastecimento.quantidadeLitros * abastecimento.precoPorLitro > 300">
+                  <strong>{{formatarMoeda(abastecimento.quantidadeLitros * abastecimento.precoPorLitro)}}</strong>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Coluna Ações -->
+            <ng-container matColumnDef="acoes">
+              <th mat-header-cell *matHeaderCellDef> Ações </th>
+              <td mat-cell *matCellDef="let abastecimento">
+                <div class="acoes-cell">
+                  <button mat-icon-button color="primary"
+                          matTooltip="Editar"
+                          (click)="editarAbastecimento(abastecimento)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+
+                  <button mat-icon-button color="warn"
+                          matTooltip="Excluir"
+                          (click)="excluirAbastecimento(abastecimento)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                [class.selected-row]="selection.selected.includes(row)"
+                (click)="toggleSelection(row)">
+            </tr>
+          </table>
+        </div>
+
+        <!-- Paginação -->
+        <mat-paginator [length]="totalItems"
+                      [pageSize]="pageSize"
+                      [pageSizeOptions]="pageSizeOptions"
+                      [pageIndex]="pageIndex"
+                      (page)="onPageChange($event)"
+                      showFirstLastButtons
+                      class="table-paginator">
+        </mat-paginator>
+
+        <!-- Mensagem de tabela vazia -->
+        <div *ngIf="abastecimentos.length === 0" class="empty-table">
+          <mat-icon>local_gas_station</mat-icon>
+          <h3>Nenhum abastecimento registrado</h3>
+          <p>Comece registrando seu primeiro abastecimento usando o formulário acima</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div *ngIf="carregando && abastecimentos.length === 0" class="loading-overlay">
+  <div class="loading-content">
+    <mat-spinner diameter="60"></mat-spinner>
+    <p>Carregando dados...</p>
+  </div>
+</div>

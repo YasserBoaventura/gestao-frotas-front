@@ -12,8 +12,9 @@ import { UsuarioDetalisComponent } from './components/Usuario/usuario-detalis/us
 import { UsuarioListComponent } from './components/Usuario/usuario-list/usuario-list.component';
 import { RotasListComponent } from './components/Rotas/rotas-list/rotas-list.component';
 import { ViagenslistComponent } from './components/viagens/viagenslist/viagenslist.component';
-import { AbastecimentoslistComponent } from './components/abastecimentos/abastecimentoslist/abastecimentoslist.component';
+
 import { RelatorioviagemComponent } from './components/relatorioViagem/relatorioviagem/relatorioviagem.component';
+import { AbastecimentoListComponent } from './components/abastecimentos/abastecimentoslist/abastecimentoslist.component';
 
 
 
@@ -31,7 +32,7 @@ export const routes: Routes = [
 {path:"drivers", component: MotoristalistComponent},
 {path: "RotasList", component: RotasListComponent},
 {path: "viagenslist", component: ViagenslistComponent},
-{path: "abastecimentoslist", component: AbastecimentoslistComponent},
+{path: "abastecimentoslist", component: AbastecimentoListComponent},
 {path: "relatoriosViagem", component: RelatorioviagemComponent},
 
 

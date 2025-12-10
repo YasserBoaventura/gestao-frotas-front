@@ -38,6 +38,7 @@ import Chart from 'chart.js/auto';
   styleUrl: './relatorioviagem.component.css'
 })
 export class RelatorioviagemComponent implements OnInit, OnDestroy {
+
   @ViewChild('statusChart', { static: false }) statusChartRef!: ElementRef;
   @ViewChild('consumoChart', { static: false }) consumoChartRef!: ElementRef;
   @ViewChild('kmChart', { static: false }) kmChartRef!: ElementRef;
@@ -61,6 +62,11 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     veiculoId: ''
   };
 
+  // Dados para os gráficos
+  viagensPorStatus: any[] = [];
+  consumoPorMotorista: any[] = [];
+  kmPorMes: any[] = [];
+
   private statusChart: any;
   private consumoChart: any;
   private kmChart: any;
@@ -69,12 +75,10 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     private viagemService: ViagensServiceService,
     private motoristaService: MotoristaService,
     private veiculoService: VeiculosService
-  ) {
-    // Definir datas padrão
-    this.setDatasPadrao();
-  }
+  ) {}
 
   ngOnInit(): void {
+    this.setDatasPadrao();
     this.carregarDadosIniciais();
     this.carregarRelatorios();
   }
@@ -95,7 +99,7 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   private setDatasPadrao(): void {
     const hoje = new Date();
     const umMesAtras = new Date();
-    umMesAtras.setDate(hoje.getDate() - 30);
+    umMesAtras.setMonth(hoje.getMonth() - 1);
 
     this.filtros.dataInicio = this.formatarDataParaInput(umMesAtras);
     this.filtros.dataFim = this.formatarDataParaInput(hoje);
@@ -108,14 +112,19 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     return `${year}-${month}-${day}`;
   }
 
+  private formatarDataParaAPI(date: string): string {
+    // O backend espera no formato ISO (YYYY-MM-DD)
+    return date;
+  }
+
   carregarDadosIniciais(): void {
     forkJoin({
       motoristas: this.motoristaService.getMotoristas(),
       veiculos: this.veiculoService.getVehicles()
     }).subscribe({
       next: (result) => {
-        this.motoristas = result.motoristas;
-        this.veiculos = result.veiculos;
+        this.motoristas = result.motoristas || [];
+        this.veiculos = result.veiculos || [];
       },
       error: (error) => {
         console.error('Erro ao carregar dados:', error);
@@ -145,55 +154,113 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   private executarCarregamentoRelatorios(): void {
     console.log('Aplicando filtros:', this.filtros);
 
+    // Formatar datas para o padrão esperado pelo backend
+    const filtrosFormatados = {
+      ...this.filtros,
+      dataInicio: this.filtros.dataInicio ? this.formatarDataParaAPI(this.filtros.dataInicio) : '',
+      dataFim: this.filtros.dataFim ? this.formatarDataParaAPI(this.filtros.dataFim) : ''
+    };
+
     forkJoin({
-      motorista: this.viagemService.getRelatorioMotorista(this.filtros),
-      veiculo: this.viagemService.getRelatorioVeiculo(this.filtros)
+      motorista: this.viagemService.getRelatorioMotorista(filtrosFormatados),
+      veiculo: this.viagemService.getRelatorioVeiculo(filtrosFormatados),
+      geral: this.viagemService.getRelatorioGeral(filtrosFormatados.dataInicio, filtrosFormatados.dataFim)
     }).subscribe({
       next: (result) => {
-        console.log('Resultado motorista:', result.motorista);
-        console.log('Resultado veículo:', result.veiculo);
+        console.log('Resultado completo:', result);
 
         // Processar dados do motorista
-        this.relatorioMotorista = result.motorista.map((item: any) => ({
-          ...item,
-          id: item.id || Math.random().toString(36).substr(2, 9) // Gerar ID se não existir
-        }));
+        this.relatorioMotorista = result.motorista ?
+          result.motorista.map((item: any) => ({
+            ...item,
+            id: item.id || Math.random().toString(36).substr(2, 9),
+            // Garantir que os nomes das propriedades estão corretos
+            nomeMotorista: item.nomeMotorista || item.nome || item.motorista || 'N/A',
+            totalViagens: item.totalViagens || item.quantidadeViagens || 0,
+            totalQuilometragem: item.totalQuilometragem || item.totalKilometragem || item.totalKm || 0,
+            totalCombustivel: item.totalCombustivel || item.totalLitrosAbastecidos || 0
+          })) : [];
 
         // Processar dados do veículo
-        this.relatorioVeiculo = result.veiculo.map((item: any) => ({
-          ...item,
-          modelo: item.modelo || 'Não especificado'
-        }));
+        this.relatorioVeiculo = result.veiculo ?
+          result.veiculo.map((item: any) => ({
+            ...item,
+            modelo: item.modelo || 'Não especificado',
+            matriculaVeiculo: item.matriculaVeiculo || item.matricula || item.veiculo || 'N/A',
+            totalViagens: item.totalViagens || item.quantidadeViagens || 0,
+            totalKm: item.totalKm || item.totalKilometragem || 0,
+            totalCombustivel: item.totalCombustivel || item.totalLitrosAbastecidos || 0
+          })) : [];
 
-        this.calcularTotais();
-        this.criarGraficos();
+        // Processar dados gerais
+        if (result.geral) {
+          this.totalViagens = result.geral.totalViagens || 0;
+          this.totalKmPercorridos = result.geral.totalKilometragem || 0;
+          this.totalLitrosAbastecidos = result.geral.totalLitrosAbastecidos || 0;
+          this.mediaConsumo = result.geral.mediaKilometragemPorViagem || 0;
+        } else {
+          // Calcular totais com base nos dados dos motoristas se não houver relatório geral
+          this.calcularTotais();
+        }
+
+        // Carregar dados para gráficos
+        this.carregarDadosParaGraficos();
+
+        // Criar gráficos
+        setTimeout(() => {
+          this.criarGraficos();
+        }, 100);
 
         this.carregando = false;
 
         // Mostrar mensagem de sucesso
-        const filtrosAtivos = Object.values(this.filtros).some(valor =>
-          valor !== '' && (valor !== this.filtros.dataInicio || valor !== this.filtros.dataFim)
-        );
-
-        if (filtrosAtivos && (this.relatorioMotorista.length > 0 || this.relatorioVeiculo.length > 0)) {
-          Swal.fire('Sucesso!', 'Relatório gerado com os filtros aplicados', 'success');
+        if (this.relatorioMotorista.length > 0 || this.relatorioVeiculo.length > 0) {
+          Swal.fire('Sucesso!', 'Relatório gerado com sucesso', 'success');
+        } else {
+          Swal.fire('Info', 'Nenhum dado encontrado com os filtros aplicados', 'info');
         }
       },
       error: (error) => {
         console.error('Erro ao carregar relatórios:', error);
-        Swal.fire('Erro', 'Não foi possível carregar os relatórios', 'error');
+        Swal.fire('Erro', 'Não foi possível carregar os relatórios. Verifique a conexão com o servidor.', 'error');
         this.carregando = false;
       }
     });
   }
 
   calcularTotais(): void {
-    this.totalViagens = this.relatorioMotorista.reduce((sum, item) => sum + item.totalViagens, 0);
+    this.totalViagens = this.relatorioMotorista.reduce((sum, item) => sum + (item.totalViagens || 0), 0);
     this.totalKmPercorridos = this.relatorioMotorista.reduce((sum, item) => sum + (item.totalQuilometragem || 0), 0);
     this.totalLitrosAbastecidos = this.relatorioMotorista.reduce((sum, item) => sum + (item.totalCombustivel || 0), 0);
     this.mediaConsumo = this.totalLitrosAbastecidos > 0
       ? this.totalKmPercorridos / this.totalLitrosAbastecidos
       : 0;
+  }
+
+  carregarDadosParaGraficos(): void {
+    // Dados para gráfico de status (simulado para agora)
+    this.viagensPorStatus = [
+      { status: 'CONCLUIDA', quantidade: Math.floor(Math.random() * 50) + 30 },
+      { status: 'EM_ANDAMENTO', quantidade: Math.floor(Math.random() * 20) + 10 },
+      { status: 'CANCELADA', quantidade: Math.floor(Math.random() * 15) + 5 },
+      { status: 'AGENDADA', quantidade: Math.floor(Math.random() * 10) + 5 }
+    ];
+
+    // Dados para gráfico de consumo por motorista
+    this.consumoPorMotorista = this.relatorioMotorista
+      .filter(item => item.totalCombustivel > 0)
+      .map(item => ({
+        nome: item.nomeMotorista,
+        consumo: item.totalQuilometragem / item.totalCombustivel
+      }))
+      .sort((a, b) => b.consumo - a.consumo);
+
+    // Dados para gráfico de km por mês (simulado)
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    this.kmPorMes = meses.map((mes, index) => ({
+      mes,
+      km: Math.floor(Math.random() * 3000) + 1000
+    }));
   }
 
   aplicarFiltros(): void {
@@ -227,15 +294,23 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     const ctx = this.statusChartRef?.nativeElement?.getContext('2d');
     if (!ctx) return;
 
-    // Dados simulados
-    const dadosStatus = [65, 15, 10, 10];
+    const labels = this.viagensPorStatus.map(item => {
+      switch(item.status) {
+        case 'CONCLUIDA': return 'Concluídas';
+        case 'EM_ANDAMENTO': return 'Em Andamento';
+        case 'CANCELADA': return 'Canceladas';
+        case 'AGENDADA': return 'Agendadas';
+        default: return item.status;
+      }
+    });
+    const dados = this.viagensPorStatus.map(item => item.quantidade);
 
     this.statusChart = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['Concluídas', 'Em Andamento', 'Planeadas', 'Canceladas'],
+        labels: labels,
         datasets: [{
-          data: dadosStatus,
+          data: dados,
           backgroundColor: ['#4ecdc4', '#fdbb2d', '#667eea', '#ff6b6b'],
           borderWidth: 2
         }]
@@ -259,30 +334,24 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
 
   criarGraficoConsumo(): void {
     const ctx = this.consumoChartRef?.nativeElement?.getContext('2d');
-    if (!ctx) return;
+    if (!ctx || this.consumoPorMotorista.length === 0) return;
 
-    const labels = this.relatorioMotorista.map(m => m.nomeMotorista);
-    const data = this.relatorioMotorista.map(m =>
-      (m.totalCombustivel || 0) > 0 ? (m.totalQuilometragem || 0) / (m.totalCombustivel || 0) : 0
-    );
+    const labels = this.consumoPorMotorista.map(m => {
+      // Limitar o nome a 15 caracteres
+      const nome = m.nome || 'Motorista';
+      return nome.length > 15 ? nome.substring(0, 15) + '...' : nome;
+    });
 
-    // Ordenar por consumo (do maior para o menor)
-    const combined = labels.map((label, index) => ({
-      label,
-      value: data[index]
-    })).sort((a, b) => b.value - a.value);
-
-    const sortedLabels = combined.map(item => item.label);
-    const sortedData = combined.map(item => item.value);
+    const data = this.consumoPorMotorista.map(m => m.consumo);
 
     this.consumoChart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: sortedLabels,
+        labels: labels,
         datasets: [{
           label: 'Consumo (km/L)',
-          data: sortedData,
-          backgroundColor: sortedData.map(consumo =>
+          data: data,
+          backgroundColor: data.map(consumo =>
             consumo > 12 ? '#4ecdc4' :
             consumo > 8 ? '#fdbb2d' :
             consumo > 6 ? '#ffa726' : '#ff6b6b'
@@ -332,14 +401,13 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     const ctx = this.kmChartRef?.nativeElement?.getContext('2d');
     if (!ctx) return;
 
-    // Dados simulados
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const dados = [1200, 1900, 3000, 5000, 2000, 3000, 4000, 3500, 2800, 3200, 4500, 3800];
+    const labels = this.kmPorMes.map(item => item.mes);
+    const dados = this.kmPorMes.map(item => item.km);
 
     this.kmChart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: meses,
+        labels: labels,
         datasets: [{
           label: 'Km Percorridos',
           data: dados,
@@ -471,21 +539,12 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   }
 
   verDetalhesMotorista(motorista: any): void {
-    // Usar valores seguros
     const nome = motorista.nomeMotorista || 'N/A';
     const totalViagens = motorista.totalViagens || 0;
     const totalKm = motorista.totalQuilometragem || motorista.totalKm || 0;
     const totalCombustivel = motorista.totalCombustivel || motorista.totalLitrosAbastecidos || 0;
-
-    // Calcular a média de consumo
-    const mediaConsumo = totalCombustivel > 0
-      ? (totalKm / totalCombustivel).toFixed(2)
-      : '0.00';
-
-    // Calcular a participação
-    const participacao = this.totalViagens > 0
-      ? ((totalViagens / this.totalViagens) * 100).toFixed(0)
-      : '0';
+    const mediaConsumo = totalCombustivel > 0 ? (totalKm / totalCombustivel).toFixed(2) : '0.00';
+    const participacao = this.totalViagens > 0 ? ((totalViagens / this.totalViagens) * 100).toFixed(0) : '0';
 
     Swal.fire({
       title: `Detalhes: ${nome}`,
@@ -506,21 +565,13 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   }
 
   verDetalhesVeiculo(veiculo: any): void {
-    console.log('Dados do veículo:', veiculo); // Para debug
-
-    // Usar valores seguros
     const matricula = veiculo.matriculaVeiculo || veiculo.veiculo || 'N/A';
     const modelo = veiculo.modelo || 'Não especificado';
     const totalViagens = veiculo.totalViagens || 0;
     const totalKm = veiculo.totalQuilometragem || veiculo.totalKm || 0;
     const totalCombustivel = veiculo.totalCombustivel || veiculo.totalLitrosAbastecidos || 0;
+    const mediaConsumo = totalCombustivel > 0 ? (totalKm / totalCombustivel).toFixed(2) : '0.00';
 
-    // Calcular a média de consumo
-    const mediaConsumo = totalCombustivel > 0
-      ? (totalKm / totalCombustivel).toFixed(2)
-      : '0.00';
-
-    // Determinar a eficiência
     let eficiencia = 'Não calculada';
     if (totalCombustivel > 0) {
       const consumo = totalKm / totalCombustivel;
