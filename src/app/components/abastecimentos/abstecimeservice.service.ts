@@ -10,16 +10,16 @@ import { Viagem } from '../viagens/viagem';
 })
 export class AbstecimeserviceService {
 
- private apiUrl = 'http://localhost:9001/api/abastecimentos';
+  private apiUrl = 'http://localhost:9001/api/abastecimentos';
   private veiculosUrl = 'http://localhost:9001/api/veiculos';
   private viagensUrl = 'http://localhost:9001/api/viagens';
 
   constructor(private http: HttpClient) { }
 
   // CRUD de Abastecimentos
-  getAbastecimentos(): Observable<Abastecimento[]> {
-    return this.http.get<Abastecimento[]>(this.apiUrl+'/findAll');
-  }
+  getAbastecimentos(): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrl+'/findAll');
+  }   
 
   getAbastecimento(id: number): Observable<Abastecimento> {
     return this.http.get<Abastecimento>(`${this.apiUrl}/findById/${id}`);
@@ -29,12 +29,14 @@ export class AbstecimeserviceService {
     return this.http.post<any>(this.apiUrl+"/save", abastecimento);
   }
 
-  updateAbastecimento(abastecimento: Abastecimento): Observable<Abastecimento> {
+  updateAbastecimento(abastecimento: any): Observable<Abastecimento> {
     return this.http.put<Abastecimento>(`${this.apiUrl}/update/${abastecimento.id}`, abastecimento);
   }
 
   deleteAbastecimento(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/delete/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/delete/${id}`,{
+      responseType: 'text' as 'json'
+    });
   }
 
   // Listagens para associações
@@ -53,5 +55,6 @@ export class AbstecimeserviceService {
   calcularValorTotal(quantidadeLitros: number, precoPorLitro: number): number {
     return quantidadeLitros * precoPorLitro;
   }
+
 
 }

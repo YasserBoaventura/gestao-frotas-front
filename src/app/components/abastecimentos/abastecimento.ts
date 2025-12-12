@@ -10,12 +10,12 @@ export class Abastecimento {
   precoPorLitro!: number;
   tipoCombustivel!: string;
   kilometragemVeiculo!: number;
-
+   statusAbastecimento !: string;
   // ManyToOne com Veiculo (OBRIGATÓRIO)
-  veiculoId?: number;
-
+  veiculoId!: number;
+   veiculo!: Veiculo;
   // Viagem (OPCIONAL)
-  viagemId?: number;
+  viagemId!: number;
     createdAt?: Date;
   updatedAt?: Date;
 
