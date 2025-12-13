@@ -25,8 +25,10 @@ export class AbstecimeserviceService {
     return this.http.get<Abastecimento>(`${this.apiUrl}/findById/${id}`);
   }
 
-  createAbastecimento(abastecimento: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl+"/save", abastecimento);
+  createAbastecimento(abastecimento: Abastecimento): Observable<any> {
+    return this.http.post<any>(this.apiUrl+"/save", abastecimento, {
+      responseType: 'json'  
+    }) ;
   }
 
   updateAbastecimento(abastecimento: any): Observable<Abastecimento> {

@@ -484,7 +484,7 @@ td.mat-cell {
     align-items: flex-start;
     gap: 12px;
   }
-}
+} 
 
 @media (max-width: 480px) {
   .estatisticas-grid {
