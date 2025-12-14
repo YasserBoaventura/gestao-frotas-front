@@ -1,0 +1,273 @@
+.manutencoes-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.title-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  color: #3f51b5;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Alertas */
+.alertas-section {
+  margin-bottom: 20px;
+}
+
+.alertas-card {
+  background-color: #fff3e0;
+  border-left: 4px solid #ff9800;
+}
+
+.alertas-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.alerta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.alerta-icon {
+  color: #ff9800;
+  flex-shrink: 0;
+}
+
+.alerta-text {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Formulário */
+.form-section {
+  margin-bottom: 20px;
+}
+
+.form-card .mat-mdc-card-header {
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.calc-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Filtros */
+.filtros-card {
+  margin-bottom: 20px;
+}
+
+.filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.filtros-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* Tabela */
+.tabela-container {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.tabela-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.tabela-count {
+  color: #666;
+  font-size: 14px;
+  background: #f5f5f5;
+  padding: 4px 12px;
+  border-radius: 16px;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Estilos da tabela */
+.veiculo-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.veiculo-icon {
+  color: #3f51b5;
+}
+
+.veiculo-detalhes {
+  display: flex;
+  flex-direction: column;
+}
+
+.veiculo-detalhes strong {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.veiculo-detalhes span {
+  font-size: 12px;
+  color: #666;
+}
+
+.sem-proxima {
+  color: #999;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.acoes-container {
+  display: flex;
+  gap: 5px;
+}
+
+/* Resumo */
+.resumo-section {
+  margin-top: 20px;
+}
+
+.resumo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.resumo-item {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.resumo-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.resumo-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #3f51b5;
+}
+
+/* Loading */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  text-align: center;
+}
+
+.loading-text h3 {
+  margin: 10px 0;
+  color: #3f51b5;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .filtros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resumo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .acoes-container {
+    flex-direction: column;
+  }
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.manutencoes-container > * {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Estilos para chips de status */
+.mat-mdc-chip {
+  font-size: 12px !important;
+  min-height: 24px !important;
+}
+
+.mat-mdc-chip.mat-primary {
+  background-color: #4caf50 !important;
+}
+
+.mat-mdc-chip.mat-accent {
+  background-color: #ff9800 !important;
+}
+
+.mat-mdc-chip.mat-warn {
+  background-color: #f44336 !important;
+}

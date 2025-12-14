@@ -15,6 +15,7 @@ import { ViagenslistComponent } from './components/viagens/viagenslist/viagensli
 
 import { RelatorioviagemComponent } from './components/relatorioViagem/relatorioviagem/relatorioviagem.component';
 import { AbastecimentoListComponent } from './components/abastecimentos/abastecimentoslist/abastecimentoslist.component';
+import { ManutencoesListComponent } from './components/Manutencoes/manutencoes-list/manutencoes-list.component';
 
 
 
@@ -33,6 +34,7 @@ export const routes: Routes = [
 {path: "RotasList", component: RotasListComponent},
 {path: "viagenslist", component: ViagenslistComponent},
 {path: "abastecimentoslist", component: AbastecimentoListComponent},
+{path: "manutencoes", component: ManutencoesListComponent},
 {path: "relatoriosViagem", component: RelatorioviagemComponent},
 
 

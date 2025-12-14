@@ -1,0 +1,355 @@
+<div class="manutencoes-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <mat-icon class="title-icon">build</mat-icon>
+      <h2>Gerenciamento de Manutenções</h2>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="novaManutencao()">
+        <mat-icon>add</mat-icon>
+        Nova Manutenção
+      </button>
+      <button mat-raised-button color="accent" (click)="exportarRelatorio()">
+        <mat-icon>download</mat-icon>
+        Exportar
+      </button>
+      <button mat-raised-button color="warn" (click)="carregarDados()" [disabled]="carregando">
+        <mat-icon>refresh</mat-icon>
+        Atualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  <div *ngIf="alertas.length > 0" class="alertas-section">
+    <mat-card class="alertas-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>notifications</mat-icon>
+          Alertas de Manutenção
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alertas-list">
+          <div *ngFor="let alerta of alertas" class="alerta-item">
+            <mat-icon class="alerta-icon">warning</mat-icon>
+            <span class="alerta-text">{{alerta}}</span>
+          </div>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="warn" (click)="verManutencoesVencidas()">
+          <mat-icon>visibility</mat-icon>
+          Ver Vencidas
+        </button>
+        <button mat-button color="accent" (click)="verManutencoesProximas()">
+          <mat-icon>schedule</mat-icon>
+          Ver Próximas
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <!-- Formulário -->
+  <div *ngIf="mostrarFormulario" class="form-section">
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>{{editando ? 'edit' : 'add'}}</mat-icon>
+          {{editando ? 'Editar Manutenção' : 'Nova Manutenção'}}
+        </mat-card-title>
+        <button mat-icon-button (click)="cancelarEdicao()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="manutencaoForm">
+          <div class="form-grid">
+            <!-- Veículo -->
+            <mat-form-field appearance="outline">
+              <mat-label>Veículo *</mat-label>
+              <mat-select formControlName="veiculo_id">
+                <mat-option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                  {{veiculo.matricula}} - {{veiculo.marca}} {{veiculo.modelo}} ({{veiculo.kilometragemAtual | number}} km)
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="manutencaoForm.get('veiculo_id')?.invalid">
+                Selecione um veículo
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Tipo -->
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de Manutenção *</mat-label>
+              <mat-select formControlName="tipoManutencao">
+                <mat-option *ngFor="let tipo of tiposManutencao" [value]="tipo">
+                  {{getTipoManutencaoLabel(tipo)}}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="manutencaoForm.get('tipoManutencao')?.invalid">
+                Selecione o tipo
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Data -->
+            <mat-form-field appearance="outline">
+              <mat-label>Data da Manutenção *</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="dataManutencao">
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+
+            <!-- Quilometragem -->
+            <mat-form-field appearance="outline">
+              <mat-label>Quilometragem (km) *</mat-label>
+              <input matInput type="number" formControlName="kilometragemVeiculo">
+            </mat-form-field>
+
+            <!-- Custo -->
+            <mat-form-field appearance="outline">
+              <mat-label>Custo (R$) *</mat-label>
+              <input matInput type="number" step="0.01" formControlName="custo">
+            </mat-form-field>
+
+            <!-- Próxima KM -->
+            <mat-form-field appearance="outline">
+              <mat-label>Próxima Manutenção (km)</mat-label>
+              <input matInput type="number" formControlName="proximaManutencaoKm">
+            </mat-form-field>
+
+            <!-- Próxima Data -->
+            <mat-form-field appearance="outline">
+              <mat-label>Próxima Manutenção (data)</mat-label>
+              <input matInput [matDatepicker]="pickerProxima" formControlName="proximaManutencaoData">
+              <mat-datepicker-toggle matSuffix [for]="pickerProxima"></mat-datepicker-toggle>
+              <mat-datepicker #pickerProxima></mat-datepicker>
+            </mat-form-field>
+
+            <!-- Botão calcular automático -->
+            <div class="calc-button">
+              <button mat-button color="primary" (click)="calcularProximaManutencao()">
+                <mat-icon>calculate</mat-icon>
+                Calcular Automático
+              </button>
+            </div>
+
+            <!-- Descrição -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Descrição *</mat-label>
+              <textarea matInput formControlName="descricao" rows="3" placeholder="Descreva os serviços realizados..."></textarea>
+              <mat-error *ngIf="manutencaoForm.get('descricao')?.invalid">
+                Descrição é obrigatória (mínimo 5 caracteres)
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </form>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="salvarManutencao()" [disabled]="manutencaoForm.invalid || carregando">
+          <mat-icon>save</mat-icon>
+          {{editando ? 'Atualizar' : 'Salvar'}}
+        </button>
+        <button mat-button (click)="cancelarEdicao()" [disabled]="carregando">
+          <mat-icon>cancel</mat-icon>
+          Cancelar
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <!-- Filtros -->
+  <mat-card class="filtros-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>filter_list</mat-icon>
+        Filtros
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="filtros-grid">
+        <!-- Veículo -->
+        <mat-form-field appearance="outline">
+          <mat-label>Veículo</mat-label>
+          <input matInput [(ngModel)]="filtroVeiculo" placeholder="Matrícula ou modelo">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Tipo -->
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select [(ngModel)]="filtroTipo">
+            <mat-option value="">Todos</mat-option>
+            <mat-option *ngFor="let tipo of tiposManutencao" [value]="tipo">
+              {{getTipoManutencaoLabel(tipo)}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Status -->
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="filtroStatus">
+            <mat-option value="">Todos</mat-option>
+            <mat-option value="OK">OK</mat-option>
+            <mat-option value="PROXIMA">Próxima</mat-option>
+            <mat-option value="VENCIDA">Vencida</mat-option>
+            <mat-option value="URGENTE">Urgente</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Data Início -->
+        <mat-form-field appearance="outline">
+          <mat-label>Data Início</mat-label>
+          <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="filtroDataInicio">
+          <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInicio></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Data Fim -->
+        <mat-form-field appearance="outline">
+          <mat-label>Data Fim</mat-label>
+          <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtroDataFim">
+          <mat-datepicker-toggle matSuffix [for]="pickerFim"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFim></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="filtros-actions">
+        <button mat-raised-button color="primary" (click)="aplicarFiltros()" [disabled]="carregando">
+          <mat-icon>search</mat-icon>
+          Aplicar Filtros
+        </button>
+        <button mat-button (click)="limparFiltros()" [disabled]="carregando">
+          <mat-icon>clear</mat-icon>
+          Limpar Filtros
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading -->
+  <div *ngIf="carregando" class="loading-state">
+    <mat-spinner diameter="60"></mat-spinner>
+    <div class="loading-text">
+      <h3>Carregando manutenções...</h3>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div *ngIf="!carregando" class="tabela-container">
+    <div class="tabela-header">
+      <h3>Lista de Manutenções</h3>
+      <span class="tabela-count">{{dataSource.filteredData.length}} manutenção(ões)</span>
+    </div>
+
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
+
+        <!-- Coluna Veículo -->
+        <ng-container matColumnDef="veiculo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Veículo </th>
+          <td mat-cell *matCellDef="let manutencao">
+            <div class="veiculo-info">
+              <mat-icon class="veiculo-icon">directions_car</mat-icon>
+              <div class="veiculo-detalhes">
+                <strong>{{manutencao.veiculo?.matricula || 'N/A'}}</strong>
+                <span>{{manutencao.veiculo?.marca}} {{manutencao.veiculo?.modelo}}</span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Coluna Tipo -->
+        <ng-container matColumnDef="tipo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Tipo </th>
+          <td mat-cell *matCellDef="let manutencao">
+            <mat-chip [color]="verificarStatusManutencao(manutencao) === 'VENCIDA' ? 'warn' : 'primary'" selected>
+              {{getTipoManutencaoLabel(manutencao.tipoManutencao)}}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Coluna Data -->
+        <ng-container matColumnDef="data">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Data </th>
+          <td mat-cell *matCellDef="let manutencao">
+            {{formatarData(manutencao.dataManutencao)}}
+          </td>
+        </ng-container>
+
+        <!-- Coluna Quilometragem -->
+        <ng-container matColumnDef="kilometragem">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Quilometragem </th>
+          <td mat-cell *matCellDef="let manutencao">
+            {{manutencao.kilometragemVeiculo | number}} km
+          </td>
+        </ng-container>
+
+        <!-- Coluna Custo -->
+        <ng-container matColumnDef="custo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Custo </th>
+          <td mat-cell *matCellDef="let manutencao">
+            {{formatarMoeda(manutencao.custo)}}
+          </td>
+        </ng-container>
+
+        <!-- Coluna Próxima Manutenção -->
+        <ng-container matColumnDef="proximaManutencao">
+          <th mat-header-cell *matHeaderCellDef> Próxima Manutenção </th>
+          <td mat-cell *matCellDef="let manutencao">
+            <div *ngIf="manutencao.proximaManutencaoData || manutencao.proximaManutencaoKm; else semProxima">
+              <div *ngIf="manutencao.proximaManutencaoData">
+                {{formatarData(manutencao.proximaManutencaoData)}}
+              </div>
+              <div *ngIf="manutencao.proximaManutencaoKm">
+                {{manutencao.proximaManutencaoKm | number}} km
+              </div>
+            </div>
+            <ng-template #semProxima>
+              <span class="sem-proxima">Não definida</span>
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Coluna Status -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef> Status </th>
+          <td mat-cell *matCellDef="let manutencao">
+            <mat-chip [color]="getStatusColor(verificarStatusManutencao(manutencao))" selected>
+              {{verificarStatusManutencao(manutencao) === 'VENCIDA' ? 'Vencida' :
+                verificarStatusManutencao(manutencao) === 'PROXIMA' ? 'Próxima' :
+                verificarStatusManutencao(manutencao) === 'URGENTE' ? 'Urgente' : 'OK'}}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Coluna Ações -->
+        <ng-container matColumnDef="acoes">
+          <th mat-header-cell *matHeaderCellDef> Ações </th>
+          <td mat-cell *matCellDef="let manutencao">
+            <div class="acoes-container">
+              <button mat-icon-button color="primary" matTooltip="Detalhes" (click)="verDetalhes(manutencao)">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button color="accent" matTooltip="Editar" (click)="editarManutencao(manutencao)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" matTooltip="Excluir" (click)="excluirManutencao(manutencao)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+
+    <!-- Paginação -->
+    <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator>
+  </div>
+
+  <!-- Resumo -->
+
+</div>
