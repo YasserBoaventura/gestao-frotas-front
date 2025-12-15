@@ -107,7 +107,7 @@ export class ManutencoesServiceService {
    * Busca manutenções por veículo
    */
   getByVeiculo(veiculoId: number): Observable<Manutencao[]> {
-    return this.http.get<Manutencao[]>(`${this.apiUrl}/findByIdVeiculo/${veiculoId}`)
+    return this.http.get<Manutencao[]>(`${this.apiUrl}//${veiculoId}`)
   }
 
 
