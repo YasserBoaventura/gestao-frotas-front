@@ -1,1 +1,361 @@
-<p>usuario-list works!</p>
+<div class="usuarios-container">
+  <!-- Cabeçalho -->
+  <div class="header">
+    <div class="header-title">
+      <i class="bi bi-people title-icon"></i>
+      <div>
+        <h1 class="h3 mb-1">Gerenciamento de Usuários</h1>
+        <p class="text-muted mb-0">Gerencie contas de usuários do sistema</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-reload" (click)="carregarUsuarios()" >
+        <i class="bi bi-arrow-clockwise"></i> Atualizar
+      </button>
+      <button class="btn-add" (click)="abrirEdicao()">
+        <i class="bi bi-person-add"></i> Novo Usuário
+      </button>
+    </div>
+  </div>
+
+
+  <!-- Erro -->
+  <div *ngIf="erro" class="error-container">
+    <i class="bi bi-exclamation-triangle error-icon"></i>
+    <p>{{ erro }}</p>
+    <button class="btn btn-warn" (click)="carregarUsuarios()">
+      Tentar Novamente
+    </button>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <div>
+    <!-- Filtros -->
+    <div class="search-section">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="bi bi-funnel me-2"></i>Filtros de Busca
+          </h5>
+          <p class="card-text">Encontre usuários específicos usando os filtros abaixo</p>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Buscar usuário</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control"
+                       [(ngModel)]="filtroBusca"
+                       (input)="aplicarFiltros()"
+                       placeholder="Digite nome, email ou NUIT...">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Cargo</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="bi bi-person-badge"></i>
+                </span>
+                <select class="form-control"
+                        [(ngModel)]="filtroRole"
+                        (change)="aplicarFiltros()">
+                  <option value="TODOS">Todos os cargos</option>
+                  <option value="ADMIN">Administrador</option>
+                  <option value="USER">Usuário</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Status</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="bi bi-check-circle"></i>
+                </span>
+                <select class="form-control"
+                        [(ngModel)]="filtroAtivo"
+                        (change)="aplicarFiltros()">
+                  <option value="TODOS">Todos os status</option>
+                  <option value="ATIVO">Ativos</option>
+                  <option value="INATIVO">Inativos</option>
+                </select>
+                <button class="btn btn-outline-secondary" type="button" (click)="limparFiltros()">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <small class="form-text mt-2 d-block">
+            <i class="bi bi-info-circle me-1"></i>
+            Mostrando {{ dataSource.data.length }} de {{ usuarios.length }} usuários
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="stats-container" *ngIf="usuarios.length > 0">
+      <div class="stat-card">
+        <div class="stat-icon total">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ totalUsuarios }}</div>
+          <div class="stat-label">Total de Usuários</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon active">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ usuariosAtivos }}</div>
+          <div class="stat-label">Usuários Ativos</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon admin">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ administradores }}</div>
+          <div class="stat-label">Administradores</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="table-container">
+      <div class="table-header-info">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="total-registros">
+            <i class="bi bi-table me-1"></i>
+            Total: <strong>{{ dataSource.data.length }}</strong> usuários encontrados
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela Bootstrap Simples -->
+      <div class="table-responsive">
+        <table class="usuarios-table">
+          <thead>
+            <tr>
+              <th class="id-cell">ID</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Cargo</th>
+              <th>Telefone</th>
+              <th>NUIT</th>
+              <th>Ativo</th>
+              <th>Bloqueado</th>
+              <th class="actions-header">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let usuario of dataSource.data; let i = index" class="table-row">
+              <td class="id-cell">{{ usuario.id }}</td>
+              <td class="username-cell">
+                <i class="bi bi-person me-2 text-primary"></i>
+                {{ usuario.username }}
+              </td>
+              <td class="email-cell">
+                <i class="bi bi-envelope me-2"></i>
+                {{ usuario.email }}
+              </td>
+              <td>
+                <span class="role-badge" [ngClass]="usuario.role === 'ADMIN' ? 'role-admin' : 'role-user'">
+                  {{ usuario.role === 'ADMIN' ? 'Administrador' : 'Usuário' }}
+                </span>
+              </td>
+              <td class="telefone-cell">
+                {{ usuario.telefone || '-' }}
+              </td>
+              <td class="nuit-cell">
+                {{ usuario.nuit || '-' }}
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="usuario.ativo ? 'status-ativo' : 'status-inativo'">
+                  {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
+                </span>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="usuario.contaBloqueada ? 'status-bloqueado' : 'status-ativo'">
+                  {{ usuario.contaBloqueada ? 'Bloqueado' : 'Liberado' }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button class="btn-edit" (click)="editarUsuario(usuario)" title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn-status"
+                        [title]="usuario.ativo ? 'Desativar' : 'Ativar'"
+                        (click)="ativarDesativar(usuario)">
+                  <i class="bi" [ngClass]="usuario.ativo ? 'bi-toggle-off' : 'bi-toggle-on'"></i>
+                </button>
+                <button class="btn-block"
+                        [title]="usuario.contaBloqueada ? 'Desbloquear' : 'Bloquear'"
+                        (click)="bloquearDesbloquear(usuario)">
+                  <i class="bi" [ngClass]="usuario.contaBloqueada ? 'bi-unlock' : 'bi-lock'"></i>
+                </button>
+                <button class="btn-reset" title="Resetar Senha" (click)="resetarSenha(usuario)">
+                  <i class="bi bi-key"></i>
+                </button>
+                <button class="btn-delete"
+                        title="Excluir"
+                        (click)="excluirUsuario(usuario)"
+                        [disabled]="usuario.role === 'ADMIN'">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Estado Vazio -->
+            <tr *ngIf="dataSource.data.length === 0">
+              <td colspan="9">
+                <div class="empty-state">
+                  <i class="bi bi-people empty-icon"></i>
+                  <h3>Nenhum usuário encontrado</h3>
+                  <p *ngIf="filtroBusca || filtroRole !== 'TODOS' || filtroAtivo !== 'TODOS'">
+                    Tente ajustar os filtros de busca.
+                  </p>
+                  <p *ngIf="!filtroBusca && filtroRole === 'TODOS' && filtroAtivo === 'TODOS'">
+                    Nenhum usuário cadastrado ainda.
+                  </p>
+                  <button class="btn-add-empty" (click)="abrirEdicao()">
+                    <i class="bi bi-person-add"></i> Criar primeiro usuário
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação Bootstrap -->
+      <div *ngIf="dataSource.data.length > 0" class="pagination-container">
+        <nav aria-label="Paginação de usuários">
+          <ul class="pagination justify-content-center">
+            <li class="page-item disabled">
+              <a class="page-link" href="#" tabindex="-1">Anterior</a>
+            </li>
+            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+              <a class="page-link" href="#">Próxima</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Edição (Bootstrap) -->
+  <div *ngIf="editando" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-person me-2"></i>
+            {{ usuarioSelecionado?.id ? 'Editar Usuário' : 'Novo Usuário' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="fecharEdicao()"></button>
+        </div>
+        <div class="modal-body">
+          <form (ngSubmit)="salvarUsuario()" #usuarioForm="ngForm">
+            <!-- ID (só na edição) -->
+            <div *ngIf="usuarioSelecionado?.id" class="mb-3">
+              <label class="form-label">ID</label>
+              <input type="text" class="form-control" [value]="usuarioSelecionado?.id" readonly>
+            </div>
+
+            <!-- Username e Email -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Username *</label>
+                <input type="text" class="form-control"
+                       [(ngModel)]="usuarioSelecionado!.username"
+                       name="username" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-control"
+                       [(ngModel)]="usuarioSelecionado!.email"
+                       name="email" required>
+              </div>
+            </div>
+
+            <!-- Role e Status -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Cargo *</label>
+                <select class="form-control"
+                        [(ngModel)]="usuarioSelecionado!.role"
+                        name="role" required>
+                  <option value="USER">Usuário</option>
+                  <option value="ADMIN">Administrador</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label d-block">Status</label>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox"
+                         [(ngModel)]="usuarioSelecionado!.ativo"
+                         name="ativo">
+                  <label class="form-check-label">Ativo</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox"
+                         [(ngModel)]="usuarioSelecionado!.contaBloqueada"
+                         name="contaBloqueada">
+                  <label class="form-check-label">Bloqueado</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Telefone e NUIT -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Telefone</label>
+                <input type="text" class="form-control"
+                       [(ngModel)]="usuarioSelecionado!.telefone"
+                       name="telefone">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">NUIT</label>
+                <input type="text" class="form-control"
+                       [(ngModel)]="usuarioSelecionado!.nuit"
+                       name="nuit">
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="fecharEdicao()">Cancelar</button>
+              <button type="submit" class="btn btn-primary" >
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                {{ usuarioSelecionado?.id ? 'Atualizar' : 'Criar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast de Sucesso -->
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="bi bi-check-circle me-2"></i>
+          Operação realizada com sucesso!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+</div>

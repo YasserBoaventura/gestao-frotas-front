@@ -1,0 +1,583 @@
+/* Container Principal */
+.rotas-container {
+  padding: 20px;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: #667eea;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-reload, .btn-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-reload {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-reload:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-add {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-add:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Estado de Carregamento */
+.loading-state {
+  text-align: center;
+  padding: 80px 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.loading-state .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 20px;
+}
+
+.loading-state h3 {
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.loading-state p {
+  color: #6c757d;
+}
+
+/* Seção de Pesquisa */
+.search-section {
+  margin-bottom: 20px;
+}
+
+.search-section .card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.search-section .card-body {
+  padding: 24px;
+}
+
+.search-section .card-title {
+  color: #495057;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.search-section .card-text {
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+.search-section .input-group {
+  margin-bottom: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.search-section .input-group-text {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-right: none;
+  padding: 12px 16px;
+}
+
+.search-section .form-control {
+  border: 2px solid #e9ecef;
+  border-left: none;
+  border-right: none;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.search-section .form-control:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: none;
+}
+
+.search-section .btn-outline-secondary {
+  border: 2px solid #e9ecef;
+  border-left: none;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+}
+
+.search-section .btn-outline-secondary:hover {
+  background: #f8f9fa;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.search-section .form-text {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* Tabela */
+.table-container {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.table-header-info {
+  background: #f8f9fa;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 14px;
+  color: #495057;
+}
+
+.total-registros strong {
+  color: #667eea;
+}
+
+.rotas-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rotas-table th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+
+.rotas-table th:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.rotas-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e9ecef;
+  color: #495057;
+  transition: all 0.3s ease;
+}
+
+.table-row {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.table-row:hover {
+  background: #f8f9fa;
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.table-row:hover td {
+  border-color: #667eea;
+}
+
+/* Células Específicas */
+.id-cell {
+  font-weight: 600;
+  color: #667eea;
+  text-align: center;
+  width: 60px;
+}
+
+.rota-origem-cell {
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.rota-destino-cell {
+  font-weight: 500;
+  color: #2d3748;
+}
+
+/* Badges para Distância e Tempo */
+.distancia-badge {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 4px rgba(78, 205, 196, 0.3);
+}
+
+.tempo-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.descricao-cell {
+  color: #718096;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Badge de Total de Viagens */
+.viagens-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  display: inline-block;
+  min-width: 40px;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.viagens-badge.viagens-0 {
+  background: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
+}
+.viagens-badge.viagens-1-5 {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+.viagens-badge.viagens-6-10 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.viagens-badge.viagens-11 {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+/* Ações */
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  width: 120px;
+}
+
+.btn-edit, .btn-delete {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-edit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+}
+
+.btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
+}
+
+.actions-header {
+  text-align: center;
+}
+
+/* Estado Vazio */
+.empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.empty-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: #bdc3c7;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  color: #7f8c8d;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: #95a5a6;
+  margin-bottom: 24px;
+}
+
+.btn-add-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.btn-add-empty:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Alertas e Estados */
+.alert-info {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: none;
+  border-radius: 8px;
+  color: #1976d2;
+  border-left: 4px solid #1976d2;
+}
+
+.spinner-border {
+  border-width: 2px;
+}
+
+/* Modal */
+.modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  padding: 20px;
+  border: none;
+}
+
+.modal-header .modal-title {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-close {
+  filter: invert(1);
+  opacity: 0.8;
+}
+
+.btn-close:hover {
+  opacity: 1;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.table-row {
+  animation: fadeIn 0.5s ease forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.table-row:nth-child(1) { animation-delay: 0.1s; }
+.table-row:nth-child(2) { animation-delay: 0.2s; }
+.table-row:nth-child(3) { animation-delay: 0.3s; }
+.table-row:nth-child(4) { animation-delay: 0.4s; }
+.table-row:nth-child(5) { animation-delay: 0.5s; }
+
+/* Efeitos de brilho no header da tabela */
+.rotas-table th {
+  position: relative;
+  overflow: hidden;
+}
+
+.rotas-table th::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transform: rotate(45deg);
+  transition: all 0.6s ease;
+}
+
+.rotas-table th:hover::before {
+  animation: shine 1.5s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .rotas-container {
+    padding: 10px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .search-section .input-group {
+    flex-direction: column;
+  }
+
+  .search-section .input-group-text,
+  .search-section .form-control,
+  .search-section .btn-outline-secondary {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .search-section .input-group-text {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .search-section .btn-outline-secondary {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  .table-container {
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  .rotas-table {
+    min-width: 800px;
+  }
+
+  .actions-cell {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn-edit, .btn-delete {
+    width: 32px;
+    height: 32px;
+  }
+}
+.rodape{
+  text-align: center;
+}
+
+/* Classes para o badge de viagens baseado na quantidade */
+

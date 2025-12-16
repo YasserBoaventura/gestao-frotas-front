@@ -82,15 +82,15 @@ export class ResetSenhaComponent {
 
       const validationData = this.validationForm.value;
 
-      console.log('📤 Validando usuário:', validationData.username);
+      console.log(' Validando usuário:', validationData.username);
 
       this.authService.validateUserForPasswordReset(validationData).subscribe({
         next: (response: any) => {
           this.isLoading = false;
-          console.log('✅ Resposta do servidor:', response);
+          console.log(' Resposta do servidor:', response);
 
           if (response.status === 'sucesso') {
-            console.log('✅ Usuário validado com sucesso');
+            console.log(' Usuário validado com sucesso');
 
             // Armazena os dados validados
             this.validatedUserData = validationData;
@@ -98,7 +98,7 @@ export class ResetSenhaComponent {
             // Armazena a pergunta e token
             this.perguntaSeguranca = response.perguntaSeguranca;
             this.tokenGerado = response.token;
-
+ 
             // Preenche automaticamente o token no formulário
             this.resetForm.patchValue({
               token: this.tokenGerado
@@ -106,10 +106,11 @@ export class ResetSenhaComponent {
 
             // Avança para o passo 2
             this.currentStep = 2;
-          }else if(response.status==='Usuario nao pode fazer altercoes. sua conta esta inativa')  {
+          }else if(response.status=== 'Usuario nao pode fazer altercoes. sua conta esta inativa')  {
             alert(response.mensagem || 'Usuario nao pode fazer altercoes. sua conta esta inativa');
-          }else{
-        alert(response.mensagem==='Usuario nao pode fazer altercoes. sua conta esta inativa');
+           }
+           else{
+           alert(response.mensagem==='Usuario nao pode fazer altercoes. sua conta esta inativa');
           }
           }
 

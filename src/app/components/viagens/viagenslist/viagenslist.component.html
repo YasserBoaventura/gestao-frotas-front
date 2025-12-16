@@ -1,0 +1,550 @@
+<div class="motoristas-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <mat-icon class="title-icon">directions_car</mat-icon>
+      <h2>Gestão de Viagens</h2>
+    </div>
+    <div class="header-actions">
+      <button class="btn-reload" (click)="carregarTudo()" title="Recarregar lista">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button class="btn-add" (click)="abrirModalViagem()">
+        <mat-icon>add</mat-icon>
+        Nova Viagem
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de Carregamento -->
+  <div *ngIf="carregando" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Carregando...</span>
+    </div>
+    <h3>Carregando viagens...</h3>
+    <p>Aguarde enquanto carregamos a lista de viagens</p>
+  </div>
+
+  <!-- Conteúdo Principal (quando não está carregando) -->
+  <div *ngIf="!carregando">
+    <!-- Seção de Filtros -->
+    <div class="search-section">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">
+            <mat-icon class="me-2">filter_list</mat-icon>
+            Filtros de Viagens
+          </h4>
+          <p class="card-text">Filtre as viagens por status, motorista ou veículo</p>
+
+          <div class="filtros-grid">
+            <div class="filtro-item">
+              <label class="filtro-label">Status</label>
+              <select class="filtro-select" [(ngModel)]="filtro.status" (change)="aplicarFiltros()">
+                <option value="">Todos</option>
+                <option value="PLANEADA">Planeada</option>
+                <option value="EM_ANDAMENTO">Em Andamento</option>
+                <option value="CONCLUIDA">Concluída</option>
+                <option value="CANCELADA">Cancelada</option>
+              </select>
+            </div>
+
+            <div class="filtro-item">
+              <label class="filtro-label">Motorista</label>
+              <input type="text" class="filtro-input"
+                     [(ngModel)]="filtro.motorista"
+                     (input)="aplicarFiltros()"
+                     placeholder="Nome do motorista">
+            </div>
+
+            <div class="filtro-item">
+              <label class="filtro-label">Veículo</label>
+              <input type="text" class="filtro-input"
+                     [(ngModel)]="filtro.veiculo"
+                     (input)="aplicarFiltros()"
+                     placeholder="Modelo do veículo">
+            </div>
+
+            <div class="filtro-item">
+              <button class="filtro-btn-clear" (click)="limparFiltros()">
+                <mat-icon>clear</mat-icon>
+                Limpar Filtros
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela com *ngFor -->
+    <div class="table-container" *ngIf="viagensFiltradas && viagensFiltradas.length > 0; else emptyState">
+      <div class="table-header-info">
+        <span class="total-registros">
+          Total de viagens: <strong>{{ viagensFiltradas.length }}</strong>
+          <span *ngIf="filtroAplicado" class="text-muted">
+            (de {{ viagens.length }} no total)
+          </span>
+        </span>
+      </div>
+      <table class="motoristas-table">
+        <thead>
+          <tr class="table-header">
+            <th>ID</th>
+            <th>Motorista</th>
+            <th>Veículo</th>
+            <th>Rota</th>
+            <th>Partida</th>
+            <th>Chegada</th>
+            <th>Status</th>
+            <th>Distância</th>
+            <th class="actions-header">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let viagem of viagensFiltradas" class="table-row">
+            <!-- Coluna ID -->
+            <td class="id-cell">{{ viagem.id || 'N/A' }}</td>
+
+            <!-- Coluna Motorista -->
+            <td class="nome-cell">
+              <div class="d-flex align-items-center">
+                <mat-icon class="me-2">person</mat-icon>
+                <span *ngIf="viagem.motorista?.nome; else semMotorista">
+                  {{ viagem.motorista.nome }}
+                </span>
+                <ng-template #semMotorista>
+                  <span class="text-muted">Não atribuído</span>
+                </ng-template>
+              </div>
+            </td>
+
+            <!-- Coluna Veículo -->
+            <td class="veiculo-cell">
+              <div class="d-flex align-items-center">
+                <mat-icon class="me-2">directions_car</mat-icon>
+                <span *ngIf="viagem.veiculo?.modelo; else semVeiculo">
+                  {{ viagem.veiculo.modelo }}
+                  <small class="text-muted d-block">
+                    {{ viagem.veiculo.matricula }}
+                  </small>
+                </span>
+                <ng-template #semVeiculo>
+                  <span class="text-muted">Não atribuído</span>
+                </ng-template>
+              </div>
+            </td>
+
+            <!-- Coluna Rota -->
+            <td class="rota-cell">
+              <div class="d-flex align-items-center">
+                <mat-icon class="me-2">map</mat-icon>
+                <span *ngIf="viagem.rota?.origem; else semRota">
+                  {{ viagem.rota.origem }} → {{ viagem.rota.destino }}
+                  <small class="text-muted d-block">
+                    {{ viagem.rota.distanciaKm || 0 }} km
+                  </small>
+                </span>
+                <ng-template #semRota>
+                  <span class="text-muted">Não atribuída</span>
+                </ng-template>
+              </div>
+            </td>
+
+            <!-- Coluna Data Partida -->
+            <td class="data-cell">
+              {{ formatarData(viagem.dataHoraPartida) }}
+            </td>
+
+            <!-- Coluna Data Chegada -->
+            <td class="data-cell">
+              {{ formatarData(viagem.dataHoraChegada) }}
+            </td>
+
+            <!-- Coluna Status -->
+            <td class="status-cell">
+              <span class="status-badge" [ngClass]="{
+                'status-planned': viagem.status === 'PLANEADA',
+                'status-inprogress': viagem.status === 'EM_ANDAMENTO',
+                'status-completed': viagem.status === 'CONCLUIDA',
+                'status-cancelled': viagem.status === 'CANCELADA'
+              }">
+                {{ getStatusText(viagem.status) || 'N/A' }}
+              </span>
+            </td>
+
+            <!-- Coluna Distância -->
+            <td class="distancia-cell">
+              <span class="distancia-badge">
+                {{ calcularDistancia(viagem) || 0 }} km
+              </span>
+            </td>
+  
+            <!-- Coluna Ações -->
+            <td class="actions-cell">
+              <div class="actions-group">
+                <!-- Botão Ver Detalhes -->
+                <button class="btn-view"
+                        (click)="abrirModalDetalhes(viagem)"
+                        title="Ver detalhes">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                
+                <!-- Botão Iniciar Viagem (apenas se status for PLANEADA) -->
+                <button *ngIf="viagem.status === 'PLANEADA'" 
+                        class="btn-start"
+                        (click)="iniciarViagem(viagem)"
+                        title="Iniciar viagem">
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+                
+                <!-- Botão Concluir Viagem (apenas se status for EM_ANDAMENTO) -->
+                <button *ngIf="viagem.status === 'EM_ANDAMENTO'" 
+                        class="btn-complete"
+                        (click)="concluirViagem(viagem)"
+                        title="Concluir viagem">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+                
+                <!-- Botão Cancelar Viagem (apenas se status for PLANEADA ou EM_ANDAMENTO) -->
+                <button *ngIf="viagem.status === 'PLANEADA' || viagem.status === 'EM_ANDAMENTO'" 
+                        class="btn-cancel"
+                        (click)="cancelarViagem(viagem)"
+                        title="Cancelar viagem">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+                
+                <!-- Botão Editar (apenas se status for PLANEADA) -->
+                <button *ngIf="viagem.status === 'PLANEADA'"
+                        class="btn-edit"
+                        (click)="abrirModalViagem(viagem)"
+                        title="Editar viagem">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                
+                <!-- Botão Eliminar (apenas se status for PLANEADA) -->
+                <button *ngIf="viagem.status === 'PLANEADA' || viagem.status === 'CANCELADA'"
+                        class="btn-delete"
+                        (click)="excluirViagem(viagem)"
+                        title="Eliminar viagem">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <mat-icon class="empty-icon">directions_car</mat-icon>
+        <h3 *ngIf="filtroAplicado">Nenhuma viagem encontrada</h3>
+        <h3 *ngIf="!filtroAplicado">Nenhuma viagem cadastrada</h3>
+        <p *ngIf="filtroAplicado">
+          Não foram encontradas viagens com os filtros aplicados
+        </p>
+        <p *ngIf="!filtroAplicado">
+          Comece adicionando sua primeira viagem
+        </p>
+        <button class="btn-add-empty" (click)="abrirModalViagem()">
+          <mat-icon>add</mat-icon>
+          {{ filtroAplicado ? 'Cadastrar Nova Viagem' : 'Adicionar Primeira Viagem' }}
+        </button>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Modal Formulário Viagem -->
+<div class="modal-overlay" *ngIf="mostrarModalViagem" (click)="fecharTodosModais()"></div>
+<div class="modal-container" *ngIf="mostrarModalViagem">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">{{ isEdit ? 'Editar Viagem' : 'Cadastrar Viagem' }}</h5>
+      <button type="button" class="btn-close" (click)="fecharTodosModais()"></button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="viagemForm" class="form-grid">
+        <!-- Motorista -->
+        <div class="form-group">
+          <label class="form-label">Motorista *</label>
+          <select class="form-select" formControlName="motoristaId">
+            <option value="">Selecione um motorista</option>
+            <option *ngFor="let item of motoristas" [value]="item.id">
+              {{item.nome}} {{item.nuit}}
+            </option>
+          </select>
+          <div class="form-error" *ngIf="viagemForm.get('motoristaId')?.invalid && viagemForm.get('motoristaId')?.touched">
+            Motorista é obrigatório
+          </div>
+        </div>
+
+        <!-- Veículo -->
+        <div class="form-group">
+          <label class="form-label">Veículo *</label>
+          <select class="form-select" formControlName="veiculoId">
+            <option value="">Selecione um veículo</option>
+            <option *ngFor="let item of veiculos" [value]="item.id">
+              {{item.modelo}} - {{item.matricula}}
+            </option>
+          </select>
+          <div class="form-error" *ngIf="viagemForm.get('veiculoId')?.invalid && viagemForm.get('veiculoId')?.touched">
+            Veículo é obrigatório
+          </div>
+        </div>
+
+        <!-- Rota -->
+        <div class="form-group">
+          <label class="form-label">Rota *</label>
+          <select class="form-select" formControlName="rotaId">
+            <option value="">Selecione uma rota</option>
+            <option *ngFor="let item of rotas" [value]="item.id">
+              {{item.origem}} → {{item.destino}} ({{item.distanciaKm}} km)
+            </option>
+          </select>
+          <div class="form-error" *ngIf="viagemForm.get('rotaId')?.invalid && viagemForm.get('rotaId')?.touched">
+            Rota é obrigatória
+          </div>
+        </div>
+
+        <!-- Data/Hora Partida -->
+        <div class="form-group">
+          <label class="form-label">Data/Hora Partida *</label>
+          <input type="datetime-local" 
+                 class="form-control" 
+                 formControlName="dataHoraPartida"
+                 (change)="onDataPartidaChange($event)">
+          <div class="form-error" *ngIf="viagemForm.get('dataHoraPartida')?.invalid && viagemForm.get('dataHoraPartida')?.touched">
+            Data de partida é obrigatória
+          </div>
+        </div>
+
+        <!-- Data/Hora Chegada -->
+        <div class="form-group">
+          <label class="form-label">Data/Hora Chegada *</label>
+          <input type="datetime-local" 
+                 class="form-control" 
+                 formControlName="dataHoraChegada">
+          <div class="form-error" *ngIf="viagemForm.get('dataHoraChegada')?.invalid && viagemForm.get('dataHoraChegada')?.touched">
+            Data de chegada é obrigatória
+          </div>
+          <div class="form-error" *ngIf="viagemForm.errors?.['dataChegadaAnterior']">
+            A data de chegada deve ser posterior à data de partida
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" formControlName="status">
+            <option value="PLANEADA">Planeada</option>
+            <option value="EM_ANDAMENTO">Em Andamento</option>
+            <option value="CONCLUIDA">Concluída</option>
+            <option value="CANCELADA">Cancelada</option>
+          </select>
+        </div>
+
+        <!-- Quilometragem -->
+        <div class="form-group">
+          <label class="form-label">Km Inicial *</label>
+          <input type="number" class="form-control" formControlName="kilometragemInicial" min="0" step="0.1">
+          <div class="form-error" *ngIf="viagemForm.get('kilometragemInicial')?.invalid && viagemForm.get('kilometragemInicial')?.touched">
+            Km inicial é obrigatório
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Km Final</label>
+          <input type="number" class="form-control" formControlName="kilometragemFinal" min="0" step="0.1">
+          <div class="form-error" *ngIf="viagemForm.get('kilometragemFinal')?.invalid && viagemForm.get('kilometragemFinal')?.touched">
+            Km final deve ser maior ou igual ao km inicial
+          </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="form-group full-width">
+          <label class="form-label">Observações</label>
+          <textarea class="form-control" formControlName="observacoes" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="fecharTodosModais()">Cancelar</button>
+      <button class="btn-primary"
+              (click)="salvarViagem()"
+              [disabled]="viagemForm.invalid">
+        {{ isEdit ? 'Atualizar' : 'Salvar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalhes Viagem -->
+<div class="modal-overlay" *ngIf="mostrarModalDetalhes" (click)="fecharTodosModais()"></div>
+<div class="modal-container" *ngIf="mostrarModalDetalhes && viagemSelecionada">
+  <div class="modal-content modal-lg">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <mat-icon>info</mat-icon>
+        Detalhes da Viagem #{{viagemSelecionada.id}}
+      </h5>
+      <button type="button" class="btn-close" (click)="fecharTodosModais()"></button>
+    </div>
+    <div class="modal-body">
+      <div class="detalhes-grid">
+        <!-- Informações principais -->
+        <div class="detalhes-card">
+          <div class="detalhes-card-header">
+            <mat-icon>info</mat-icon>
+            <span>Informações</span>
+          </div>
+          <div class="detalhes-card-body">
+            <div class="detalhes-item">
+              <span class="detalhes-label">Status:</span>
+              <span class="status-badge" [ngClass]="{
+                'status-planned': viagemSelecionada.status === 'PLANEADA',
+                'status-inprogress': viagemSelecionada.status === 'EM_ANDAMENTO',
+                'status-completed': viagemSelecionada.status === 'CONCLUIDA',
+                'status-cancelled': viagemSelecionada.status === 'CANCELADA'
+              }">
+                {{getStatusText(viagemSelecionada.status)}}
+              </span>
+            </div>
+            <div class="detalhes-item">
+              <span class="detalhes-label">Partida:</span>
+              <span class="detalhes-value">{{formatarData(viagemSelecionada.dataHoraPartida)}}</span>
+            </div>
+            <div class="detalhes-item">
+              <span class="detalhes-label">Chegada:</span>
+              <span class="detalhes-value">{{formatarData(viagemSelecionada.dataHoraChegada)}}</span>
+            </div>
+            <div class="detalhes-item">
+              <span class="detalhes-label">Distância Percorrida:</span>
+              <span class="detalhes-value">{{calcularDistancia(viagemSelecionada)}} km</span>
+            </div>
+            <div class="detalhes-item">
+              <span class="detalhes-label">Km Inicial:</span>
+              <span class="detalhes-value">{{viagemSelecionada.kilometragemInicial || 0}} km</span>
+            </div>
+            <div class="detalhes-item">
+              <span class="detalhes-label">Km Final:</span>
+              <span class="detalhes-value">{{viagemSelecionada.kilometragemFinal || '--'}} km</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Motorista -->
+        <div class="detalhes-card">
+          <div class="detalhes-card-header">
+            <mat-icon>person</mat-icon>
+            <span>Motorista</span>
+          </div>
+          <div class="detalhes-card-body">
+            <div *ngIf="viagemSelecionada.motorista?.nome; else semMotorista">
+              <div class="detalhes-item">
+                <span class="detalhes-label">Nome:</span>
+                <span class="detalhes-value">{{viagemSelecionada.motorista?.nome}}</span>
+              </div>
+              <div class="detalhes-item">
+                <span class="detalhes-label">Telefone:</span>
+                <span class="detalhes-value">{{viagemSelecionada.motorista?.telefone}}</span>
+              </div>
+            </div>
+            <ng-template #semMotorista>
+              <div class="text-muted">Nenhum motorista associado</div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Veículo -->
+        <div class="detalhes-card">
+          <div class="detalhes-card-header">
+            <mat-icon>directions_car</mat-icon>
+            <span>Veículo</span>
+          </div>
+          <div class="detalhes-card-body">
+            <div *ngIf="viagemSelecionada.veiculo?.modelo; else semVeiculo">
+              <div class="detalhes-item">
+                <span class="detalhes-label">Modelo:</span>
+                <span class="detalhes-value">{{viagemSelecionada.veiculo?.modelo}}</span>
+              </div>
+              <div class="detalhes-item">
+                <span class="detalhes-label">Matrícula:</span>
+                <span class="detalhes-value">{{viagemSelecionada.veiculo?.matricula}}</span>
+              </div>
+            </div>
+            <ng-template #semVeiculo>
+              <div class="text-muted">Nenhum veículo associado</div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Rota -->
+        <div class="detalhes-card">
+          <div class="detalhes-card-header">
+            <mat-icon>map</mat-icon>
+            <span>Rota</span>
+          </div>
+          <div class="detalhes-card-body">
+            <div *ngIf="viagemSelecionada.rota?.origem; else semRota">
+              <div class="detalhes-item">
+                <span class="detalhes-label">Origem:</span>
+                <span class="detalhes-value">{{viagemSelecionada.rota?.origem}}</span>
+              </div>
+              <div class="detalhes-item">
+                <span class="detalhes-label">Destino:</span>
+                <span class="detalhes-value">{{viagemSelecionada.rota?.destino}}</span>
+              </div>
+              <div class="detalhes-item">
+                <span class="detalhes-label">Distância:</span>
+                <span class="detalhes-value">{{viagemSelecionada.rota?.distanciaKm}} km</span>
+              </div>
+            </div>
+            <ng-template #semRota>
+              <div class="text-muted">Nenhuma rota associada</div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="detalhes-card full-width" *ngIf="viagemSelecionada.observacoes">
+          <div class="detalhes-card-header">
+            <mat-icon>notes</mat-icon>
+            <span>Observações</span>
+          </div>
+          <div class="detalhes-card-body">
+            <p>{{viagemSelecionada.observacoes}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="fecharTodosModais()">Fechar</button>
+      <button *ngIf="viagemSelecionada.status === 'PLANEADA'" 
+              class="btn-primary" 
+              (click)="abrirModalViagem(viagemSelecionada)">
+        <mat-icon>edit</mat-icon>
+        Editar
+      </button>
+      <button *ngIf="viagemSelecionada.status === 'PLANEADA'" 
+              class="btn-start"
+              (click)="iniciarViagem(viagemSelecionada)">
+        <mat-icon>play_arrow</mat-icon>
+        Iniciar Viagem
+      </button>
+      <button *ngIf="viagemSelecionada.status === 'EM_ANDAMENTO'" 
+              class="btn-complete"
+              (click)="concluirViagem(viagemSelecionada)">
+        <mat-icon>check_circle</mat-icon>
+        Concluir Viagem
+      </button>
+      <button *ngIf="viagemSelecionada.status === 'PLANEADA' || viagemSelecionada.status === 'EM_ANDAMENTO'" 
+              class="btn-cancel"
+              (click)="cancelarViagem(viagemSelecionada)">
+        <mat-icon>cancel</mat-icon>
+        Cancelar Viagem
+      </button>
+    </div>
+  </div>
+</div>

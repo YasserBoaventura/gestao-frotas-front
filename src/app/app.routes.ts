@@ -10,6 +10,14 @@ import { MotoristadetalisComponent } from './components/motorista/motoristadetal
 import { MotoristalistComponent } from './components/motorista/motoristalist/motoristalist.component';
 import { UsuarioDetalisComponent } from './components/Usuario/usuario-detalis/usuario-detalis.component';
 import { UsuarioListComponent } from './components/Usuario/usuario-list/usuario-list.component';
+import { RotasListComponent } from './components/Rotas/rotas-list/rotas-list.component';
+import { ViagenslistComponent } from './components/viagens/viagenslist/viagenslist.component';
+
+import { RelatorioviagemComponent } from './components/relatorioViagem/relatorioviagem/relatorioviagem.component';
+import { AbastecimentoListComponent } from './components/abastecimentos/abastecimentoslist/abastecimentoslist.component';
+import { ManutencoesListComponent } from './components/Manutencoes/manutencoes-list/manutencoes-list.component';
+
+
 
 export const routes: Routes = [
 
@@ -20,7 +28,14 @@ export const routes: Routes = [
 {path: "marcaslist", component: MarcalistComponent},
 {path: "marcas", component: MarcadetalhesComponent},
 {path: "register", component: UsuarioDetalisComponent},
+{path: "userlist", component: UsuarioListComponent},
 {path: "reset-senha", component: ResetSenhaComponent},
-{path:"drivers", component: MotoristalistComponent}
+{path:"drivers", component: MotoristalistComponent},
+{path: "RotasList", component: RotasListComponent},
+{path: "viagenslist", component: ViagenslistComponent},
+{path: "abastecimentoslist", component: AbastecimentoListComponent},
+{path: "manutencoes", component: ManutencoesListComponent},
+{path: "relatoriosViagem", component: RelatorioviagemComponent},
+
 
 ];

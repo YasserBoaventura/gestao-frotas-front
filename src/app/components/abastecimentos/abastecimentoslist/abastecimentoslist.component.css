@@ -1,0 +1,493 @@
+.abastecimentos-container {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #1976d2;
+}
+
+.title-text h1 {
+  margin: 0;
+  color: #333;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-state mat-spinner {
+  margin-bottom: 16px;
+}
+
+.loading-state p {
+  color: #666;
+  font-size: 16px;
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-card {
+  border-left: 4px solid #ff9800;
+  position: relative;
+}
+
+.form-card .close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.estatisticas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.estatistica-card {
+  transition: transform 0.2s ease;
+  border-left: 4px solid;
+}
+
+.estatistica-card:hover {
+  transform: translateY(-4px);
+}
+
+.estatistica-card.total {
+  border-left-color: #1976d2;
+}
+
+.estatistica-card.litros {
+  border-left-color: #4caf50;
+}
+
+.estatistica-card.media {
+  border-left-color: #ff9800;
+}
+
+.estatistica-card.consumo {
+  border-left-color: #9c27b0;
+}
+
+.estatistica-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.estatistica-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: rgba(25, 118, 210, 0.1);
+}
+
+.estatistica-icon mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: #1976d2;
+}
+
+.estatistica-card.litros .estatistica-icon {
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.estatistica-card.litros .estatistica-icon mat-icon {
+  color: #4caf50;
+}
+
+.estatistica-card.media .estatistica-icon {
+  background: rgba(255, 152, 0, 0.1);
+}
+
+.estatistica-card.media .estatistica-icon mat-icon {
+  color: #ff9800;
+}
+
+.estatistica-card.consumo .estatistica-icon {
+  background: rgba(156, 39, 176, 0.1);
+}
+
+.estatistica-card.consumo .estatistica-icon mat-icon {
+  color: #9c27b0;
+}
+
+.estatistica-info {
+  flex: 1;
+}
+
+.estatistica-valor {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.estatistica-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-field {
+  width: 100%;
+}
+
+.form-field.disabled {
+  opacity: 0.6;
+}
+
+.veiculo-option,
+.viagem-option,
+.combustivel-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.valor-total-section {
+  margin-top: 16px;
+}
+
+.valor-total-card {
+  background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+  color: white;
+}
+
+.valor-total-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.valor-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.valor-label {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+.valor-amount {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.filtros-card {
+  margin-bottom: 24px;
+}
+
+.filtros-form {
+  margin-top: 16px;
+}
+
+.filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.filtro-field {
+  width: 100%;
+}
+
+.filtro-actions {
+  display: flex;
+  gap: 8px;
+  align-self: end;
+}
+
+.table-card {
+  margin-bottom: 24px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.table-info {
+  color: #666;
+  font-size: 14px;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.badge {
+  background: rgba(25, 118, 210, 0.1);
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  margin-left: 8px;
+  color: #1976d2;
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+table {
+  width: 100%;
+}
+
+th.mat-header-cell {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+tr.mat-row {
+  transition: background-color 0.2s ease;
+}
+
+tr.mat-row:hover {
+  background-color: #f5f5f5;
+}
+
+tr.selected-row {
+  background-color: #e3f2fd !important;
+}
+
+td.mat-cell {
+  vertical-align: middle;
+  padding: 12px 16px;
+}
+
+.data-cell .data-dia {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.veiculo-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.veiculo-icon {
+  color: #1976d2;
+}
+
+.veiculo-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.veiculo-matricula {
+  font-weight: 500;
+}
+
+.veiculo-viagem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.km-cell,
+.combustivel-cell,
+.quantidade-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.km-cell mat-icon,
+.quantidade-cell mat-icon {
+  color: #666;
+}
+
+.valor-cell {
+  font-weight: 500;
+}
+
+.valor-cell.alto {
+  color: #d32f2f;
+}
+
+.acoes-cell {
+  display: flex;
+  gap: 4px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-planeada {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.status-realizada {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.empty-table {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.empty-table mat-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  color: #bdbdbd;
+}
+
+.empty-table h3 {
+  margin: 0 0 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.empty-table p {
+  margin: 0 0 20px;
+  font-size: 14px;
+}
+
+.table-paginator {
+  background: transparent;
+}
+
+/* Snackbars customizados */
+::ng-deep .sucesso-snackbar {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+::ng-deep .erro-snackbar {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .abastecimentos-container {
+    padding: 16px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .estatisticas-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+} 
+
+@media (max-width: 480px) {
+  .estatisticas-grid {
+    grid-template-columns: 1fr;
+  }
+}

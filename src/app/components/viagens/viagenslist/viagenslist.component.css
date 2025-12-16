@@ -1,0 +1,1093 @@
+/* Container Principal */
+.motoristas-container {
+  padding: 20px;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: #667eea;
+}
+
+.header-title h2 {
+  margin: 0;
+  color: #2d3748;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-reload, .btn-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-reload {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-reload:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-add {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-add:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Estado de Carregamento */
+.loading-state {
+  text-align: center;
+  padding: 80px 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.loading-state .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 20px;
+}
+
+.loading-state h3 {
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.loading-state p {
+  color: #6c757d;
+}
+
+/* Seção de Filtros */
+.search-section {
+  margin-bottom: 20px;
+}
+
+.search-section .card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.search-section .card-body {
+  padding: 24px;
+}
+
+.search-section .card-title {
+  color: #495057;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.search-section .card-text {
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+.filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.filtro-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.filtro-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.filtro-select, .filtro-input {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.filtro-select:focus, .filtro-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filtro-btn-clear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-top: 24px;
+  justify-content: center;
+}
+
+.filtro-btn-clear:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+/* Tabela */
+.table-container {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.table-header-info {
+  background: #f8f9fa;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 14px;
+  color: #495057;
+}
+
+.total-registros strong {
+  color: #667eea;
+}
+
+.motoristas-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.motoristas-table th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+
+.motoristas-table th:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.motoristas-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e9ecef;
+  color: #495057;
+  transition: all 0.3s ease;
+}
+
+.table-row {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.table-row:hover {
+  background: #f8f9fa;
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.table-row:hover td {
+  border-color: #667eea;
+}
+
+/* Células Específicas */
+.id-cell {
+  font-weight: 600;
+  color: #667eea;
+  text-align: center;
+  width: 60px;
+}
+
+.nome-cell, .veiculo-cell, .rota-cell {
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.me-2 {
+  margin-right: 8px;
+}
+
+.text-muted {
+  color: #6c757d;
+}
+
+.d-block {
+  display: block;
+}
+
+.data-cell {
+  color: #4a5568;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  display: inline-block;
+  text-align: center;
+  min-width: 100px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-planned {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.status-inprogress {
+  background: linear-gradient(135deg, #fdbb2d 0%, #22c1c3 100%);
+}
+
+.status-completed {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.status-cancelled {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+/* Distância Badge */
+.distancia-badge {
+  background: linear-gradient(135deg, #a8e6cf 0%, #3ed598 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 4px rgba(78, 205, 196, 0.3);
+}
+
+/* AÇÕES - NOVOS ESTILOS PARA TODOS OS BOTÕES */
+.actions-cell {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  width: 180px;
+  flex-wrap: wrap;
+}
+
+.actions-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.actions-group button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Botão Ver */
+.btn-view {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: white;
+}
+
+/* Botão Editar */
+.btn-edit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+/* Botão Iniciar */
+.btn-start {
+  background: linear-gradient(135deg, #06d6a0 0%, #07c7a4 100%);
+  color: white;
+}
+
+/* Botão Concluir */
+.btn-complete {
+  background: linear-gradient(135deg, #118ab2 0%, #06b6d4 100%);
+  color: white;
+}
+
+/* Botão Cancelar */
+.btn-cancel {
+  background: linear-gradient(135deg, #ef476f 0%, #ff6b6b 100%);
+  color: white;
+}
+
+/* Botão Eliminar */
+.btn-delete {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+}
+
+/* Hover para todos os botões */
+.btn-view:hover, .btn-edit:hover, .btn-start:hover, 
+.btn-complete:hover, .btn-cancel:hover, .btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  opacity: 0.9;
+}
+
+/* Tooltip hover para botões */
+.actions-group button {
+  position: relative;
+}
+
+.actions-group button::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.actions-group button:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.actions-header {
+  text-align: center;
+}
+
+/* Estado Vazio */
+.empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.empty-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: #bdc3c7;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  color: #7f8c8d;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: #95a5a6;
+  margin-bottom: 24px;
+}
+
+.btn-add-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.btn-add-empty:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Modais */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1050;
+  animation: slideIn 0.3s ease;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  max-width: 800px;
+  width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-lg {
+  max-width: 1000px;
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header .modal-title {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.btn-close:hover {
+  opacity: 1;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 20px 24px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Estilos para botões do modal de detalhes */
+.modal-footer .btn-start,
+.modal-footer .btn-complete,
+.modal-footer .btn-cancel,
+.modal-footer .btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 160px;
+  justify-content: center;
+}
+
+/* Botão Iniciar no modal */
+.modal-footer .btn-start {
+  background: linear-gradient(135deg, #06d6a0 0%, #07c7a4 100%);
+  color: white;
+}
+
+.modal-footer .btn-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(6, 214, 160, 0.3);
+}
+
+/* Botão Concluir no modal */
+.modal-footer .btn-complete {
+  background: linear-gradient(135deg, #118ab2 0%, #06b6d4 100%);
+  color: white;
+}
+
+.modal-footer .btn-complete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(17, 138, 178, 0.3);
+}
+
+/* Botão Cancelar no modal */
+.modal-footer .btn-cancel {
+  background: linear-gradient(135deg, #ef476f 0%, #ff6b6b 100%);
+  color: white;
+}
+
+.modal-footer .btn-cancel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 71, 111, 0.3);
+}
+
+/* Botão Primário no modal */
+.modal-footer .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.modal-footer .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Botão Secundário no modal */
+.modal-footer .btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal-footer .btn-secondary:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+/* Botões desabilitados */
+.modal-footer button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Formulário */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-select, .form-control {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.form-select:focus, .form-control:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-error {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Mensagens de validação de formulário */
+.form-error {
+  background: #ffeaea;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  border-left: 4px solid #dc3545;
+}
+
+/* Detalhes Grid */
+.detalhes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.detalhes-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.detalhes-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.detalhes-card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.detalhes-card-body {
+  padding: 16px;
+}
+
+.detalhes-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.detalhes-label {
+  font-weight: 600;
+  color: #495057;
+  min-width: 140px;
+}
+
+.detalhes-value {
+  color: #6c757d;
+  flex: 1;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.table-row {
+  animation: fadeIn 0.5s ease forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.table-row:nth-child(1) { animation-delay: 0.1s; }
+.table-row:nth-child(2) { animation-delay: 0.2s; }
+.table-row:nth-child(3) { animation-delay: 0.3s; }
+.table-row:nth-child(4) { animation-delay: 0.4s; }
+.table-row:nth-child(5) { animation-delay: 0.5s; }
+
+/* Responsividade */
+@media (max-width: 1200px) {
+  .actions-cell {
+    width: 200px;
+  }
+  
+  .actions-group {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 992px) {
+  .actions-cell {
+    width: auto;
+    justify-content: flex-start;
+  }
+  
+  .actions-group {
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  
+  .actions-group button {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .motoristas-container {
+    padding: 10px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    padding: 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .search-section .card-body {
+    padding: 16px;
+  }
+
+  .filtros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-container {
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  .motoristas-table {
+    min-width: 1200px; /* Aumentado para acomodar todas as colunas */
+  }
+
+  .actions-cell {
+    width: 200px;
+    justify-content: center;
+  }
+  
+  .actions-group {
+    justify-content: center;
+    gap: 4px;
+  }
+  
+  .actions-group button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .modal-content {
+    width: 95vw;
+    max-height: 85vh;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 16px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-footer .btn-start,
+  .modal-footer .btn-complete,
+  .modal-footer .btn-cancel,
+  .modal-footer .btn-primary,
+  .modal-footer .btn-secondary {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detalhes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .detalhes-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .detalhes-label {
+    min-width: auto;
+    margin-bottom: 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .actions-cell {
+    width: 150px;
+  }
+  
+  .actions-group {
+    gap: 3px;
+  }
+  
+  .actions-group button {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .actions-group button mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+  }
+  
+  .modal-footer button {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+}
+
+/* Efeitos de brilho no header da tabela */
+.motoristas-table th {
+  position: relative;
+  overflow: hidden;
+}
+
+.motoristas-table th::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transform: rotate(45deg);
+  transition: all 0.6s ease;
+}
+
+.motoristas-table th:hover::before {
+  animation: shine 1.5s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Estilos para SweetAlert2 personalizado */
+.swal2-popup {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+.swal2-title {
+  color: #2d3748 !important;
+  font-weight: 600 !important;
+}
+
+.swal2-content {
+  color: #4a5568 !important;
+}
+
+.swal2-confirm {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 24px !important;
+  font-weight: 500 !important;
+}
+
+.swal2-cancel {
+  background: #6c757d !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 24px !important;
+  font-weight: 500 !important;
+}
+
+.swal2-input, .swal2-textarea {
+  border: 2px solid #e9ecef !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  font-size: 14px !important;
+}
+
+.swal2-input:focus, .swal2-textarea:focus {
+  outline: none !important;
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Estilos para mensagens de validação no formulário de conclusão */
+.swal2-validation-message {
+  background: #ffeaea !important;
+  color: #dc3545 !important;
+  border-radius: 8px !important;
+  border: 1px solid #ffc9c9 !important;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6b3f9e 100%);
+}
+
+/* Estilos para o loader interno */
+.loader {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estilo para campos obrigatórios */
+.form-label.required::after {
+  content: " *";
+  color: #ef476f;
+}
+
+/* Destaque para ações importantes */
+.highlight-action {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(6, 214, 160, 0.4);
+  }  
+  70% {
+    box-shadow: 0 0 0 10px rgba(6, 214, 160, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(6, 214, 160, 0);
+  }
+}

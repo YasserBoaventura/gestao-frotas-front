@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 
 import { Router } from '@angular/router';
+import { LoginService } from '../auth/login.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -11,9 +12,10 @@ import { Router } from '@angular/router';
 export class DashboardComponent {
 
   router=inject(Router);
+  serviceLogin= inject(LoginService)
 
     // Exemplo de dados da frota
- 
+
   vehiclesAvailable = 12;
   vehiclesInUse = 5;
   vehiclesMaintenance = 3;
@@ -28,8 +30,8 @@ export class DashboardComponent {
   }
 
 
-  
-// implementar componentes para essa rotas 
+
+// implementar componentes para essa rotas
   navigateTo(path: string) {
     this.router.navigate([path]);
   }

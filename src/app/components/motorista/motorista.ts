@@ -7,4 +7,5 @@ export class Motorista {
    dataNascimento!: string;
   categoriaHabilitacao?: string;
   statusMotorista!: string;
+  nuit?: string;
   }
