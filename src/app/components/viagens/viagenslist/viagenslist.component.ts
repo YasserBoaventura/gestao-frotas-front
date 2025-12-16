@@ -405,8 +405,8 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
 
     if (this.isEdit) {
       this.viagemService.updateViagem(dadosParaEnviar).subscribe({
-        next: () => {
-          Swal.fire('Sucesso', 'Viagem atualizada com sucesso!', 'success');
+        next: (next) => {
+          Swal.fire('Sucesso', next, 'success');
           this.carregarTudo();
           this.fecharTodosModais();
         },
@@ -416,8 +416,8 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
       });
     } else {
       this.viagemService.createViagem(dadosParaEnviar).subscribe({
-        next: () => {
-          Swal.fire('Sucesso', 'Viagem criada com sucesso!', 'success');
+        next: (next) => {
+          Swal.fire('Sucesso', next, 'success');
           this.carregarTudo();
           this.fecharTodosModais();
         },
@@ -618,11 +618,11 @@ cancelarViagem(viagem: Viagem): void {
         error: (error) => {
           console.error('Erro ao cancelar viagem:', error);
           let mensagem = 'Erro ao cancelar viagem';
-          
+
           if (error.status === 400) {
             mensagem = 'Dados inválidos enviados ao servidor';
           }
-          
+
           Swal.fire('Erro', mensagem + ': ' + error.message, 'error');
         }
       });

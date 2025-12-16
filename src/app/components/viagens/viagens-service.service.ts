@@ -23,8 +23,10 @@ export class ViagensServiceService {
     return this.http.get<Viagem>(`${this.apiUrl}/${id}`);
   }
 
-  createViagem(viagem: Viagem): Observable<Viagem> {
-    return this.http.post<Viagem>(this.apiUrl+"/save", viagem);
+  createViagem(viagem: Viagem): Observable<string> {
+    return this.http.post<string>(this.apiUrl+"/save", viagem, {
+      responseType: 'text' as 'json'
+    });
   }
 
   updateViagem(viagem: Viagem): Observable<string> {

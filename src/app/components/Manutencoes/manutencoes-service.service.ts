@@ -80,15 +80,19 @@ export class ManutencoesServiceService {
   /**
    * Cria uma nova manutenção
    */
-  create(manutencaoDTO: ManutencaoDTO): Observable<Manutencao> {
-    return this.http.post<Manutencao>(this.apiUrl+"save" ,manutencaoDTO)
+  create(manutencaoDTO: ManutencaoDTO): Observable<string> {
+    return this.http.post<string>(this.apiUrl+"/save" ,manutencaoDTO, {
+      responseType: 'text' as 'json'
+    })
   }
 
   /**
    * Atualiza uma manutenção existente
    */
-  update(id: number, manutencaoDTO: ManutencaoDTO): Observable<Manutencao> {
-    return this.http.put<Manutencao>(`${this.apiUrl}/update/${id}`, manutencaoDTO)
+  update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
+    return this.http.put<string>(`${this.apiUrl}/update/${id}`, manutencaoDTO,{
+      responseType : 'text' as 'json'
+    })
   }
 
   /**
@@ -107,7 +111,7 @@ export class ManutencoesServiceService {
    * Busca manutenções por veículo
    */
   getByVeiculo(veiculoId: number): Observable<Manutencao[]> {
-    return this.http.get<Manutencao[]>(`${this.apiUrl}//${veiculoId}`)
+    return this.http.get<Manutencao[]>(`${this.apiUrl}/findByIdVeiculo/${veiculoId}`)
   }
 
 

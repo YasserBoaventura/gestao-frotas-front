@@ -354,12 +354,12 @@ aplicarFiltros(): void {
       // Atualizar manutenção existente
       this.manutencaoService.update(this.manutencaoSelecionada.id, manutencaoDTO).subscribe({
         next: (manutencaoAtualizada) => {
-          const index = this.manutencoes.findIndex(m => m.id === this.manutencaoSelecionada!.id);
+          const index = this.manutencoes.findIndex(m => m.id === this. manutencaoSelecionada!.id);
           if (index !== -1) {
             this.manutencoes[index] = this.mapearManutencaoIndividual(manutencaoAtualizada);
             this.dataSource.data = [...this.manutencoes];
           }
-          this.mostrarSucesso('Manutenção atualizada com sucesso!');
+     this.mostrarSucesso(manutencaoAtualizada);
           this.cancelarEdicao();
           this.carregando = false;
         },
@@ -470,6 +470,7 @@ aplicarFiltros(): void {
     this.manutencaoService.getVencidas().subscribe({
       next: (vencidas) => {
         this.dataSource.data = this.mapearManutencoes(vencidas);
+
         this.filtroStatus = 'VENCIDA';
         this.carregando = false;
         this.mostrarSucesso(`${vencidas.length} manutenção(ões) vencida(s) encontrada(s)`);

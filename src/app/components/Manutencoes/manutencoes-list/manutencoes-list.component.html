@@ -356,7 +356,7 @@
                 <mat-icon class="veiculo-icon">directions_car</mat-icon>
                 <div class="veiculo-detalhes">
                   <strong>{{manutencao.veiculo?.matricula || 'N/A'}}</strong>
-                  <span>{{manutencao.veiculo?.marca || ''}} {{manutencao.veiculo?.modelo || ''}}</span>
+                  <span>{{manutencao.veiculo?.marca?.nome}} {{manutencao.veiculo?.modelo || ''}}</span>
                 </div>
               </div>
             </td>
