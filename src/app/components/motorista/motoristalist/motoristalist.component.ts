@@ -103,17 +103,17 @@ export class MotoristalistComponent implements OnInit {
     this.pesquisando = true;
     this.pesquisaRealizada = true;
 
-    console.log('🔍 Pesquisando motoristas por:', this.termoPesquisa);
+    console.log(' Pesquisando motoristas por:', this.termoPesquisa);
 
     this.serviceMotorista.findByNome(this.termoPesquisa).subscribe({
       next: (motoristas: Motorista[]) => {
-        console.log('✅ Resultado da pesquisa:', motoristas);
+        console.log(' Resultado da pesquisa:', motoristas);
         this.listaFiltrada = motoristas || [];
         this.pesquisando = false;
-        console.log('✅ Motoristas encontrados:', this.listaFiltrada.length);
+        console.log(' Motoristas encontrados:', this.listaFiltrada.length);
       },
       error: (erro) => {
-        console.error('❌ Erro ao pesquisar motoristas:', erro);
+        console.error(' Erro ao pesquisar motoristas:', erro);
         this.pesquisando = false;
         this.listaFiltrada = [];
         Swal.fire({
@@ -254,6 +254,6 @@ export class MotoristalistComponent implements OnInit {
     this.loadMotoristas();
   }
 
-  
+
 
 }

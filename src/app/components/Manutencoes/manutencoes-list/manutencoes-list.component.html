@@ -75,7 +75,7 @@
                 <label>Veículo *</label>
                 <mat-select formControlName="veiculo_id" class="form-control-select">
                   <mat-option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
-                    {{veiculo.matricula}} - {{veiculo.marca}} {{veiculo.modelo}} ({{veiculo.kilometragemAtual | number}} km)
+                    {{veiculo.matricula}} - {{veiculo.marca.nome}} {{veiculo.modelo}} ({{veiculo.kilometragemAtual | number}} km)
                   </mat-option>
                 </mat-select>
               </div>
@@ -165,13 +165,13 @@
             <!-- Veículo -->
             <div class="filter-group">
               <label>Veículo</label>
-              <input matInput [(ngModel)]="filtroVeiculo" placeholder="Matrícula ou modelo" class="form-control">
+              <input matInput [(ngModel)]="filtroVeiculo" placeholder="Matrícula ou modelo" class="form-control" (keyup.enter)="aplicarFiltros()">
             </div>
 
             <!-- Tipo -->
             <div class="filter-group">
               <label>Tipo</label>
-              <mat-select [(ngModel)]="filtroTipo" class="form-control-select">
+              <mat-select [(ngModel)]="filtroTipo" class="form-control-select" (selectionChange)="aplicarFiltros()">
                 <mat-option value="">Todos</mat-option>
                 <mat-option *ngFor="let tipo of tiposManutencao" [value]="tipo">
                   {{getTipoManutencaoLabel(tipo)}}
@@ -182,7 +182,7 @@
             <!-- Status -->
             <div class="filter-group">
               <label>Status</label>
-              <mat-select [(ngModel)]="filtroStatus" class="form-control-select">
+              <mat-select [(ngModel)]="filtroStatus" class="form-control-select" (selectionChange)="aplicarFiltros()">
                 <mat-option value="">Todos</mat-option>
                 <mat-option value="OK">OK</mat-option>
                 <mat-option value="PROXIMA">Próxima</mat-option>
@@ -194,7 +194,7 @@
             <!-- Data Início -->
             <div class="filter-group">
               <label>Data Início</label>
-              <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="filtroDataInicio" class="form-control">
+              <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="filtroDataInicio" class="form-control" (dateChange)="aplicarFiltros()">
               <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
               <mat-datepicker #pickerInicio></mat-datepicker>
             </div>
@@ -202,7 +202,7 @@
             <!-- Data Fim -->
             <div class="filter-group">
               <label>Data Fim</label>
-              <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtroDataFim" class="form-control">
+              <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtroDataFim" class="form-control" (dateChange)="aplicarFiltros()">
               <mat-datepicker-toggle matSuffix [for]="pickerFim"></mat-datepicker-toggle>
               <mat-datepicker #pickerFim></mat-datepicker>
             </div>
@@ -216,114 +216,128 @@
               <mat-icon>clear</mat-icon>
               Limpar Filtros
             </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!--Resumo-->
-    <!-- Resumo -->
-<div class="summary-section" *ngIf="!carregando && manutencoes.length > 0">
-  <div class="card">
-    <div class="card-body">
-      <h4 class="card-title">
-        <mat-icon class="me-2">assessment</mat-icon>
-        Resumo das Manutenções
-      </h4>
-      <div class="summary-grid">
-        <!-- Total de Manutenções -->
-        <div class="summary-item">
-          <div class="summary-icon total">
-            <mat-icon>build</mat-icon>
-          </div>
-          <div class="summary-content">
-            <span class="summary-label">Total de Manutenções</span>
-            <span class="summary-value">{{getTotalCount()}}</span>
-            <span class="summary-trend">Registradas</span>
-          </div>
-        </div>
-
-        <!-- Custo Total -->
-        <div class="summary-item">
-          <div class="summary-icon cost">
-            <mat-icon>attach_money</mat-icon>
-          </div>
-          <div class="summary-content">
-            <span class="summary-label">Custo Total</span>
-            <span class="summary-value">{{formatarMoeda(getTotalCusto())}}</span>
-            <span class="summary-trend">Investido</span>
-          </div>
-        </div>
-
-        <!-- Manutenções Vencidas -->
-        <div class="summary-item">
-          <div class="summary-icon overdue">
-            <mat-icon>warning</mat-icon>
-          </div>
-          <div class="summary-content">
-            <span class="summary-label">Manutenções Vencidas</span>
-            <span class="summary-value">{{getVencidasCount()}}</span>
-            <span class="summary-trend">Necessitam atenção</span>
-          </div>
-        </div>
-
-        <!-- Manutenções Próximas -->
-        <div class="summary-item">
-          <div class="summary-icon upcoming">
-            <mat-icon>schedule</mat-icon>
-          </div>
-          <div class="summary-content">
-            <span class="summary-label">Manutenções Próximas</span>
-            <span class="summary-value">{{getProximasCount()}}</span>
-            <span class="summary-trend">A programar</span>
-          </div>
-        </div>
-
-        <!-- Custo Médio -->
-        <div class="summary-item">
-          <div class="summary-icon average">
-            <mat-icon>trending_up</mat-icon>
-          </div>
-          <div class="summary-content">
-            <span class="summary-label">Custo Médio</span>
-            <span class="summary-value">{{formatarMoeda(getCustoMedio())}}</span>
-            <span class="summary-trend">Por manutenção</span>
-          </div>
-        </div>
-
-        <!-- Status Geral -->
-        <div class="summary-item">
-          <div class="summary-icon status">
-            <mat-icon>check_circle</mat-icon>
-          </div>
-          <div class="summary-content">
-            <span class="summary-label">Status Geral</span>
-            <span class="summary-value status-text {{getStatusGeral().toLowerCase()}}">
-              {{getStatusGeralText()}}
+            <span *ngIf="temFiltrosAtivos()" class="filtros-info">
+              <mat-icon>filter_alt</mat-icon>
+              Filtros ativos
             </span>
-            <span class="summary-trend">{{getPercentualOK()}}% OK</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Detalhamento por Tipo -->
-      <div class="type-breakdown mt-4">
-        <h5 class="breakdown-title">
-          <mat-icon class="me-2">pie_chart</mat-icon>
-          Distribuição por Tipo
-        </h5>
-        <div class="breakdown-grid">
-          <div *ngFor="let tipo of getTiposDistribuicao()" class="breakdown-item">
-            <span class="breakdown-type">{{tipo.label}}</span>
-            <div class="breakdown-bar">
-              <div class="bar-fill" [style.width.%]="tipo.percentual" [class]="'fill-' + tipo.key"></div>
-            </div>
-            <span class="breakdown-count">{{tipo.count}} ({{tipo.percentual}}%)</span>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
+
+    <!-- Resumo -->
+    <div class="summary-section" *ngIf="manutencoes.length > 0">
+      <div class="card">
+        <div class="card-body">
+          <div class="summary-header">
+            <h4 class="card-title">
+              <mat-icon class="me-2">assessment</mat-icon>
+              Resumo das Manutenções
+              <span *ngIf="temFiltrosAtivos()" class="filtro-ativo-badge">
+                <mat-icon>filter_alt</mat-icon>
+                Filtros Ativos
+              </span>
+            </h4>
+            <button class="btn-info" matTooltip="Os valores do resumo refletem os filtros aplicados" matTooltipPosition="left">
+              <mat-icon>info</mat-icon>
+            </button>
+          </div>
+
+          <div class="summary-grid">
+            <!-- Total de Manutenções -->
+            <div class="summary-item">
+              <div class="summary-icon total">
+                <mat-icon>build</mat-icon>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Total de Manutenções</span>
+                <span class="summary-value">{{getTotalCount()}}</span>
+                <span class="summary-trend">Registradas</span>
+              </div>
+            </div>
+
+            <!-- Custo Total -->
+            <div class="summary-item">
+              <div class="summary-icon cost">
+                <mat-icon>attach_money</mat-icon>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Custo Total</span>
+                <span class="summary-value">{{formatarMoeda(getTotalCusto())}}</span>
+                <span class="summary-trend">Investido</span>
+              </div>
+            </div>
+
+            <!-- Manutenções Vencidas -->
+            <div class="summary-item">
+              <div class="summary-icon overdue">
+                <mat-icon>warning</mat-icon>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Manutenções Vencidas</span>
+                <span class="summary-value">{{getVencidasCount()}}</span>
+                <span class="summary-trend">Necessitam atenção</span>
+              </div>
+            </div>
+
+            <!-- Manutenções Próximas -->
+            <div class="summary-item">
+              <div class="summary-icon upcoming">
+                <mat-icon>schedule</mat-icon>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Manutenções Próximas</span>
+                <span class="summary-value">{{getProximasCount()}}</span>
+                <span class="summary-trend">A programar</span>
+              </div>
+            </div>
+
+            <!-- Custo Médio -->
+            <div class="summary-item">
+              <div class="summary-icon average">
+                <mat-icon>trending_up</mat-icon>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Custo Médio</span>
+                <span class="summary-value">{{formatarMoeda(getCustoMedio())}}</span>
+                <span class="summary-trend">Por manutenção</span>
+              </div>
+            </div>
+
+            <!-- Status Geral -->
+            <div class="summary-item">
+              <div class="summary-icon status">
+                <mat-icon>check_circle</mat-icon>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Status Geral</span>
+                <span class="summary-value status-text {{getStatusGeral().toLowerCase()}}">
+                  {{getStatusGeralText()}}
+                </span>
+                <span class="summary-trend">{{getPercentualOK()}}% OK</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detalhamento por Tipo -->
+          <div class="type-breakdown mt-4" *ngIf="getTiposDistribuicao().length > 0">
+            <h5 class="breakdown-title">
+              <mat-icon class="me-2">pie_chart</mat-icon>
+              Distribuição por Tipo
+            </h5>
+            <div class="breakdown-grid">
+              <div *ngFor="let tipo of getTiposDistribuicao()" class="breakdown-item">
+                <span class="breakdown-type">{{tipo.label}}</span>
+                <div class="breakdown-bar">
+                  <div class="bar-fill" [style.width.%]="tipo.percentual" [class]="'fill-' + tipo.key.toLowerCase()"></div>
+                </div>
+                <span class="breakdown-count">{{tipo.count}} ({{tipo.percentual}}%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Tabela -->
     <div class="table-container" *ngIf="manutencoes && manutencoes.length > 0; else emptyState">
@@ -334,6 +348,10 @@
             Custo total: {{formatarMoeda(getTotalCusto())}}
           </span>
         </span>
+        <button class="btn-export" (click)="exportarRelatorio()">
+          <mat-icon>download</mat-icon>
+          Exportar
+        </button>
       </div>
       <table class="manutencoes-table">
         <thead>
@@ -356,7 +374,7 @@
                 <mat-icon class="veiculo-icon">directions_car</mat-icon>
                 <div class="veiculo-detalhes">
                   <strong>{{manutencao.veiculo?.matricula || 'N/A'}}</strong>
-                  <span>{{manutencao.veiculo?.marca?.nome}} {{manutencao.veiculo?.modelo || ''}}</span>
+                  <span>{{manutencao.veiculo?.marca?.nome || manutencao.veiculo?.marca}} {{manutencao.veiculo?.modelo || ''}}</span>
                 </div>
               </div>
             </td>

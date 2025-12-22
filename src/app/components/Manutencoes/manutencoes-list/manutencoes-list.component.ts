@@ -53,7 +53,7 @@ import { Veiculo } from '../../Veiculos/veiculos.model';
     MatChipsModule
   ],
   templateUrl: './manutencoes-list.component.html',
-  styleUrl: './manutencoes-list.component.css'
+  styleUrls: ['./manutencoes-list.component.css']
 })
 export class ManutencoesListComponent implements OnInit, AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -133,7 +133,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     // Carregar manutenções do backend
     this.manutencaoService.getAll().subscribe({
       next: (manutencoes) => {
-        console.log('Manutenções recebidas:', manutencoes); // Para debug
+        console.log('Manutenções recebidas:', manutencoes);
         this.manutencoes = this.mapearManutencoes(manutencoes);
         this.dataSource.data = this.manutencoes;
         this.carregando = false;
@@ -148,7 +148,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     // Carregar veículos
     this.manutencaoService.getVeiculos().subscribe({
       next: (veiculos) => {
-        console.log('Veículos recebidos:', veiculos); // Para debug
+        console.log('Veículos recebidos:', veiculos);
         this.veiculos = veiculos;
       },
       error: (error) => {
@@ -158,7 +158,6 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // Método para mapear os dados recebidos do backend
   private mapearManutencoes(manutencoes: any[]): Manutencao[] {
     return manutencoes.map(manutencao => ({
       id: manutencao.id,
@@ -173,7 +172,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
         id: manutencao.veiculoId,
         matricula: manutencao.veiculoMatricula,
         modelo: manutencao.veiculoModelo,
-        marca: manutencao.veiculoMarca,
+        marca: manutencao.veiculoMarca || { nome: manutencao.veiculoMarca },
         kilometragemAtual: manutencao.kilometragemAtual
       }
     }));
@@ -191,51 +190,53 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     });
   }
 
-aplicarFiltros(): void {
-  let dadosFiltrados = this.manutencoes;
+  aplicarFiltros(): void {
+    let dadosFiltrados = this.manutencoes;
 
-  if (this.filtroVeiculo && this.filtroVeiculo.trim() !== '') {
-    const termo = this.filtroVeiculo.toLowerCase().trim();
-    dadosFiltrados = dadosFiltrados.filter(m => {
-      // Verifica se existe veículo e suas propriedades
-      if (!m.veiculo) return false;
+    if (this.filtroVeiculo && this.filtroVeiculo.trim() !== '') {
+      const termo = this.filtroVeiculo.toLowerCase().trim();
+      dadosFiltrados = dadosFiltrados.filter(m => {
+        if (!m.veiculo) return false;
 
-      const matricula = (m.veiculo.matricula || '').toLowerCase();
-      const modelo = (m.veiculo.modelo || '').toLowerCase();
-      const marca = (m.veiculo.marca.nome || '').toLowerCase();
+        const matricula = (m.veiculo.matricula || '').toLowerCase();
+        const modelo = (m.veiculo.modelo || '').toLowerCase();
+        const marca = m.veiculo.marca ?
+          (typeof m.veiculo.marca.nome === 'string' ? m.veiculo.marca.nome.toLowerCase() :
+          (m.veiculo.marca.nome || '')) : '';
 
-      return matricula.includes(termo) ||
-             modelo.includes(termo) ||
-             marca.includes(termo);
-    });
+        return matricula.includes(termo) ||
+               modelo.includes(termo) ||
+               marca.includes(termo);
+      });
+    }
+
+    if (this.filtroTipo && this.filtroTipo !== '') {
+      dadosFiltrados = dadosFiltrados.filter(m => m.tipoManutencao === this.filtroTipo);
+    }
+
+    if (this.filtroStatus && this.filtroStatus !== '') {
+      dadosFiltrados = dadosFiltrados.filter(m => this.verificarStatusManutencao(m) === this.filtroStatus);
+    }
+
+    if (this.filtroDataInicio) {
+      dadosFiltrados = dadosFiltrados.filter(m => {
+        if (!m.dataManutencao) return false;
+        const dataManutencao = new Date(m.dataManutencao);
+        return dataManutencao >= this.filtroDataInicio!;
+      });
+    }
+
+    if (this.filtroDataFim) {
+      dadosFiltrados = dadosFiltrados.filter(m => {
+        if (!m.dataManutencao) return false;
+        const dataManutencao = new Date(m.dataManutencao);
+        return dataManutencao <= this.filtroDataFim!;
+      });
+    }
+
+    this.dataSource.data = dadosFiltrados;
+    this.dataSource._updateChangeSubscription();
   }
-
-  if (this.filtroTipo && this.filtroTipo !== '') {
-    dadosFiltrados = dadosFiltrados.filter(m => m.tipoManutencao === this.filtroTipo);
-  }
-
-  if (this.filtroStatus && this.filtroStatus !== '') {
-    dadosFiltrados = dadosFiltrados.filter(m => this.verificarStatusManutencao(m) === this.filtroStatus);
-  }
-
-  if (this.filtroDataInicio) {
-    dadosFiltrados = dadosFiltrados.filter(m => {
-      if (!m.dataManutencao) return false;
-      const dataManutencao = new Date(m.dataManutencao);
-      return dataManutencao >= this.filtroDataInicio!;
-    });
-  }
-
-  if (this.filtroDataFim) {
-    dadosFiltrados = dadosFiltrados.filter(m => {
-      if (!m.dataManutencao) return false;
-      const dataManutencao = new Date(m.dataManutencao);
-      return dataManutencao <= this.filtroDataFim!;
-    });
-  }
-
-  this.dataSource.data = dadosFiltrados;
-}
 
   limparFiltros(): void {
     this.filtroVeiculo = '';
@@ -244,6 +245,8 @@ aplicarFiltros(): void {
     this.filtroDataInicio = null;
     this.filtroDataFim = null;
     this.dataSource.data = this.manutencoes;
+    this.dataSource._updateChangeSubscription();
+    this.mostrarSucesso('Filtros limpos com sucesso!');
   }
 
   verificarStatusManutencao(manutencao: Manutencao): string {
@@ -282,10 +285,10 @@ aplicarFiltros(): void {
 
   getStatusColor(status: string): string {
     switch(status) {
-      case 'VENCIDA': return '#f44336'; // Vermelho
-      case 'PROXIMA': return '#ff9800'; // Laranja
-      case 'OK': return '#4caf50';      // Verde
-      default: return '#9e9e9e';        // Cinza
+      case 'VENCIDA': return '#f44336';
+      case 'PROXIMA': return '#ff9800';
+      case 'OK': return '#4caf50';
+      default: return '#9e9e9e';
     }
   }
 
@@ -351,15 +354,16 @@ aplicarFiltros(): void {
     this.carregando = true;
 
     if (this.editando && this.manutencaoSelecionada?.id) {
-      // Atualizar manutenção existente
       this.manutencaoService.update(this.manutencaoSelecionada.id, manutencaoDTO).subscribe({
         next: (manutencaoAtualizada) => {
-          const index = this.manutencoes.findIndex(m => m.id === this. manutencaoSelecionada!.id);
+          const index = this.manutencoes.findIndex(m => m.id === this.manutencaoSelecionada!.id);
           if (index !== -1) {
             this.manutencoes[index] = this.mapearManutencaoIndividual(manutencaoAtualizada);
             this.dataSource.data = [...this.manutencoes];
+                 this.carregarDados();
           }
-     this.mostrarSucesso(manutencaoAtualizada);
+
+          this.mostrarSucesso('Manutenção atualizada com sucesso!');
           this.cancelarEdicao();
           this.carregando = false;
         },
@@ -370,11 +374,11 @@ aplicarFiltros(): void {
         }
       });
     } else {
-      // Criar nova manutenção
       this.manutencaoService.create(manutencaoDTO).subscribe({
         next: (novaManutencao) => {
           this.manutencoes.push(this.mapearManutencaoIndividual(novaManutencao));
           this.dataSource.data = [...this.manutencoes];
+           this.carregarDados();
           this.mostrarSucesso('Manutenção registrada com sucesso!');
           this.cancelarEdicao();
           this.carregando = false;
@@ -444,11 +448,16 @@ aplicarFiltros(): void {
     const statusText = status === 'VENCIDA' ? 'Vencida' :
                       status === 'PROXIMA' ? 'Próxima' : 'OK';
 
+    const marcaNome = manutencao.veiculo?.marca ?
+      (typeof manutencao.veiculo.marca === 'string' ?
+        manutencao.veiculo.marca :
+        manutencao.veiculo.marca.nome) : '';
+
     Swal.fire({
       title: `Detalhes da Manutenção`,
       html: `
         <div style="text-align: left; font-size: 14px;">
-          <p><strong>Veículo:</strong> ${manutencao.veiculo?.marca || ''} ${manutencao.veiculo?.modelo || ''} (${manutencao.veiculo?.matricula || 'N/A'})</p>
+          <p><strong>Veículo:</strong> ${marcaNome} ${manutencao.veiculo?.modelo || ''} (${manutencao.veiculo?.matricula || 'N/A'})</p>
           <p><strong>Tipo:</strong> ${this.getTipoManutencaoLabel(manutencao.tipoManutencao)}</p>
           <p><strong>Data:</strong> ${manutencao.dataManutencao ? new Date(manutencao.dataManutencao).toLocaleDateString('pt-BR') : 'Não informada'}</p>
           <p><strong>Quilometragem:</strong> ${(manutencao.kilometragemVeiculo || 0).toLocaleString('pt-BR')} km</p>
@@ -469,9 +478,16 @@ aplicarFiltros(): void {
     this.carregando = true;
     this.manutencaoService.getVencidas().subscribe({
       next: (vencidas) => {
-        this.dataSource.data = this.mapearManutencoes(vencidas);
-
+        const dadosMapeados = this.mapearManutencoes(vencidas);
+        this.dataSource.data = dadosMapeados;
         this.filtroStatus = 'VENCIDA';
+
+        // Limpa outros filtros
+        this.filtroVeiculo = '';
+        this.filtroTipo = '';
+        this.filtroDataInicio = null;
+        this.filtroDataFim = null;
+
         this.carregando = false;
         this.mostrarSucesso(`${vencidas.length} manutenção(ões) vencida(s) encontrada(s)`);
       },
@@ -487,8 +503,16 @@ aplicarFiltros(): void {
     this.carregando = true;
     this.manutencaoService.getProximas().subscribe({
       next: (proximas) => {
-        this.dataSource.data = this.mapearManutencoes(proximas);
+        const dadosMapeados = this.mapearManutencoes(proximas);
+        this.dataSource.data = dadosMapeados;
         this.filtroStatus = 'PROXIMA';
+
+        // Limpa outros filtros
+        this.filtroVeiculo = '';
+        this.filtroTipo = '';
+        this.filtroDataInicio = null;
+        this.filtroDataFim = null;
+
         this.carregando = false;
         this.mostrarSucesso(`${proximas.length} manutenção(ões) próxima(s) encontrada(s)`);
       },
@@ -505,7 +529,6 @@ aplicarFiltros(): void {
     if (formValue.tipoManutencao && formValue.kilometragemVeiculo) {
       const veiculo = this.veiculos.find(v => v.id === formValue.veiculo_id);
       if (veiculo) {
-        // Cálculo simples baseado no tipo de manutenção
         const hoje = new Date();
         const kmAtual = formValue.kilometragemVeiculo;
 
@@ -526,7 +549,6 @@ aplicarFiltros(): void {
             proximaData.setMonth(proximaData.getMonth() + 24);
             break;
           default:
-            // Para manutenções corretivas, não calcula automaticamente
             this.mostrarSucesso('Manutenções corretivas não possuem periodicidade fixa');
             return;
         }
@@ -539,10 +561,6 @@ aplicarFiltros(): void {
       }
     }
   }
-  // calculos
-  // Adicione estes métodos na classe ManutencoesListComponent
-
-
 
   exportarRelatorio(): void {
     Swal.fire({
@@ -577,6 +595,146 @@ aplicarFiltros(): void {
     this.mostrarSucesso('Funcionalidade CSV em desenvolvimento');
   }
 
+  // Métodos para o resumo (baseados nos dados filtrados)
+  getTotalCount(): number {
+    return this.dataSource.data?.length || 0;
+  }
+
+  getTotalCusto(): number {
+    const dados = this.dataSource.data || [];
+    if (dados.length === 0) return 0;
+    return dados.reduce((sum, m) => sum + (m.custo || 0), 0);
+  }
+
+  getVencidasCount(): number {
+    const dados = this.dataSource.data || [];
+    if (dados.length === 0) return 0;
+    return dados.filter(m => this.verificarStatusManutencao(m) === 'VENCIDA').length;
+  }
+
+  getProximasCount(): number {
+    const dados = this.dataSource.data || [];
+    if (dados.length === 0) return 0;
+    return dados.filter(m => {
+      const status = this.verificarStatusManutencao(m);
+      return status === 'PROXIMA';
+    }).length;
+  }
+
+  getCustoMedio(): number {
+    const total = this.getTotalCount();
+    if (total === 0) return 0;
+    return this.getTotalCusto() / total;
+  }
+
+  getStatusGeral(): string {
+    const vencidas = this.getVencidasCount();
+    const proximas = this.getProximasCount();
+    const total = this.getTotalCount();
+
+    if (total === 0) return 'VAZIO';
+    if (vencidas > 0) return 'CRITICO';
+    if (proximas > 0) return 'ATENCAO';
+    return 'OK';
+  }
+
+  getStatusGeralText(): string {
+    const status = this.getStatusGeral();
+    switch(status) {
+      case 'OK': return 'Em Dia';
+      case 'ATENCAO': return 'Atenção';
+      case 'CRITICO': return 'Crítico';
+      default: return 'Sem Dados';
+    }
+  }
+
+  getPercentualOK(): number {
+    const dados = this.dataSource.data || [];
+    if (dados.length === 0) return 0;
+    const okCount = dados.filter(m => this.verificarStatusManutencao(m) === 'OK').length;
+    return Math.round((okCount / dados.length) * 100);
+  }
+
+  getTiposDistribuicao(): any[] {
+    const dados = this.dataSource.data || [];
+    if (dados.length === 0) return [];
+
+    const tipos = this.tiposManutencao.map(tipo => ({
+      key: tipo,
+      label: this.getTipoManutencaoLabel(tipo),
+      count: 0,
+      percentual: 0
+    }));
+
+    // Contar ocorrências
+    dados.forEach(m => {
+      const tipo = tipos.find(t => t.key === m.tipoManutencao);
+      if (tipo) tipo.count++;
+    });
+
+    // Calcular percentuais
+    tipos.forEach(tipo => {
+      tipo.percentual = Math.round((tipo.count / dados.length) * 100);
+    });
+
+    return tipos.filter(t => t.count > 0);
+  }
+
+  // Verifica se há filtros ativos
+  temFiltrosAtivos(): boolean {
+    return !!this.filtroVeiculo ||
+           !!this.filtroTipo ||
+           !!this.filtroStatus ||
+           !!this.filtroDataInicio ||
+           !!this.filtroDataFim;
+  }
+
+  getResumoFiltros(): string {
+    const filtros = [];
+
+    if (this.filtroVeiculo) {
+      filtros.push(`Veículo: ${this.filtroVeiculo}`);
+    }
+    if (this.filtroTipo) {
+      filtros.push(`Tipo: ${this.getTipoManutencaoLabel(this.filtroTipo)}`);
+    }
+    if (this.filtroStatus) {
+      filtros.push(`Status: ${this.filtroStatus}`);
+    }
+    if (this.filtroDataInicio) {
+      filtros.push(`De: ${this.formatarData(this.filtroDataInicio)}`);
+    }
+    if (this.filtroDataFim) {
+      filtros.push(`Até: ${this.formatarData(this.filtroDataFim)}`);
+    }
+
+    return filtros.length > 0 ? filtros.join(' | ') : 'Sem filtros';
+  }
+
+  // Métodos auxiliares para a view
+  formatarData(data?: Date): string {
+    if (!data) return 'Não definida';
+    return data.toLocaleDateString('pt-BR');
+  }
+
+  formatarMoeda(valor?: number): string {
+    if (!valor) return 'MT$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor);
+  }
+
+  getStatusText(status: string): string {
+    switch(status) {
+      case 'VENCIDA': return 'Vencida';
+      case 'PROXIMA': return 'Próxima';
+      case 'URGENTE': return 'Urgente';
+      case 'OK': return 'OK';
+      default: return status;
+    }
+  }
+
   private mostrarSucesso(mensagem: string): void {
     this.snackBar.open(mensagem, 'Fechar', {
       duration: 3000,
@@ -590,114 +748,4 @@ aplicarFiltros(): void {
       panelClass: ['snackbar-error']
     });
   }
-
-  // Métodos auxiliares para a view
-  formatarData(data?: Date): string {
-    if (!data) return 'Não definida';
-    return data.toLocaleDateString('pt-BR');
-  }
-
-  formatarMoeda(valor?: number): string {
-    if (!valor) return 'R$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor);
-  }
-
-  //
-  // Método para obter o texto do status
-getStatusText(status: string): string {
-  switch(status) {
-    case 'VENCIDA': return 'Vencida';
-    case 'PROXIMA': return 'Próxima';
-    case 'URGENTE': return 'Urgente';
-    case 'OK': return 'OK';
-    default: return status;
-  }
-}
-
-
-getTiposDistribuicao(): any[] {
-  if (!this.manutencoes || this.manutencoes.length === 0) return [];
-
-  const tipos = this.tiposManutencao.map(tipo => ({
-    key: tipo,
-    label: this.getTipoManutencaoLabel(tipo),
-    count: 0,
-    percentual: 0
-  }));
-
-  // Contar ocorrências
-  this.manutencoes.forEach(m => {
-    const tipo = tipos.find(t => t.key === m.tipoManutencao);
-    if (tipo) tipo.count++;
-  });
-
-  // Calcular percentuais
-  tipos.forEach(tipo => {
-    tipo.percentual = Math.round((tipo.count / this.manutencoes.length) * 100);
-  });
-
-  return tipos.filter(t => t.count > 0);
-}
-
-//
-// Métodos para o resumo
-getTotalCount(): number {
-  return this.manutencoes?.length || 0;
-}
-
-getTotalCusto(): number {
-  if (!this.manutencoes || this.manutencoes.length === 0) return 0;
-  return this.manutencoes.reduce((sum, m) => sum + (m.custo || 0), 0);
-}
-
-getVencidasCount(): number {
-  if (!this.manutencoes) return 0;
-  return this.manutencoes.filter(m => this.verificarStatusManutencao(m) === 'VENCIDA').length;
-}
-
-getProximasCount(): number {
-  if (!this.manutencoes) return 0;
-  return this.manutencoes.filter(m => {
-    const status = this.verificarStatusManutencao(m);
-    return status === 'PROXIMA' || status === 'URGENTE';
-  }).length;
-}
-
-getCustoMedio(): number {
-  if (!this.manutencoes || this.manutencoes.length === 0) return 0;
-  return this.getTotalCusto() / this.manutencoes.length;
-}
-
-getStatusGeral(): string {
-  const vencidas = this.getVencidasCount();
-  const proximas = this.getProximasCount();
-  const total = this.getTotalCount();
-
-  if (total === 0) return 'VAZIO';
-  if (vencidas > 0) return 'CRITICO';
-  if (proximas > 0) return 'ATENCAO';
-  return 'OK';
-}
-
-getStatusGeralText(): string {
-  const status = this.getStatusGeral();
-  switch(status) {
-    case 'OK': return 'Em Dia';
-    case 'ATENCAO': return 'Atenção';
-    case 'CRITICO': return 'Crítico';
-    default: return 'Sem Dados';
-  }
-}
-
-getPercentualOK(): number {
-  if (!this.manutencoes || this.manutencoes.length === 0) return 0;
-  const okCount = this.manutencoes.filter(m => this.verificarStatusManutencao(m) === 'OK').length;
-  return Math.round((okCount / this.manutencoes.length) * 100);
-}
-
-
-
 }

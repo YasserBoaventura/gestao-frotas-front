@@ -178,7 +178,7 @@
                 {{ calcularDistancia(viagem) || 0 }} km
               </span>
             </td>
-  
+
             <!-- Coluna Ações -->
             <td class="actions-cell">
               <div class="actions-group">
@@ -188,31 +188,31 @@
                         title="Ver detalhes">
                   <mat-icon>visibility</mat-icon>
                 </button>
-                
+
                 <!-- Botão Iniciar Viagem (apenas se status for PLANEADA) -->
-                <button *ngIf="viagem.status === 'PLANEADA'" 
+                <button *ngIf="viagem.status === 'PLANEADA'"
                         class="btn-start"
                         (click)="iniciarViagem(viagem)"
                         title="Iniciar viagem">
                   <mat-icon>play_arrow</mat-icon>
                 </button>
-                
+
                 <!-- Botão Concluir Viagem (apenas se status for EM_ANDAMENTO) -->
-                <button *ngIf="viagem.status === 'EM_ANDAMENTO'" 
+                <button *ngIf="viagem.status === 'EM_ANDAMENTO'"
                         class="btn-complete"
                         (click)="concluirViagem(viagem)"
                         title="Concluir viagem">
                   <mat-icon>check_circle</mat-icon>
                 </button>
-                
+
                 <!-- Botão Cancelar Viagem (apenas se status for PLANEADA ou EM_ANDAMENTO) -->
-                <button *ngIf="viagem.status === 'PLANEADA' || viagem.status === 'EM_ANDAMENTO'" 
+                <button *ngIf="viagem.status === 'PLANEADA' || viagem.status === 'EM_ANDAMENTO'"
                         class="btn-cancel"
                         (click)="cancelarViagem(viagem)"
                         title="Cancelar viagem">
                   <mat-icon>cancel</mat-icon>
                 </button>
-                
+
                 <!-- Botão Editar (apenas se status for PLANEADA) -->
                 <button *ngIf="viagem.status === 'PLANEADA'"
                         class="btn-edit"
@@ -220,7 +220,7 @@
                         title="Editar viagem">
                   <mat-icon>edit</mat-icon>
                 </button>
-                
+
                 <!-- Botão Eliminar (apenas se status for PLANEADA) -->
                 <button *ngIf="viagem.status === 'PLANEADA' || viagem.status === 'CANCELADA'"
                         class="btn-delete"
@@ -272,7 +272,7 @@
           <select class="form-select" formControlName="motoristaId">
             <option value="">Selecione um motorista</option>
             <option *ngFor="let item of motoristas" [value]="item.id">
-              {{item.nome}} {{item.nuit}}
+              {{item.nome}} <p>status: </p> {{item.statusMotorista}}
             </option>
           </select>
           <div class="form-error" *ngIf="viagemForm.get('motoristaId')?.invalid && viagemForm.get('motoristaId')?.touched">
@@ -286,7 +286,7 @@
           <select class="form-select" formControlName="veiculoId">
             <option value="">Selecione um veículo</option>
             <option *ngFor="let item of veiculos" [value]="item.id">
-              {{item.modelo}} - {{item.matricula}}
+              {{item.modelo}} - {{item.matricula}} status: {{item.status}}
             </option>
           </select>
           <div class="form-error" *ngIf="viagemForm.get('veiculoId')?.invalid && viagemForm.get('veiculoId')?.touched">
@@ -311,8 +311,8 @@
         <!-- Data/Hora Partida -->
         <div class="form-group">
           <label class="form-label">Data/Hora Partida *</label>
-          <input type="datetime-local" 
-                 class="form-control" 
+          <input type="datetime-local"
+                 class="form-control"
                  formControlName="dataHoraPartida"
                  (change)="onDataPartidaChange($event)">
           <div class="form-error" *ngIf="viagemForm.get('dataHoraPartida')?.invalid && viagemForm.get('dataHoraPartida')?.touched">
@@ -323,8 +323,8 @@
         <!-- Data/Hora Chegada -->
         <div class="form-group">
           <label class="form-label">Data/Hora Chegada *</label>
-          <input type="datetime-local" 
-                 class="form-control" 
+          <input type="datetime-local"
+                 class="form-control"
                  formControlName="dataHoraChegada">
           <div class="form-error" *ngIf="viagemForm.get('dataHoraChegada')?.invalid && viagemForm.get('dataHoraChegada')?.touched">
             Data de chegada é obrigatória
@@ -521,25 +521,25 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" (click)="fecharTodosModais()">Fechar</button>
-      <button *ngIf="viagemSelecionada.status === 'PLANEADA'" 
-              class="btn-primary" 
+      <button *ngIf="viagemSelecionada.status === 'PLANEADA'"
+              class="btn-primary"
               (click)="abrirModalViagem(viagemSelecionada)">
         <mat-icon>edit</mat-icon>
         Editar
       </button>
-      <button *ngIf="viagemSelecionada.status === 'PLANEADA'" 
+      <button *ngIf="viagemSelecionada.status === 'PLANEADA'"
               class="btn-start"
               (click)="iniciarViagem(viagemSelecionada)">
         <mat-icon>play_arrow</mat-icon>
         Iniciar Viagem
       </button>
-      <button *ngIf="viagemSelecionada.status === 'EM_ANDAMENTO'" 
+      <button *ngIf="viagemSelecionada.status === 'EM_ANDAMENTO'"
               class="btn-complete"
               (click)="concluirViagem(viagemSelecionada)">
         <mat-icon>check_circle</mat-icon>
         Concluir Viagem
       </button>
-      <button *ngIf="viagemSelecionada.status === 'PLANEADA' || viagemSelecionada.status === 'EM_ANDAMENTO'" 
+      <button *ngIf="viagemSelecionada.status === 'PLANEADA' || viagemSelecionada.status === 'EM_ANDAMENTO'"
               class="btn-cancel"
               (click)="cancelarViagem(viagemSelecionada)">
         <mat-icon>cancel</mat-icon>
