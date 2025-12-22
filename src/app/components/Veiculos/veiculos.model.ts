@@ -10,6 +10,7 @@ export class Veiculo {
   anoFabricacao!: number;
   capacidadeTanque!: number;
   kilometragemAtual!: number;
+  status!: string;
   marca!: Marca;
   motoristas: Motorista[]=[];
   //abastecimentoss!: any[];

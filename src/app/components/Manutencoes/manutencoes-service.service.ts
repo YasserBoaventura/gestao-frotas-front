@@ -52,6 +52,7 @@ export interface AlertaManutencao {
 export class ManutencoesServiceService {
 
  private apiUrl = "http://localhost:9001/api/manutencoes";
+ //dos veicuos
   private veiculosUrl = 'http://localhost:9001/api/veiculos';
 
   constructor(private http: HttpClient) {}

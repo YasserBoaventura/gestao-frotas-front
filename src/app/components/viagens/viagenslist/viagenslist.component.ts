@@ -406,9 +406,13 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
     if (this.isEdit) {
       this.viagemService.updateViagem(dadosParaEnviar).subscribe({
         next: (next) => {
-          Swal.fire('Sucesso', next, 'success');
+         if(next==='viagem atualizada com sucesso!'){
+         Swal.fire('Sucesso', next, 'success');
           this.carregarTudo();
           this.fecharTodosModais();
+         }else{
+          Swal.fire('erro', next, 'error');
+         }
         },
         error: (error) => {
           Swal.fire('Erro', 'Erro ao atualizar viagem: ' + error.message, 'error');
@@ -417,9 +421,14 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
     } else {
       this.viagemService.createViagem(dadosParaEnviar).subscribe({
         next: (next) => {
-          Swal.fire('Sucesso', next, 'success');
+          if(next==='viagem salva com sucesso'){
+         Swal.fire('Sucesso', next, 'success');
           this.carregarTudo();
           this.fecharTodosModais();
+         }else{
+          Swal.fire('erro', next, 'error');
+         }
+
         },
         error: (error) => {
           Swal.fire('Erro', 'Erro ao criar viagem: ' + error.message, 'error');
