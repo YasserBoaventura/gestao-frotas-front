@@ -77,11 +77,20 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
   veiculos: Veiculo[] = [];
   tiposManutencao = Object.values(TipoManutencao);
 
-  // Formulário
-  manutencaoForm!: FormGroup;
+  // Modal de Cadastro/Edição
+  mostrarModal = false;
   editando = false;
   manutencaoSelecionada: Manutencao | null = null;
-  mostrarFormulario = false;
+  carregandoModal = false;
+
+  // Formulário
+  manutencaoForm!: FormGroup;
+
+  // Modal de Ações
+  mostrarModalAcao = false;
+  tipoAcao: 'iniciar' | 'concluir' | 'cancelar' | null = null;
+  observacoes = '';
+  motivoCancelamento = '';
 
   // Filtros
   filtroVeiculo: string = '';
@@ -123,7 +132,8 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
       custo: [0, [Validators.required, Validators.min(0)]],
       kilometragemVeiculo: [0, [Validators.required, Validators.min(0)]],
       proximaManutencaoKm: [null],
-      proximaManutencaoData: [null]
+      proximaManutencaoData: [null],
+      status: ['PENDENTE']
     });
   }
 
@@ -168,6 +178,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
       kilometragemVeiculo: manutencao.kilometragemVeiculo || manutencao.kilometragemVeiculo,
       proximaManutencaoKm: manutencao.proximaManutencaoKm,
       proximaManutencaoData: manutencao.proximaManutencaoData ? new Date(manutencao.proximaManutencaoData) : undefined,
+      status: manutencao.status,
       veiculo: manutencao.veiculo || {
         id: manutencao.veiculoId,
         matricula: manutencao.veiculoMatricula,
@@ -190,6 +201,202 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     });
   }
 
+  // ============ MODAL CADASTRO/EDIÇÃO ============
+  abrirModalCadastro(manutencao?: Manutencao): void {
+    this.editando = !!manutencao;
+    this.manutencaoSelecionada = manutencao || null;
+    this.mostrarModal = true;
+    this.carregandoModal = false;
+
+    if (manutencao) {
+      // Preencher formulário para edição
+      this.manutencaoForm.patchValue({
+        veiculo_id: manutencao.veiculo?.id || '',
+        tipoManutencao: manutencao.tipoManutencao,
+        dataManutencao: manutencao.dataManutencao ? new Date(manutencao.dataManutencao) : new Date(),
+        descricao: manutencao.descricao || '',
+        custo: manutencao.custo || 0,
+        kilometragemVeiculo: manutencao.kilometragemVeiculo || 0,
+        proximaManutencaoKm: manutencao.proximaManutencaoKm || null,
+        proximaManutencaoData: manutencao.proximaManutencaoData ? new Date(manutencao.proximaManutencaoData) : null,
+        status: manutencao.status || 'PENDENTE'
+      });
+    } else {
+      // Resetar formulário para novo cadastro
+      this.manutencaoForm.reset({
+        dataManutencao: new Date(),
+        custo: 0,
+        kilometragemVeiculo: 0,
+        status: 'PENDENTE'
+      });
+    }
+  }
+
+  fecharModal(): void {
+    this.mostrarModal = false;
+    this.mostrarModalAcao = false;
+    this.editando = false;
+    this.manutencaoSelecionada = null;
+    this.tipoAcao = null;
+    this.observacoes = '';
+    this.motivoCancelamento = '';
+    this.manutencaoForm.reset();
+  }
+
+  salvarManutencao(): void {
+    if (this.manutencaoForm.invalid) {
+      this.marcarCamposTocados();
+      this.mostrarErro('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+
+    this.carregandoModal = true;
+    const formValue = this.manutencaoForm.value;
+
+    const manutencaoDTO: ManutencaoDTO = {
+      veiculo_id: formValue.veiculo_id,
+      tipoManutencao: formValue.tipoManutencao,
+      dataManutencao: formValue.dataManutencao,
+      descricao: formValue.descricao,
+      custo: formValue.custo,
+      kilometragemVeiculo: formValue.kilometragemVeiculo,
+      proximaManutencaoKm: formValue.proximaManutencaoKm,
+      proximaManutencaoData: formValue.proximaManutencaoData,
+      status: formValue.status
+
+    };
+
+    if (this.editando && this.manutencaoSelecionada?.id) {
+      // Atualizar manutenção existente
+      this.manutencaoService.update(this.manutencaoSelecionada.id, manutencaoDTO).subscribe({
+        next: () => {
+          this.carregarDados();
+          this.mostrarSucesso('Manutenção atualizada com sucesso!');
+          this.fecharModal();
+          this.carregandoModal = false;
+        },
+        error: (error) => {
+          console.error('Erro ao atualizar manutenção:', error);
+          this.mostrarErro('Erro ao atualizar manutenção');
+          this.carregandoModal = false;
+        }
+      });
+    } else {
+      // Criar nova manutenção
+      this.manutencaoService.create(manutencaoDTO).subscribe({
+        next: () => {
+          this.carregarDados();
+          this.mostrarSucesso('Manutenção cadastrada com sucesso!');
+          this.fecharModal();
+          this.carregandoModal = false;
+        },
+        error: (error) => {
+          console.error('Erro ao criar manutenção:', error);
+          this.mostrarErro('Erro ao criar manutenção');
+          this.carregandoModal = false;
+        }
+      });
+    }
+  }
+
+  // ============ MODAL AÇÕES ============
+  abrirModalAcao(tipo: 'iniciar' | 'concluir' | 'cancelar', manutencao: Manutencao): void {
+    this.tipoAcao = tipo;
+    this.manutencaoSelecionada = manutencao;
+    this.mostrarModalAcao = true;
+    this.observacoes = '';
+    this.motivoCancelamento = '';
+  }
+
+  confirmarAcao(): void {
+    if (!this.manutencaoSelecionada?.id || !this.tipoAcao) return;
+
+    this.carregando = true;
+
+    switch(this.tipoAcao) {
+      case 'iniciar':
+        this.manutencaoService.iniciarManutencao(this.manutencaoSelecionada.id).subscribe({
+          next: () => {
+            this.carregarDados();
+            this.mostrarSucesso('Manutenção iniciada com sucesso!');
+            this.fecharModal();
+          },
+          error: (error) => {
+            console.error('Erro ao iniciar manutenção:', error);
+            this.mostrarErro('Erro ao iniciar manutenção');
+            this.carregando = false;
+          }
+        });
+        break;
+
+      case 'concluir':
+        this.manutencaoService.concluirManutencao(this.manutencaoSelecionada.id, {
+          observacoes: this.observacoes
+        }).subscribe({
+          next: () => {
+            this.carregarDados();
+            this.mostrarSucesso('Manutenção concluída com sucesso!');
+            this.fecharModal();
+          },
+          error: (error) => {
+            console.error('Erro ao concluir manutenção:', error);
+            this.mostrarErro('Erro ao concluir manutenção');
+            this.carregando = false;
+          }
+        });
+        break;
+
+      case 'cancelar':
+        if (!this.motivoCancelamento.trim()) {
+          this.mostrarErro('Informe o motivo do cancelamento');
+          this.carregando = false;
+          return;
+        }
+
+        this.manutencaoService.cancelarManutencao(this.manutencaoSelecionada.id, this.motivoCancelamento).subscribe({
+          next: () => {
+            this.carregarDados();
+            this.mostrarSucesso('Manutenção cancelada com sucesso!');
+            this.fecharModal();
+          },
+          error: (error) => {
+            console.error('Erro ao cancelar manutenção:', error);
+            this.mostrarErro('Erro ao cancelar manutenção');
+            this.carregando = false;
+          }
+        });
+        break;
+    }
+  }
+
+  getTituloAcao(): string {
+    switch(this.tipoAcao) {
+      case 'iniciar': return 'Iniciar Manutenção';
+      case 'concluir': return 'Concluir Manutenção';
+      case 'cancelar': return 'Cancelar Manutenção';
+      default: return 'Ação';
+    }
+  }
+
+  getIconeAcao(): string {
+    switch(this.tipoAcao) {
+      case 'iniciar': return 'play_arrow';
+      case 'concluir': return 'check_circle';
+      case 'cancelar': return 'cancel';
+      default: return 'info';
+    }
+  }
+
+  getCorAcao(): string {
+    switch(this.tipoAcao) {
+      case 'iniciar': return '#2196f3';
+      case 'concluir': return '#4caf50';
+      case 'cancelar': return '#f44336';
+      default: return '#667eea';
+    }
+  }
+
+  // ============ FILTROS ============
   aplicarFiltros(): void {
     let dadosFiltrados = this.manutencoes;
 
@@ -197,16 +404,11 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
       const termo = this.filtroVeiculo.toLowerCase().trim();
       dadosFiltrados = dadosFiltrados.filter(m => {
         if (!m.veiculo) return false;
-
         const matricula = (m.veiculo.matricula || '').toLowerCase();
         const modelo = (m.veiculo.modelo || '').toLowerCase();
         const marca = m.veiculo.marca ?
-          (typeof m.veiculo.marca.nome === 'string' ? m.veiculo.marca.nome.toLowerCase() :
-          (m.veiculo.marca.nome || '')) : '';
-
-        return matricula.includes(termo) ||
-               modelo.includes(termo) ||
-               marca.includes(termo);
+          (typeof m.veiculo.marca.nome === 'string' ? m.veiculo.marca.nome.toLowerCase() : '') : '';
+        return matricula.includes(termo) || modelo.includes(termo) || marca.includes(termo);
       });
     }
 
@@ -215,22 +417,20 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     }
 
     if (this.filtroStatus && this.filtroStatus !== '') {
-      dadosFiltrados = dadosFiltrados.filter(m => this.verificarStatusManutencao(m) === this.filtroStatus);
+      dadosFiltrados = dadosFiltrados.filter(m => m.status === this.filtroStatus);
     }
 
     if (this.filtroDataInicio) {
       dadosFiltrados = dadosFiltrados.filter(m => {
         if (!m.dataManutencao) return false;
-        const dataManutencao = new Date(m.dataManutencao);
-        return dataManutencao >= this.filtroDataInicio!;
+        return new Date(m.dataManutencao) >= this.filtroDataInicio!;
       });
     }
 
     if (this.filtroDataFim) {
       dadosFiltrados = dadosFiltrados.filter(m => {
         if (!m.dataManutencao) return false;
-        const dataManutencao = new Date(m.dataManutencao);
-        return dataManutencao <= this.filtroDataFim!;
+        return new Date(m.dataManutencao) <= this.filtroDataFim!;
       });
     }
 
@@ -249,170 +449,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     this.mostrarSucesso('Filtros limpos com sucesso!');
   }
 
-  verificarStatusManutencao(manutencao: Manutencao): string {
-    const hoje = new Date();
-    const kmAtual = manutencao.veiculo?.kilometragemAtual || 0;
-
-    // Verificar se está vencida por data
-    if (manutencao.proximaManutencaoData && new Date(manutencao.proximaManutencaoData) < hoje) {
-      return 'VENCIDA';
-    }
-
-    // Verificar se está vencida por quilometragem
-    if (manutencao.proximaManutencaoKm && kmAtual >= manutencao.proximaManutencaoKm) {
-      return 'VENCIDA';
-    }
-
-    // Verificar se está próxima (30 dias ou 1000 km)
-    if (manutencao.proximaManutencaoData) {
-      const diasParaVencimento = Math.floor(
-        (new Date(manutencao.proximaManutencaoData).getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (diasParaVencimento <= 30 && diasParaVencimento > 0) {
-        return 'PROXIMA';
-      }
-    }
-
-    if (manutencao.proximaManutencaoKm) {
-      const kmRestantes = manutencao.proximaManutencaoKm - kmAtual;
-      if (kmRestantes <= 1000 && kmRestantes > 0) {
-        return 'PROXIMA';
-      }
-    }
-
-    return 'OK';
-  }
-
-  getStatusColor(status: string): string {
-    switch(status) {
-      case 'VENCIDA': return '#f44336';
-      case 'PROXIMA': return '#ff9800';
-      case 'OK': return '#4caf50';
-      default: return '#9e9e9e';
-    }
-  }
-
-  getTipoManutencaoLabel(tipo: any): string {
-    if (!tipo) return 'Desconhecido';
-
-    const labels: { [key: string]: string } = {
-      'PREVENTIVA': 'Preventiva',
-      'CORRETIVA': 'Corretiva',
-      'TROCA_OLEO': 'Troca de Óleo',
-      'REVISAO': 'Revisão'
-    };
-
-    return labels[tipo] || tipo;
-  }
-
-  novaManutencao(): void {
-    this.editando = false;
-    this.manutencaoSelecionada = null;
-    this.mostrarFormulario = true;
-    this.manutencaoForm.reset({
-      dataManutencao: new Date(),
-      custo: 0,
-      kilometragemVeiculo: 0
-    });
-  }
-
-  editarManutencao(manutencao: Manutencao): void {
-    this.editando = true;
-    this.manutencaoSelecionada = manutencao;
-    this.mostrarFormulario = true;
-
-    this.manutencaoForm.patchValue({
-      veiculo_id: manutencao.veiculo?.id,
-      tipoManutencao: manutencao.tipoManutencao,
-      dataManutencao: manutencao.dataManutencao ? new Date(manutencao.dataManutencao) : new Date(),
-      descricao: manutencao.descricao || '',
-      custo: manutencao.custo || 0,
-      kilometragemVeiculo: manutencao.kilometragemVeiculo || 0,
-      proximaManutencaoKm: manutencao.proximaManutencaoKm || null,
-      proximaManutencaoData: manutencao.proximaManutencaoData ? new Date(manutencao.proximaManutencaoData) : null
-    });
-  }
-
-  salvarManutencao(): void {
-    if (this.manutencaoForm.invalid) {
-      this.mostrarErro('Por favor, preencha todos os campos obrigatórios');
-      return;
-    }
-
-    const formValue = this.manutencaoForm.value;
-    const manutencaoDTO: ManutencaoDTO = {
-      veiculo_id: formValue.veiculo_id,
-      tipoManutencao: formValue.tipoManutencao,
-      dataManutencao: formValue.dataManutencao,
-      descricao: formValue.descricao,
-      custo: formValue.custo,
-      kilometragemVeiculo: formValue.kilometragemVeiculo,
-      proximaManutencaoKm: formValue.proximaManutencaoKm,
-      proximaManutencaoData: formValue.proximaManutencaoData
-    };
-
-    this.carregando = true;
-
-    if (this.editando && this.manutencaoSelecionada?.id) {
-      this.manutencaoService.update(this.manutencaoSelecionada.id, manutencaoDTO).subscribe({
-        next: (manutencaoAtualizada) => {
-          const index = this.manutencoes.findIndex(m => m.id === this.manutencaoSelecionada!.id);
-          if (index !== -1) {
-            this.manutencoes[index] = this.mapearManutencaoIndividual(manutencaoAtualizada);
-            this.dataSource.data = [...this.manutencoes];
-                 this.carregarDados();
-          }
-
-          this.mostrarSucesso('Manutenção atualizada com sucesso!');
-          this.cancelarEdicao();
-          this.carregando = false;
-        },
-        error: (error) => {
-          console.error('Erro ao atualizar manutenção:', error);
-          this.mostrarErro('Erro ao atualizar manutenção: ' + error.message);
-          this.carregando = false;
-        }
-      });
-    } else {
-      this.manutencaoService.create(manutencaoDTO).subscribe({
-        next: (novaManutencao) => {
-          this.manutencoes.push(this.mapearManutencaoIndividual(novaManutencao));
-          this.dataSource.data = [...this.manutencoes];
-           this.carregarDados();
-          this.mostrarSucesso('Manutenção registrada com sucesso!');
-          this.cancelarEdicao();
-          this.carregando = false;
-        },
-        error: (error) => {
-          console.error('Erro ao criar manutenção:', error);
-          this.mostrarErro('Erro ao criar manutenção: ' + error.message);
-          this.carregando = false;
-        }
-      });
-    }
-  }
-
-  private mapearManutencaoIndividual(manutencao: any): Manutencao {
-    return {
-      id: manutencao.id,
-      dataManutencao: manutencao.dataManutencao ? new Date(manutencao.dataManutencao) : undefined,
-      tipoManutencao: manutencao.tipoManutencao,
-      descricao: manutencao.descricao,
-      custo: manutencao.custo,
-      kilometragemVeiculo: manutencao.kilometragemVeiculo,
-      proximaManutencaoKm: manutencao.proximaManutencaoKm,
-      proximaManutencaoData: manutencao.proximaManutencaoData ? new Date(manutencao.proximaManutencaoData) : undefined,
-      veiculo: manutencao.veiculo
-    };
-  }
-
-  cancelarEdicao(): void {
-    this.manutencaoForm.reset();
-    this.editando = false;
-    this.manutencaoSelecionada = null;
-    this.mostrarFormulario = false;
-  }
-
+  // ============ OUTRAS AÇÕES ============
   excluirManutencao(manutencao: Manutencao): void {
     Swal.fire({
       title: 'Tem certeza?',
@@ -428,10 +465,8 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
         this.carregando = true;
         this.manutencaoService.delete(manutencao.id).subscribe({
           next: (mensagem) => {
-            this.manutencoes = this.manutencoes.filter(m => m.id !== manutencao.id);
-            this.dataSource.data = this.manutencoes;
+            this.carregarDados();
             this.mostrarSucesso(mensagem || 'Manutenção excluída com sucesso!');
-            this.carregando = false;
           },
           error: (error) => {
             console.error('Erro ao excluir manutenção:', error);
@@ -444,83 +479,22 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
   }
 
   verDetalhes(manutencao: Manutencao): void {
-    const status = this.verificarStatusManutencao(manutencao);
-    const statusText = status === 'VENCIDA' ? 'Vencida' :
-                      status === 'PROXIMA' ? 'Próxima' : 'OK';
-
-    const marcaNome = manutencao.veiculo?.marca ?
-      (typeof manutencao.veiculo.marca === 'string' ?
-        manutencao.veiculo.marca :
-        manutencao.veiculo.marca.nome) : '';
-
     Swal.fire({
       title: `Detalhes da Manutenção`,
       html: `
         <div style="text-align: left; font-size: 14px;">
-          <p><strong>Veículo:</strong> ${marcaNome} ${manutencao.veiculo?.modelo || ''} (${manutencao.veiculo?.matricula || 'N/A'})</p>
+          <p><strong>Veículo:</strong> ${manutencao.veiculo?.marca?.nome || manutencao.veiculo?.marca} ${manutencao.veiculo?.modelo || ''} (${manutencao.veiculo?.matricula || 'N/A'})</p>
           <p><strong>Tipo:</strong> ${this.getTipoManutencaoLabel(manutencao.tipoManutencao)}</p>
           <p><strong>Data:</strong> ${manutencao.dataManutencao ? new Date(manutencao.dataManutencao).toLocaleDateString('pt-BR') : 'Não informada'}</p>
           <p><strong>Quilometragem:</strong> ${(manutencao.kilometragemVeiculo || 0).toLocaleString('pt-BR')} km</p>
           <p><strong>Custo:</strong> R$ ${(manutencao.custo || 0).toFixed(2)}</p>
           <p><strong>Descrição:</strong> ${manutencao.descricao || 'Não informada'}</p>
-          <p><strong>Próxima manutenção (km):</strong> ${manutencao.proximaManutencaoKm ? manutencao.proximaManutencaoKm.toLocaleString('pt-BR') + ' km' : 'Não definido'}</p>
-          <p><strong>Próxima manutenção (data):</strong> ${manutencao.proximaManutencaoData ? new Date(manutencao.proximaManutencaoData).toLocaleDateString('pt-BR') : 'Não definida'}</p>
-          <p><strong>Status:</strong> <span style="color: ${this.getStatusColor(status)}">${statusText}</span></p>
+          <p><strong>Status:</strong> <span style="color: ${this.getStatusColor(manutencao.status!)}; font-weight: bold">${this.getStatusLabel(manutencao.status!)}</span></p>
         </div>
       `,
       icon: 'info',
       confirmButtonText: 'Fechar',
       width: '600px'
-    });
-  }
-
-  verManutencoesVencidas(): void {
-    this.carregando = true;
-    this.manutencaoService.getVencidas().subscribe({
-      next: (vencidas) => {
-        const dadosMapeados = this.mapearManutencoes(vencidas);
-        this.dataSource.data = dadosMapeados;
-        this.filtroStatus = 'VENCIDA';
-
-        // Limpa outros filtros
-        this.filtroVeiculo = '';
-        this.filtroTipo = '';
-        this.filtroDataInicio = null;
-        this.filtroDataFim = null;
-
-        this.carregando = false;
-        this.mostrarSucesso(`${vencidas.length} manutenção(ões) vencida(s) encontrada(s)`);
-      },
-      error: (error) => {
-        console.error('Erro ao carregar manutenções vencidas:', error);
-        this.mostrarErro('Erro ao carregar manutenções vencidas');
-        this.carregando = false;
-      }
-    });
-  }
-
-  verManutencoesProximas(): void {
-    this.carregando = true;
-    this.manutencaoService.getProximas().subscribe({
-      next: (proximas) => {
-        const dadosMapeados = this.mapearManutencoes(proximas);
-        this.dataSource.data = dadosMapeados;
-        this.filtroStatus = 'PROXIMA';
-
-        // Limpa outros filtros
-        this.filtroVeiculo = '';
-        this.filtroTipo = '';
-        this.filtroDataInicio = null;
-        this.filtroDataFim = null;
-
-        this.carregando = false;
-        this.mostrarSucesso(`${proximas.length} manutenção(ões) próxima(s) encontrada(s)`);
-      },
-      error: (error) => {
-        console.error('Erro ao carregar manutenções próximas:', error);
-        this.mostrarErro('Erro ao carregar manutenções próximas');
-        this.carregando = false;
-      }
     });
   }
 
@@ -562,40 +536,72 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     }
   }
 
-  exportarRelatorio(): void {
-    Swal.fire({
-      title: 'Exportar Relatório',
-      text: 'Selecione o formato de exportação',
-      icon: 'info',
-      showCancelButton: true,
-      confirmButtonText: 'PDF',
-      cancelButtonText: 'Excel',
-      showDenyButton: true,
-      denyButtonText: 'CSV'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.exportarPDF();
-      } else if (result.isDenied) {
-        this.exportarCSV();
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        this.exportarExcel();
-      }
+  // ============ MÉTODOS AUXILIARES ============
+  getTipoManutencaoLabel(tipo: any): string {
+    if (!tipo) return 'Desconhecido';
+    const labels: { [key: string]: string } = {
+      'PREVENTIVA': 'Preventiva',
+      'CORRETIVA': 'Corretiva',
+      'TROCA_OLEO': 'Troca de Óleo',
+      'REVISAO': 'Revisão'
+    };
+    return labels[tipo] || tipo;
+  }
+
+  getStatusLabel(status: string): string {
+    const labels: { [key: string]: string } = {
+      'PENDENTE': 'Pendente',
+      'EM_ANDAMENTO': 'Em Andamento',
+      'CONCLUIDA': 'Concluída',
+      'CANCELADA': 'Cancelada'
+    };
+    return labels[status] || status;
+  }
+
+  getStatusColor(status: string): string {
+    const colors: { [key: string]: string } = {
+      'PENDENTE': '#ff9800',
+      'EM_ANDAMENTO': '#2196f3',
+      'CONCLUIDA': '#4caf50',
+      'CANCELADA': '#f44336'
+    };
+    return colors[status] || '#9e9e9e';
+  }
+
+  formatarData(data?: Date): string {
+    if (!data) return 'Não definida';
+    return data.toLocaleDateString('pt-BR');
+  }
+
+  formatarMoeda(valor?: number): string {
+    if (!valor) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor);
+  }
+
+  marcarCamposTocados(): void {
+    Object.values(this.manutencaoForm.controls).forEach(control => {
+      control.markAsTouched();
     });
   }
 
-  exportarPDF(): void {
-    this.mostrarSucesso('Funcionalidade PDF em desenvolvimento');
+  mostrarSucesso(mensagem: string): void {
+    this.snackBar.open(mensagem, 'Fechar', {
+      duration: 3000,
+      panelClass: ['snackbar-success']
+    });
   }
 
-  exportarExcel(): void {
-    this.mostrarSucesso('Funcionalidade Excel em desenvolvimento');
+  mostrarErro(mensagem: string): void {
+    this.snackBar.open(mensagem, 'Fechar', {
+      duration: 3000,
+      panelClass: ['snackbar-error']
+    });
   }
 
-  exportarCSV(): void {
-    this.mostrarSucesso('Funcionalidade CSV em desenvolvimento');
-  }
-
-  // Métodos para o resumo (baseados nos dados filtrados)
+  // Métodos para o resumo (mantidos do código original)
   getTotalCount(): number {
     return this.dataSource.data?.length || 0;
   }
@@ -655,6 +661,37 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     return Math.round((okCount / dados.length) * 100);
   }
 
+  verificarStatusManutencao(manutencao: Manutencao): string {
+    const hoje = new Date();
+    const kmAtual = manutencao.veiculo?.kilometragemAtual || 0;
+
+    if (manutencao.proximaManutencaoData && new Date(manutencao.proximaManutencaoData) < hoje) {
+      return 'VENCIDA';
+    }
+
+    if (manutencao.proximaManutencaoKm && kmAtual >= manutencao.proximaManutencaoKm) {
+      return 'VENCIDA';
+    }
+
+    if (manutencao.proximaManutencaoData) {
+      const diasParaVencimento = Math.floor(
+        (new Date(manutencao.proximaManutencaoData).getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (diasParaVencimento <= 30 && diasParaVencimento > 0) {
+        return 'PROXIMA';
+      }
+    }
+
+    if (manutencao.proximaManutencaoKm) {
+      const kmRestantes = manutencao.proximaManutencaoKm - kmAtual;
+      if (kmRestantes <= 1000 && kmRestantes > 0) {
+        return 'PROXIMA';
+      }
+    }
+
+    return 'OK';
+  }
+
   getTiposDistribuicao(): any[] {
     const dados = this.dataSource.data || [];
     if (dados.length === 0) return [];
@@ -666,13 +703,11 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
       percentual: 0
     }));
 
-    // Contar ocorrências
     dados.forEach(m => {
       const tipo = tipos.find(t => t.key === m.tipoManutencao);
       if (tipo) tipo.count++;
     });
 
-    // Calcular percentuais
     tipos.forEach(tipo => {
       tipo.percentual = Math.round((tipo.count / dados.length) * 100);
     });
@@ -680,72 +715,11 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     return tipos.filter(t => t.count > 0);
   }
 
-  // Verifica se há filtros ativos
   temFiltrosAtivos(): boolean {
     return !!this.filtroVeiculo ||
            !!this.filtroTipo ||
            !!this.filtroStatus ||
            !!this.filtroDataInicio ||
            !!this.filtroDataFim;
-  }
-
-  getResumoFiltros(): string {
-    const filtros = [];
-
-    if (this.filtroVeiculo) {
-      filtros.push(`Veículo: ${this.filtroVeiculo}`);
-    }
-    if (this.filtroTipo) {
-      filtros.push(`Tipo: ${this.getTipoManutencaoLabel(this.filtroTipo)}`);
-    }
-    if (this.filtroStatus) {
-      filtros.push(`Status: ${this.filtroStatus}`);
-    }
-    if (this.filtroDataInicio) {
-      filtros.push(`De: ${this.formatarData(this.filtroDataInicio)}`);
-    }
-    if (this.filtroDataFim) {
-      filtros.push(`Até: ${this.formatarData(this.filtroDataFim)}`);
-    }
-
-    return filtros.length > 0 ? filtros.join(' | ') : 'Sem filtros';
-  }
-
-  // Métodos auxiliares para a view
-  formatarData(data?: Date): string {
-    if (!data) return 'Não definida';
-    return data.toLocaleDateString('pt-BR');
-  }
-
-  formatarMoeda(valor?: number): string {
-    if (!valor) return 'MT$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor);
-  }
-
-  getStatusText(status: string): string {
-    switch(status) {
-      case 'VENCIDA': return 'Vencida';
-      case 'PROXIMA': return 'Próxima';
-      case 'URGENTE': return 'Urgente';
-      case 'OK': return 'OK';
-      default: return status;
-    }
-  }
-
-  private mostrarSucesso(mensagem: string): void {
-    this.snackBar.open(mensagem, 'Fechar', {
-      duration: 3000,
-      panelClass: ['snackbar-success']
-    });
-  }
-
-  private mostrarErro(mensagem: string): void {
-    this.snackBar.open(mensagem, 'Fechar', {
-      duration: 3000,
-      panelClass: ['snackbar-error']
-    });
   }
 }

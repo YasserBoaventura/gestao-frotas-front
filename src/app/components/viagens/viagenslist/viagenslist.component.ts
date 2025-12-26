@@ -421,6 +421,7 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
     } else {
       this.viagemService.createViagem(dadosParaEnviar).subscribe({
         next: (next) => {
+
           if(next==='viagem salva com sucesso'){
          Swal.fire('Sucesso', next, 'success');
           this.carregarTudo();
@@ -456,6 +457,7 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
       if (result.isConfirmed) {
         this.viagemService.iniciarViagem(viagem.id!).subscribe({
           next: (viagemAtualizada) => {
+            console.log("Porsnfjn"+viagemAtualizada);
             Swal.fire({
               title: 'Viagem Iniciada!',
               text: 'A viagem foi iniciada com sucesso.',

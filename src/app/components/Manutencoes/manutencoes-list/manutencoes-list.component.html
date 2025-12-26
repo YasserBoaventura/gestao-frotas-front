@@ -1,4 +1,205 @@
 <div class="manutencoes-container">
+  <!-- Overlay e Modais -->
+  <div class="modal-overlay" *ngIf="mostrarModal || mostrarModalAcao" (click)="fecharModal()">
+    <!-- Modal de Cadastro/Edição -->
+    <div *ngIf="mostrarModal" class="modal-form" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">
+          <mat-icon class="modal-icon">{{editando ? 'edit' : 'add'}}</mat-icon>
+          <h2>{{editando ? 'Editar Manutenção' : 'Nova Manutenção'}}</h2>
+        </div>
+        <button class="btn-close" (click)="fecharModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-content">
+        <form [formGroup]="manutencaoForm" class="form-grid">
+          <!-- Veículo -->
+          <div class="form-group">
+            <label class="form-label">Veículo *</label>
+            <mat-select formControlName="veiculo_id" class="form-control-select">
+              <mat-option value="">Selecione um veículo</mat-option>
+              <mat-option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                {{veiculo.matricula}} - {{veiculo.marca.nome}} {{veiculo.modelo}} ({{veiculo.kilometragemAtual | number}} km)
+              </mat-option>
+            </mat-select>
+            <div class="form-error" *ngIf="manutencaoForm.get('veiculo_id')?.invalid && manutencaoForm.get('veiculo_id')?.touched">
+              Veículo é obrigatório
+            </div>
+          </div>
+
+          <!-- Tipo -->
+          <div class="form-group">
+            <label class="form-label">Tipo de Manutenção *</label>
+            <mat-select formControlName="tipoManutencao" class="form-control-select">
+              <mat-option value="">Selecione um tipo</mat-option>
+              <mat-option *ngFor="let tipo of tiposManutencao" [value]="tipo">
+                {{getTipoManutencaoLabel(tipo)}}
+              </mat-option>
+            </mat-select>
+            <div class="form-error" *ngIf="manutencaoForm.get('tipoManutencao')?.invalid && manutencaoForm.get('tipoManutencao')?.touched">
+              Tipo é obrigatório
+            </div>
+          </div>
+
+          <!-- Data -->
+          <div class="form-group">
+            <label class="form-label">Data da Manutenção *</label>
+            <input matInput [matDatepicker]="picker" formControlName="dataManutencao" class="form-control">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <div class="form-error" *ngIf="manutencaoForm.get('dataManutencao')?.invalid && manutencaoForm.get('dataManutencao')?.touched">
+              Data é obrigatória
+            </div>
+          </div>
+
+          <!-- Quilometragem -->
+          <div class="form-group">
+            <label class="form-label">Quilometragem (km) *</label>
+            <input matInput type="number" formControlName="kilometragemVeiculo" class="form-control">
+            <div class="form-error" *ngIf="manutencaoForm.get('kilometragemVeiculo')?.invalid && manutencaoForm.get('kilometragemVeiculo')?.touched">
+              Quilometragem é obrigatória
+            </div>
+          </div>
+
+          <!-- Custo -->
+          <div class="form-group">
+            <label class="form-label">Custo (R$) *</label>
+            <input matInput type="number" step="0.01" formControlName="custo" class="form-control">
+            <div class="form-error" *ngIf="manutencaoForm.get('custo')?.invalid && manutencaoForm.get('custo')?.touched">
+              Custo é obrigatório
+            </div>
+          </div>
+
+          <!-- Status (só na edição) -->
+          <div class="form-group" *ngIf="editando">
+            <label class="form-label">Status</label>
+            <mat-select formControlName="status" class="form-control-select">
+              <mat-option value="PENDENTE">Pendente</mat-option>
+              <mat-option value="EM_ANDAMENTO">Em Andamento</mat-option>
+              <mat-option value="CONCLUIDA">Concluída</mat-option>
+              <mat-option value="CANCELADA">Cancelada</mat-option>
+            </mat-select>
+          </div>
+
+          <!-- Próxima KM -->
+          <div class="form-group">
+            <label class="form-label">Próxima Manutenção (km)</label>
+            <input matInput type="number" formControlName="proximaManutencaoKm" class="form-control">
+          </div>
+
+          <!-- Próxima Data -->
+          <div class="form-group">
+            <label class="form-label">Próxima Manutenção (data)</label>
+            <input matInput [matDatepicker]="pickerProxima" formControlName="proximaManutencaoData" class="form-control">
+            <mat-datepicker-toggle matSuffix [for]="pickerProxima"></mat-datepicker-toggle>
+            <mat-datepicker #pickerProxima></mat-datepicker>
+          </div>
+
+          <!-- Botão calcular automático -->
+          <div class="form-group">
+            <button type="button" class="btn-calc" (click)="calcularProximaManutencao()">
+              <mat-icon>calculate</mat-icon>
+              Calcular Automático
+            </button>
+          </div>
+
+          <!-- Descrição -->
+          <div class="form-group full-width">
+            <label class="form-label">Descrição *</label>
+            <textarea matInput formControlName="descricao" rows="3" class="form-control" placeholder="Descreva os serviços realizados..."></textarea>
+            <div class="form-error" *ngIf="manutencaoForm.get('descricao')?.invalid && manutencaoForm.get('descricao')?.touched">
+              Descrição é obrigatória (mínimo 5 caracteres)
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="fecharModal()">
+          <mat-icon>cancel</mat-icon>
+          Cancelar
+        </button>
+        <button class="btn-save" (click)="salvarManutencao()" [disabled]="manutencaoForm.invalid || carregandoModal">
+          <mat-icon *ngIf="!carregandoModal">save</mat-icon>
+          <span *ngIf="carregandoModal" class="spinner-border spinner-border-sm"></span>
+          {{editando ? 'Atualizar' : 'Salvar'}}
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal de Ações -->
+    <div *ngIf="mostrarModalAcao && tipoAcao && manutencaoSelecionada" class="modal-acao" (click)="$event.stopPropagation()">
+      <div class="modal-header" [style.background]="getCorAcao()">
+        <div class="modal-title">
+          <mat-icon class="modal-icon">{{getIconeAcao()}}</mat-icon>
+          <h2>{{getTituloAcao()}}</h2>
+        </div>
+        <button class="btn-close" (click)="fecharModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-content">
+        <div class="acao-content">
+          <div class="acao-icon" [style.color]="getCorAcao()">
+            <mat-icon>{{getIconeAcao()}}</mat-icon>
+          </div>
+
+          <h3>{{getTituloAcao()}}</h3>
+
+          <div class="acao-info">
+            <p><strong>Veículo:</strong> {{manutencaoSelecionada.veiculo?.matricula || 'N/A'}}</p>
+            <p><strong>Tipo:</strong> {{getTipoManutencaoLabel(manutencaoSelecionada.tipoManutencao)}}</p>
+            <p><strong>Data:</strong> {{formatarData(manutencaoSelecionada.dataManutencao)}}</p>
+          </div>
+
+          <!-- Campos específicos por ação -->
+          <div *ngIf="tipoAcao === 'concluir'" class="acao-field">
+            <label class="form-label">Observações (opcional)</label>
+            <textarea [(ngModel)]="observacoes" rows="3" class="form-control"
+                      placeholder="Adicione observações sobre a conclusão..."></textarea>
+          </div>
+
+          <div *ngIf="tipoAcao === 'cancelar'" class="acao-field">
+            <label class="form-label">Motivo do Cancelamento *</label>
+            <textarea [(ngModel)]="motivoCancelamento" rows="3" class="form-control"
+                      placeholder="Informe o motivo do cancelamento..." required></textarea>
+            <div class="form-error" *ngIf="!motivoCancelamento">
+              Motivo é obrigatório
+            </div>
+          </div>
+
+          <div class="acao-warning" *ngIf="tipoAcao === 'iniciar'">
+            <mat-icon>info</mat-icon>
+            <span>A manutenção será marcada como "Em Andamento".</span>
+          </div>
+
+          <div class="acao-warning" *ngIf="tipoAcao === 'cancelar'">
+            <mat-icon>warning</mat-icon>
+            <span>Esta ação não pode ser desfeita.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="fecharModal()">
+          <mat-icon>cancel</mat-icon>
+          Cancelar
+        </button>
+        <button class="btn-confirm"
+                (click)="confirmarAcao()"
+                [disabled]="carregando || (tipoAcao === 'cancelar' && !motivoCancelamento)"
+                [style.background]="getCorAcao()">
+          <mat-icon *ngIf="!carregando">{{getIconeAcao()}}</mat-icon>
+          <span *ngIf="carregando" class="spinner-border spinner-border-sm"></span>
+          {{tipoAcao === 'iniciar' ? 'Iniciar' : tipoAcao === 'concluir' ? 'Concluir' : 'Cancelar'}}
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Header -->
   <div class="header">
     <div class="header-title">
@@ -9,7 +210,7 @@
       <button class="btn-reload" (click)="carregarDados()" [disabled]="carregando" title="Recarregar lista">
         <mat-icon>refresh</mat-icon>
       </button>
-      <button class="btn-add" (click)="novaManutencao()">
+      <button class="btn-add" (click)="abrirModalCadastro()">
         <mat-icon>add</mat-icon>
         Nova Manutenção
       </button>
@@ -40,114 +241,6 @@
               <mat-icon class="alerta-icon">warning</mat-icon>
               <span class="alerta-text">{{alerta}}</span>
             </div>
-          </div>
-          <div class="alert-actions mt-3">
-            <button class="btn-alerta" (click)="verManutencoesVencidas()">
-              <mat-icon>visibility</mat-icon>
-              Ver Vencidas
-            </button>
-            <button class="btn-alerta" (click)="verManutencoesProximas()">
-              <mat-icon>schedule</mat-icon>
-              Ver Próximas
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Formulário (quando aberto) -->
-    <div *ngIf="mostrarFormulario" class="form-section">
-      <div class="card">
-        <div class="card-body">
-          <div class="form-header">
-            <h4 class="card-title">
-              <mat-icon>{{editando ? 'edit' : 'add'}}</mat-icon>
-              {{editando ? 'Editar Manutenção' : 'Nova Manutenção'}}
-            </h4>
-            <button class="btn-close-form" (click)="cancelarEdicao()">
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-          <form [formGroup]="manutencaoForm">
-            <div class="form-grid">
-              <!-- Veículo -->
-              <div class="form-group">
-                <label>Veículo *</label>
-                <mat-select formControlName="veiculo_id" class="form-control-select">
-                  <mat-option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
-                    {{veiculo.matricula}} - {{veiculo.marca.nome}} {{veiculo.modelo}} ({{veiculo.kilometragemAtual | number}} km)
-                  </mat-option>
-                </mat-select>
-              </div>
-
-              <!-- Tipo -->
-              <div class="form-group">
-                <label>Tipo de Manutenção *</label>
-                <mat-select formControlName="tipoManutencao" class="form-control-select">
-                  <mat-option *ngFor="let tipo of tiposManutencao" [value]="tipo">
-                    {{getTipoManutencaoLabel(tipo)}}
-                  </mat-option>
-                </mat-select>
-              </div>
-
-              <!-- Data -->
-              <div class="form-group">
-                <label>Data da Manutenção *</label>
-                <input matInput [matDatepicker]="picker" formControlName="dataManutencao" class="form-control">
-                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                <mat-datepicker #picker></mat-datepicker>
-              </div>
-
-              <!-- Quilometragem -->
-              <div class="form-group">
-                <label>Quilometragem (km) *</label>
-                <input matInput type="number" formControlName="kilometragemVeiculo" class="form-control">
-              </div>
-
-              <!-- Custo -->
-              <div class="form-group">
-                <label>Custo (R$) *</label>
-                <input matInput type="number" step="0.01" formControlName="custo" class="form-control">
-              </div>
-
-              <!-- Próxima KM -->
-              <div class="form-group">
-                <label>Próxima Manutenção (km)</label>
-                <input matInput type="number" formControlName="proximaManutencaoKm" class="form-control">
-              </div>
-
-              <!-- Próxima Data -->
-              <div class="form-group">
-                <label>Próxima Manutenção (data)</label>
-                <input matInput [matDatepicker]="pickerProxima" formControlName="proximaManutencaoData" class="form-control">
-                <mat-datepicker-toggle matSuffix [for]="pickerProxima"></mat-datepicker-toggle>
-                <mat-datepicker #pickerProxima></mat-datepicker>
-              </div>
-
-              <!-- Botão calcular automático -->
-              <div class="form-group">
-                <button class="btn-calc" (click)="calcularProximaManutencao()">
-                  <mat-icon>calculate</mat-icon>
-                  Calcular Automático
-                </button>
-              </div>
-
-              <!-- Descrição -->
-              <div class="form-group full-width">
-                <label>Descrição *</label>
-                <textarea matInput formControlName="descricao" rows="3" class="form-control" placeholder="Descreva os serviços realizados..."></textarea>
-              </div>
-            </div>
-          </form>
-          <div class="form-actions">
-            <button class="btn-save" (click)="salvarManutencao()" [disabled]="manutencaoForm.invalid || carregando">
-              <mat-icon>save</mat-icon>
-              {{editando ? 'Atualizar' : 'Salvar'}}
-            </button>
-            <button class="btn-cancel" (click)="cancelarEdicao()">
-              <mat-icon>cancel</mat-icon>
-              Cancelar
-            </button>
           </div>
         </div>
       </div>
@@ -184,27 +277,11 @@
               <label>Status</label>
               <mat-select [(ngModel)]="filtroStatus" class="form-control-select" (selectionChange)="aplicarFiltros()">
                 <mat-option value="">Todos</mat-option>
-                <mat-option value="OK">OK</mat-option>
-                <mat-option value="PROXIMA">Próxima</mat-option>
-                <mat-option value="VENCIDA">Vencida</mat-option>
-                <mat-option value="URGENTE">Urgente</mat-option>
+                <mat-option value="PENDENTE">Pendente</mat-option>
+                <mat-option value="EM_ANDAMENTO">Em Andamento</mat-option>
+                <mat-option value="CONCLUIDA">Concluída</mat-option>
+                <mat-option value="CANCELADA">Cancelada</mat-option>
               </mat-select>
-            </div>
-
-            <!-- Data Início -->
-            <div class="filter-group">
-              <label>Data Início</label>
-              <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="filtroDataInicio" class="form-control" (dateChange)="aplicarFiltros()">
-              <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
-              <mat-datepicker #pickerInicio></mat-datepicker>
-            </div>
-
-            <!-- Data Fim -->
-            <div class="filter-group">
-              <label>Data Fim</label>
-              <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtroDataFim" class="form-control" (dateChange)="aplicarFiltros()">
-              <mat-datepicker-toggle matSuffix [for]="pickerFim"></mat-datepicker-toggle>
-              <mat-datepicker #pickerFim></mat-datepicker>
             </div>
           </div>
           <div class="filter-actions">
@@ -216,10 +293,6 @@
               <mat-icon>clear</mat-icon>
               Limpar Filtros
             </button>
-            <span *ngIf="temFiltrosAtivos()" class="filtros-info">
-              <mat-icon>filter_alt</mat-icon>
-              Filtros ativos
-            </span>
           </div>
         </div>
       </div>
@@ -233,14 +306,7 @@
             <h4 class="card-title">
               <mat-icon class="me-2">assessment</mat-icon>
               Resumo das Manutenções
-              <span *ngIf="temFiltrosAtivos()" class="filtro-ativo-badge">
-                <mat-icon>filter_alt</mat-icon>
-                Filtros Ativos
-              </span>
             </h4>
-            <button class="btn-info" matTooltip="Os valores do resumo refletem os filtros aplicados" matTooltipPosition="left">
-              <mat-icon>info</mat-icon>
-            </button>
           </div>
 
           <div class="summary-grid">
@@ -318,23 +384,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Detalhamento por Tipo -->
-          <div class="type-breakdown mt-4" *ngIf="getTiposDistribuicao().length > 0">
-            <h5 class="breakdown-title">
-              <mat-icon class="me-2">pie_chart</mat-icon>
-              Distribuição por Tipo
-            </h5>
-            <div class="breakdown-grid">
-              <div *ngFor="let tipo of getTiposDistribuicao()" class="breakdown-item">
-                <span class="breakdown-type">{{tipo.label}}</span>
-                <div class="breakdown-bar">
-                  <div class="bar-fill" [style.width.%]="tipo.percentual" [class]="'fill-' + tipo.key.toLowerCase()"></div>
-                </div>
-                <span class="breakdown-count">{{tipo.count}} ({{tipo.percentual}}%)</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -348,10 +397,6 @@
             Custo total: {{formatarMoeda(getTotalCusto())}}
           </span>
         </span>
-        <button class="btn-export" (click)="exportarRelatorio()">
-          <mat-icon>download</mat-icon>
-          Exportar
-        </button>
       </div>
       <table class="manutencoes-table">
         <thead>
@@ -418,8 +463,8 @@
 
             <!-- Coluna Status -->
             <td class="status-cell">
-              <span class="status-badge status-{{verificarStatusManutencao(manutencao).toLowerCase()}}">
-                {{getStatusText(verificarStatusManutencao(manutencao))}}
+              <span class="status-badge" [style.background-color]="getStatusColor(manutencao.status!)">
+                {{getStatusLabel(manutencao.status!)}}
               </span>
             </td>
 
@@ -428,9 +473,26 @@
               <button class="btn-view" (click)="verDetalhes(manutencao)" title="Detalhes">
                 <mat-icon>visibility</mat-icon>
               </button>
-              <button class="btn-edit" (click)="editarManutencao(manutencao)" title="Editar">
+              <button class="btn-edit" (click)="abrirModalCadastro(manutencao)" title="Editar">
                 <mat-icon>edit</mat-icon>
               </button>
+
+              <!-- Botões condicionais por status -->
+              <button *ngIf="manutencao.status === 'PENDENTE'" class="btn-success"
+                      (click)="abrirModalAcao('iniciar', manutencao)" title="Iniciar Manutenção">
+                <mat-icon>play_arrow</mat-icon>
+              </button>
+
+              <button *ngIf="manutencao.status === 'EM_ANDAMENTO'" class="btn-primary"
+                      (click)="abrirModalAcao('concluir', manutencao)" title="Concluir Manutenção">
+                <mat-icon>check_circle</mat-icon>
+              </button>
+
+              <button *ngIf="manutencao.status === 'PENDENTE' || manutencao.status === 'EM_ANDAMENTO'"
+                      class="btn-warning" (click)="abrirModalAcao('cancelar', manutencao)" title="Cancelar Manutenção">
+                <mat-icon>cancel</mat-icon>
+              </button>
+
               <button class="btn-delete" (click)="excluirManutencao(manutencao)" title="Excluir">
                 <mat-icon>delete</mat-icon>
               </button>
@@ -456,7 +518,7 @@
         <p *ngIf="!filtroVeiculo && !filtroTipo && !filtroStatus">
           Comece registrando sua primeira manutenção
         </p>
-        <button class="btn-add-empty" (click)="novaManutencao()">
+        <button class="btn-add-empty" (click)="abrirModalCadastro()">
           <mat-icon>add</mat-icon>
           Nova Manutenção
         </button>
