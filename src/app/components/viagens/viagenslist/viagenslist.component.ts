@@ -256,7 +256,7 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
       const dataChegadaFormatada = this.formatarDataParaInput(viagem.dataHoraChegada);
 
       this.viagemForm.patchValue({
-        ...viagem,
+        ...viagem, 
         dataHoraPartida: dataPartidaFormatada,
         dataHoraChegada: dataChegadaFormatada,
         motoristaId: viagem.motorista?.id || '',

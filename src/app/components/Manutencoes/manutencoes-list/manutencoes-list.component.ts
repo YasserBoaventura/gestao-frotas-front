@@ -330,9 +330,9 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
         break;
 
       case 'concluir':
-        this.manutencaoService.concluirManutencao(this.manutencaoSelecionada.id, {
-          observacoes: this.observacoes
-        }).subscribe({
+        this.manutencaoService.concluirManutencao(this.manutencaoSelecionada.id,
+        this.observacoes
+        ).subscribe({
           next: () => {
             this.carregarDados();
             this.mostrarSucesso('Manutenção concluída com sucesso!');

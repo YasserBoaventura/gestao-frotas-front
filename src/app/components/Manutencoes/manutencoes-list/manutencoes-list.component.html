@@ -78,6 +78,7 @@
             <mat-select formControlName="status" class="form-control-select">
               <mat-option value="PENDENTE">Pendente</mat-option>
               <mat-option value="EM_ANDAMENTO">Em Andamento</mat-option>
+              <mat-option  value="URGENTE"> Urgente</mat-option>
               <mat-option value="CONCLUIDA">Concluída</mat-option>
               <mat-option value="CANCELADA">Cancelada</mat-option>
             </mat-select>
@@ -478,7 +479,9 @@
               </button>
 
               <!-- Botões condicionais por status -->
-              <button *ngIf="manutencao.status === 'PENDENTE'" class="btn-success"
+            <button *ngIf="manutencao.status === 'ATRASADA' || manutencao.status === 'AGENDADA_HOJE'||
+            manutencao.status === 'AGENDADA'"
+              class="btn-success"
                       (click)="abrirModalAcao('iniciar', manutencao)" title="Iniciar Manutenção">
                 <mat-icon>play_arrow</mat-icon>
               </button>
