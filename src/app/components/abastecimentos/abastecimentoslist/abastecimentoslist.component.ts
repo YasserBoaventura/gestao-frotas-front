@@ -170,7 +170,7 @@ export class AbastecimentoListComponent implements OnInit {
 
   carregarDados(): void {
     this.carregando = true;
-    
+
     forkJoin({
       veiculos: this.veiculoService.getVehicles(),
       abastecimentos: this.abastecimentoService.getAbastecimentos(),
@@ -179,10 +179,10 @@ export class AbastecimentoListComponent implements OnInit {
       next: ({ veiculos, abastecimentos, viagens }) => {
         this.veiculos = veiculos;
         this.viagens = viagens;
-        
+
         console.log('Veículos carregados:', veiculos);
         console.log('Abastecimentos carregados:', abastecimentos);
-        
+
         // Garantir que todos os abastecimentos têm status
         this.abastecimentos = abastecimentos.map(abastecimento => ({
           ...abastecimento,
@@ -191,7 +191,7 @@ export class AbastecimentoListComponent implements OnInit {
           // Garantir status
           statusAbastecimento: abastecimento.statusAbastecimento || 'PLANEADA'
         }));
-        
+
         this.filteredAbastecimentos = [...this.abastecimentos];
         this.totalItems = this.abastecimentos.length;
         this.calcularEstatisticas();
@@ -208,7 +208,7 @@ export class AbastecimentoListComponent implements OnInit {
   onVeiculoChange(veiculoId: number | null): void {
     if (veiculoId) {
       // Filtrar viagens por veículo
-      this.viagensDoVeiculo = this.viagens.filter(viagem => 
+      this.viagensDoVeiculo = this.viagens.filter(viagem =>
         viagem.veiculo?.id === veiculoId
       );
       console.log('Viagens filtradas para veículo', veiculoId, ':', this.viagensDoVeiculo);
@@ -234,7 +234,7 @@ export class AbastecimentoListComponent implements OnInit {
 
     this.editando = false;
     this.mostrarFormulario = true;
-    
+
     // Resetar formulário com valores padrão
     const dataAtual = new Date();
     this.abastecimentoForm.reset({
@@ -247,10 +247,10 @@ export class AbastecimentoListComponent implements OnInit {
       veiculoId: null,
       viagemId: null
     });
-    
+
     this.viagensDoVeiculo = [];
     this.valorCalculado = 0;
-    
+
     // Scroll para o formulário
     setTimeout(() => {
       document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth' });
@@ -268,26 +268,26 @@ export class AbastecimentoListComponent implements OnInit {
 
     this.editando = true;
     this.mostrarFormulario = true;
-    
+
     console.log('Editando abastecimento:', abastecimento);
-    
+
     // Obter o ID do veículo (pode vir de diferentes propriedades)
     const veiculoId = abastecimento.veiculo?.id || abastecimento.veiculoId;
     console.log('Veículo ID:', veiculoId);
-    
+
     // Formatar data para input
     const dataFormatada = this.formatarDataParaInput(new Date(abastecimento.dataAbastecimento));
-    
+
     // Primeiro setar o veículo para carregar as viagens
     this.abastecimentoForm.patchValue({
       veiculoId: veiculoId
     });
-    
+
     // Carregar viagens do veículo
     if (veiculoId) {
       this.onVeiculoChange(veiculoId);
     }
-    
+
     // Aguardar um pouco para carregar as viagens antes de preencher o restante
     setTimeout(() => {
       this.abastecimentoForm.patchValue({
@@ -300,11 +300,11 @@ export class AbastecimentoListComponent implements OnInit {
         quantidadeLitros: abastecimento.quantidadeLitros,
         precoPorLitro: abastecimento.precoPorLitro
       });
-      
+
       this.calcularValorTotal();
       console.log('Formulário preenchido:', this.abastecimentoForm.value);
     }, 300);
-    
+
     // Scroll para o formulário
     setTimeout(() => {
       document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth' });
@@ -319,7 +319,7 @@ export class AbastecimentoListComponent implements OnInit {
     });
 
     if (this.abastecimentoForm.invalid) {
-      this.snackBar.open('Preencha todos os campos obrigatórios corretamente', 'Fechar', { 
+      this.snackBar.open('Preencha todos os campos obrigatórios corretamente', 'Fechar', {
         duration: 3000,
         panelClass: ['error-snackbar']
       });
@@ -328,13 +328,13 @@ export class AbastecimentoListComponent implements OnInit {
 
     this.carregando = true;
     const formValue = this.abastecimentoForm.value;
-    
+
     console.log('Salvando abastecimento:', formValue);
-    
+
     // Converter a data para o formato ISO (ajustar timezone)
     const dataLocal = new Date(formValue.dataAbastecimento);
     const dataISO = dataLocal.toISOString();
-    
+
     // Preparar dados para enviar
     const abastecimento: Abastecimento = {
       ...formValue,
@@ -349,17 +349,17 @@ export class AbastecimentoListComponent implements OnInit {
     }
 
     const observavel = this.editando && abastecimento.id
-      ? this.abastecimentoService.updateAbastecimento(abastecimento)
+      ? this.abastecimentoService.updateAbastecimento(abastecimento.id!, abastecimento)
       : this.abastecimentoService.createAbastecimento(abastecimento);
 
     observavel.subscribe({
       next: (response) => {
         this.snackBar.open(
-          this.editando 
-            ? 'Abastecimento atualizado com sucesso!' 
-            : 'Abastecimento registrado com sucesso!', 
-          'Fechar', 
-          { 
+          this.editando
+            ? 'Abastecimento atualizado com sucesso!'
+            : 'Abastecimento registrado com sucesso!',
+          'Fechar',
+          {
             duration: 3000,
             panelClass: ['success-snackbar']
           }
@@ -370,14 +370,14 @@ export class AbastecimentoListComponent implements OnInit {
       error: (error) => {
         console.error('Erro ao salvar abastecimento:', error);
         let mensagemErro = `Erro ao ${this.editando ? 'atualizar' : 'criar'} abastecimento`;
-        
+
         if (error.error && error.error.message) {
           mensagemErro += `: ${error.error.message}`;
         } else if (error.message) {
           mensagemErro += `: ${error.message}`;
         }
-        
-        this.snackBar.open(mensagemErro, 'Fechar', { 
+
+        this.snackBar.open(mensagemErro, 'Fechar', {
           duration: 5000,
           panelClass: ['error-snackbar']
         });
@@ -507,7 +507,7 @@ export class AbastecimentoListComponent implements OnInit {
     // Calcular para cada veículo
     Object.values(abastecimentosPorVeiculo).forEach(abastecimentosVeiculo => {
       // Ordenar por data
-      abastecimentosVeiculo.sort((a, b) => 
+      abastecimentosVeiculo.sort((a, b) =>
         new Date(a.dataAbastecimento).getTime() - new Date(b.dataAbastecimento).getTime()
       );
 
@@ -572,12 +572,12 @@ export class AbastecimentoListComponent implements OnInit {
   // Getters para descrições
   getVeiculoInfo(veiculoId: number): string {
     if (!veiculoId) return 'Não informado';
-    
+
     const veiculo = this.veiculos.find(v => v.id === veiculoId);
     if (veiculo) {
       return `${veiculo.matricula} - ${veiculo.modelo}`;
     }
-    
+
     return 'Veículo não encontrado';
   }
 

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Veiculo } from '../Veiculos/veiculos.model';
 import { Observable } from 'rxjs';
@@ -19,7 +19,7 @@ export class AbstecimeserviceService {
   // CRUD de Abastecimentos
   getAbastecimentos(): Observable<any[]> {
     return this.http.get<any[]>(this.apiUrl+'/findAll');
-  }   
+  }
 
   getAbastecimento(id: number): Observable<Abastecimento> {
     return this.http.get<Abastecimento>(`${this.apiUrl}/findById/${id}`);
@@ -27,13 +27,31 @@ export class AbstecimeserviceService {
 
   createAbastecimento(abastecimento: Abastecimento): Observable<any> {
     return this.http.post<any>(this.apiUrl+"/save", abastecimento, {
-      responseType: 'json'  
+      responseType: 'json'
     }) ;
   }
 
-  updateAbastecimento(abastecimento: any): Observable<Abastecimento> {
-    return this.http.put<Abastecimento>(`${this.apiUrl}/update/${abastecimento.id}`, abastecimento);
-  }
+  // No seu abastecimento.service.ts
+updateAbastecimento(id: number, abastecimentoDTO: any): Observable<string> {
+  console.log('Atualizando abastecimento ID:', id, 'DTO:', abastecimentoDTO);
+
+  // Remover o id do corpo se existir, pois já está na URL
+  const body = { ...abastecimentoDTO };
+  delete body.id;
+
+  return this.http.put<string>(
+    `${this.apiUrl}/update/${id}`,
+    body,
+    {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      }),
+      responseType: 'text' as 'json'
+    }
+  );
+}
+
+
 
   deleteAbastecimento(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/delete/${id}`,{

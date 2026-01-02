@@ -247,7 +247,8 @@ export class UsuarioListComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.usuarioService.toggleBloqueio(usuario.id, novoEstado).subscribe({
-          next: () => {
+          next: (next) => {
+            console.log(next);//for debu
             usuario.contaBloqueada = novoEstado;
             this.atualizarUsuarioNaLista(usuario);
             this.mostrarSucesso(`Conta ${acao}da com sucesso!`);

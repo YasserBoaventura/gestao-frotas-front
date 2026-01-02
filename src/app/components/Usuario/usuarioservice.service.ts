@@ -32,16 +32,15 @@ export class UsuarioserviceService {
   return this.http.delete<string>(this.apiUrl+"/delete/"+id ,{responseType :'text' as 'json'});
 }
 
-  // Ativar/Desativar
   toggleAtivo(id: number, ativo: boolean): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/${id}/ativo`, { ativo });
+    return this.http.put(`${this.apiUrl}/ativo/${id}`, { ativo });
   }
 
   // Bloquear/Desbloquear
-  toggleBloqueio(id: number, bloqueado: boolean): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/${id}/bloqueio`, { bloqueado });
-  }
 
+  toggleBloqueio(id: number, bloqueado: boolean): Observable<any> {
+    return this.http.put(`${this.apiUrl}/bloqueio/${id}`, { bloqueado });
+  } 
   // Resetar senha
   resetarSenha(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/reset-senha`, {});
