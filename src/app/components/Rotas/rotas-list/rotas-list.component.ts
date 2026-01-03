@@ -34,6 +34,7 @@ export class RotasListComponent {
   carregarRotas(): void {
     this.rotaService.getAll().subscribe({
       next: (data) => {
+        console.log(data)
         this.rotas = data;
       },
       error: (error) => {
