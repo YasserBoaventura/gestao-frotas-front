@@ -1,0 +1,305 @@
+<div class="relatorio-container">
+  <!-- Header -->
+  <div class="relatorio-header">
+    <div class="header-title">
+      <div class="title-icon">
+        <i class="fas fa-gas-pump"></i>
+      </div>
+      <h2>Relatório de Combustível</h2>
+    </div>
+    <div class="header-actions">
+      <button class="btn-reload" (click)="carregarRelatorioPorVeiculo()" [disabled]="carregando" title="Recarregar">
+        <i class="fas fa-redo"></i> Recarregar
+      </button>
+      <button class="btn-print" (click)="imprimirRelatorio()" [disabled]="relatoriosFiltrados.length === 0" title="Imprimir">
+        <i class="fas fa-print"></i> Imprimir
+      </button>
+      <button class="btn-export" (click)="exportarParaExcel()" [disabled]="relatoriosFiltrados.length === 0" title="Exportar para Excel">
+        <i class="fas fa-file-excel"></i> Exportar
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de Carregamento -->
+  <div *ngIf="carregando" class="loading-state">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Carregando...</span>
+    </div>
+    <h3>Carregando relatório...</h3>
+    <p>Aguarde enquanto processamos os dados</p>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <div *ngIf="!carregando">
+    <!-- Filtros -->
+    <div class="filter-section">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">
+            <i class="fas fa-filter me-2"></i>
+            Filtros de Relatório
+          </h4>
+
+          <div class="filter-controls">
+            <!-- Filtro por Tipo -->
+            <div class="filter-row">
+              <div class="filter-group">
+                <label>Tipo de Relatório</label>
+                <select class="filter-select" [(ngModel)]="filtroAtivo" (change)="onTipoRelatorioChange()">
+                  <option value="veiculo">Por Veículo</option>
+                  <option value="periodo">Por Período</option>
+                </select>
+              </div>
+
+              <!-- Filtro por Veículo (sempre visível) -->
+              <div class="filter-group">
+                <label>Filtrar por Veículo</label>
+                <select class="filter-select" [(ngModel)]="veiculoSelecionado" (change)="aplicarFiltroVeiculo()">
+                  <option value="">Todos os Veículos</option>
+                  <option *ngFor="let veiculo of veiculos" [value]="veiculo">
+                    {{ veiculo }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Filtro por Período (visível apenas quando selecionado) -->
+            <div class="filter-row" *ngIf="filtroAtivo === 'periodo'">
+              <div class="date-inputs">
+                <div class="date-group">
+                  <label>Data Início</label>
+                  <input type="date" class="filter-input" [(ngModel)]="dataInicio" [max]="hojeString">
+                </div>
+
+                <div class="date-group">
+                  <label>Data Fim</label>
+                  <input type="date" class="filter-input" [(ngModel)]="dataFim" [max]="hojeString" [min]="dataInicio">
+                </div>
+
+                <div class="filter-group">
+                  <label>&nbsp;</label>
+                  <button class="btn-apply" (click)="carregarRelatorioPorPeriodo()" [disabled]="!dataInicio || !dataFim">
+                    <i class="fas fa-search"></i> Buscar Período
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ações dos Filtros -->
+            <div class="filter-actions">
+              <button class="btn-clear" (click)="limparFiltros()">
+                <i class="fas fa-times"></i> Limpar Filtros
+              </button>
+              <button class="btn-download" (click)="exportarParaPDF()" [disabled]="relatoriosFiltrados.length === 0">
+                <i class="fas fa-download"></i> Baixar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumo -->
+    <div class="summary-section" *ngIf="relatoriosFiltrados.length > 0">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">
+            <i class="fas fa-chart-bar me-2"></i>
+            Resumo do Relatório
+          </h4>
+
+          <div class="summary-grid">
+            <!-- Total de Litros -->
+            <div class="summary-item" (click)="ordenarPor('totalLitros')">
+              <div class="summary-icon litros">
+                <i class="fas fa-oil-can"></i>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Total de Litros</span>
+                <span class="summary-value">{{ totalGeralLitros | number:'1.2-2' }} L</span>
+                <span class="summary-subtext">
+                  <i class="fas fa-sort-up text-success" *ngIf="temTendenciaPositiva()"></i>
+                  <i class="fas fa-sort-down text-danger" *ngIf="!temTendenciaPositiva()"></i>
+                  Média por veículo
+                </span>
+              </div>
+            </div>
+
+            <!-- Total Gasto -->
+            <div class="summary-item" (click)="ordenarPor('totalGasto')">
+              <div class="summary-icon gasto">
+                <i class="fas fa-money-bill-wave"></i>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Total Gasto</span>
+                <span class="summary-value">{{ totalGeralGasto | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span class="summary-subtext">
+                  <i class="fas fa-chart-line text-success"></i>
+                  Custo total
+                </span>
+              </div>
+            </div>
+
+            <!-- Média por Litro -->
+            <div class="summary-item" (click)="ordenarPor('mediaPorLitro')">
+              <div class="summary-icon media">
+                <i class="fas fa-calculator"></i>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Média por Litro</span>
+                <span class="summary-value">
+                  {{ (totalGeralLitros > 0 ? (totalGeralGasto / totalGeralLitros) : 0) | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
+                <span class="summary-subtext">
+                  <i class="fas fa-gas-pump text-info"></i>
+                  Preço médio
+                </span>
+              </div>
+            </div>
+
+            <!-- Total de Veículos -->
+            <div class="summary-item" (click)="ordenarPor('veiculo')">
+              <div class="summary-icon veiculos">
+                <i class="fas fa-car"></i>
+              </div>
+              <div class="summary-content">
+                <span class="summary-label">Veículos Analisados</span>
+                <span class="summary-value">{{ getVeiculosUnicos() }}</span>
+                <span class="summary-subtext">
+                  <i class="fas fa-list text-primary"></i>
+                  Total registros: {{ relatoriosFiltrados.length }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de Resultados -->
+    <div class="table-container" *ngIf="relatoriosFiltrados.length > 0; else emptyState">
+      <div class="table-header-info">
+        <span class="total-registros">
+          Total de registros: <strong>{{ relatoriosFiltrados.length }}</strong>
+          <span class="text-muted">
+            {{ filtroAtivo === 'periodo' && dataInicio && dataFim ?
+               'Período: ' + formatarData(dataInicio) + ' a ' + formatarData(dataFim) :
+               'Todos os veículos' }}
+          </span>
+        </span>
+      </div>
+
+      <table class="relatorio-table">
+        <thead>
+          <tr>
+            <th (click)="ordenarPor('veiculo')" style="cursor: pointer;">
+              Veículo <i class="fas fa-sort"></i>
+            </th>
+            <th (click)="ordenarPor('totalLitros')" style="cursor: pointer; text-align: center;">
+              Total Litros <i class="fas fa-sort"></i>
+            </th>
+            <th (click)="ordenarPor('totalGasto')" style="cursor: pointer; text-align: right;">
+              Total Gasto <i class="fas fa-sort"></i>
+            </th>
+            <th (click)="ordenarPor('mediaPorLitro')" style="cursor: pointer; text-align: right;">
+              Média por Litro <i class="fas fa-sort"></i>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let relatorio of relatoriosFiltrados" class="table-row">
+            <!-- Coluna Veículo -->
+            <td class="veiculo-cell">
+              <div class="veiculo-info">
+                <div class="veiculo-icon">
+                  <i class="fas fa-car"></i>
+                </div>
+                <div class="veiculo-detalhes">
+                  <strong>{{ relatorio.veiculo || 'Não informado' }}</strong>
+                  <span>Registro de combustível</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Coluna Litros -->
+            <td class="litros-cell">
+              <span class="litros-badge">
+                {{ relatorio.totalLitros | number:'1.2-2' }} L
+              </span>
+            </td>
+
+            <!-- Coluna Gasto -->
+            <td class="valor-cell">
+              <span class="gasto-badge">
+                {{ relatorio.totalGasto | currency:'BRL':'symbol':'1.2-2' }}
+              </span>
+            </td>
+
+            <!-- Coluna Média -->
+            <td class="valor-cell">
+              <span class="media-badge">
+                {{ relatorio.mediaPorLitro | currency:'BRL':'symbol':'1.2-2' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- Rodapé da Tabela -->
+        <tfoot>
+          <tr class="table-footer">
+            <td colspan="4">
+              <div class="total-row">
+                <span class="total-label">TOTAIS GERAIS:</span>
+                <span class="total-value">
+                  {{ totalGeralLitros | number:'1.2-2' }} L |
+                  {{ totalGeralGasto | currency:'BRL':'symbol':'1.2-2' }} |
+                  {{ (totalGeralLitros > 0 ? (totalGeralGasto / totalGeralLitros) : 0) | currency:'BRL':'symbol':'1.2-2' }}/L
+                </span>
+              </div>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Estado Vazio -->
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-gas-pump"></i>
+        </div>
+        <h3>Nenhum dado encontrado</h3>
+        <p *ngIf="filtroAtivo === 'periodo'">
+          Não foram encontrados registros para o período selecionado
+        </p>
+        <p *ngIf="filtroAtivo === 'veiculo' && veiculoSelecionado">
+          Não há registros para o veículo selecionado
+        </p>
+        <p *ngIf="!veiculoSelecionado && filtroAtivo === 'veiculo'">
+          Não há registros de combustível cadastrados
+        </p>
+        <button class="btn-apply" (click)="limparFiltros()">
+          <i class="fas fa-redo"></i> Limpar Filtros
+        </button>
+      </div>
+    </ng-template>
+
+    <!-- Rodapé de Informações -->
+    <div class="relatorio-footer">
+      <div class="relatorio-info">
+        <span>
+          <i class="fas fa-info-circle"></i>
+          Relatório gerado em {{ hoje | date:'dd/MM/yyyy HH:mm' }}
+        </span>
+        <span *ngIf="veiculoSelecionado">
+          <i class="fas fa-filter"></i>
+          Filtrado por: {{ veiculoSelecionado }}
+        </span>
+        <span>
+          <i class="fas fa-database"></i>
+          Dados atualizados em tempo real
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
