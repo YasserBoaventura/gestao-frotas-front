@@ -23,6 +23,7 @@ export interface ManutencaoDTO {
   kilometragemVeiculo: number;
   proximaManutencaoKm?: number;
   proximaManutencaoData?: Date;
+  status?: string;
 }
 
 export interface RelatorioManutencaoDTO {
@@ -134,20 +135,23 @@ export class ManutencoesServiceService {
     return this.http.get<string[]>(`${this.apiUrl}/gerarAltertas`, )
   }
 
-  /**
-   * Gera alertas simplificados
-   */
-  getAlertasSimplificados(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/alertas/simplificado`,)
-  }
 
-  /**
-   * Busca manutenções vencidas
-   */
   getVencidas(): Observable<Manutencao[]> {
     return this.http.get<Manutencao[]>(`${this.apiUrl}/vencidas`)
   }
 
+  // Novas funcionalidades
+  iniciarManutencao(id: number): Observable<Manutencao> {
+    return this.http.put<Manutencao>(`${this.apiUrl}/iniciarManutencao/${id}`, {});
+  }
+
+  concluirManutencao(id: number, dados: any ): Observable<Manutencao> {
+    return this.http.put<Manutencao>(`${this.apiUrl}/concluirManutencao/${id}`, dados);
+  }
+
+  cancelarManutencao(id: number, motivo: string): Observable<Manutencao> {
+    return this.http.put<Manutencao>(`${this.apiUrl}/cancelarManutencao/${id}`, { motivo });
+   } 
   /**
    * Busca próximas manutenções (próximos 30 dias)
    */

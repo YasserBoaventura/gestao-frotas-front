@@ -39,8 +39,10 @@ export class ViagensServiceService {
     });
   }
 
-  iniciarViagem(id: number): Observable<Viagem> {
-    return this.http.patch<Viagem>(`${this.apiUrl}/${id}/iniciar`, {});
+  iniciarViagem(id: number): Observable<string> {
+    return this.http.put<string>(`${this.apiUrl}/inicializarViagem/${id}`, {      responseType: 'text'
+
+    });
   }
 
   concluirViagem(dados: any, id: number ): Observable<Viagem> {
