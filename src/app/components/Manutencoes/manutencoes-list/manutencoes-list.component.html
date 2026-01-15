@@ -404,11 +404,12 @@
           <tr class="table-header">
             <th>Veículo</th>
             <th>Tipo</th>
-            <th>Data</th>
-            <th>Quilometragem</th>
-            <th>Custo</th>
-            <th>Próxima Manutenção</th>
+              <th>Custo</th>
+            <th>data</th>
+            <th>next manu</th>
             <th>Status</th>
+            <th>DataInicio</th>
+            <th>DataFim</th>
             <th class="actions-header">Ações</th>
           </tr>
         </thead>
@@ -432,21 +433,12 @@
               </span>
             </td>
 
-            <!-- Coluna Data -->
-            <td class="data-cell">
-              {{formatarData(manutencao.dataManutencao)}}
-            </td>
-
-            <!-- Coluna Quilometragem -->
-            <td class="km-cell">
-              <span class="km-badge">{{(manutencao.kilometragemVeiculo || 0) | number:'1.0-0'}} km</span>
-            </td>
 
             <!-- Coluna Custo -->
             <td class="custo-cell">
               {{formatarMoeda(manutencao.custo)}}
             </td>
-
+        <td> {{ formatarData(manutencao.dataManutencao)}}</td>
             <!-- Coluna Próxima Manutenção -->
             <td class="proxima-cell">
               <div *ngIf="manutencao.proximaManutencaoData || manutencao.proximaManutencaoKm; else semProxima">
@@ -467,6 +459,12 @@
               <span class="status-badge" [style.background-color]="getStatusColor(manutencao.status!)">
                 {{getStatusLabel(manutencao.status!)}}
               </span>
+            </td>
+      <td class="data-cell">
+            {{formatarDataConclusao(manutencao.dataInicio)}}
+            </td>
+  <td class="data-cell">
+              {{formatarDataConclusao(manutencao.dataConclusao)}}
             </td>
 
             <!-- Coluna Ações -->

@@ -148,7 +148,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
         this.dataSource.data = this.manutencoes;
         this.carregando = false;
       },
-      error: (error) => {
+      error: (error) => {  
         console.error('Erro ao carregar manutenções:', error);
         this.mostrarErro('Erro ao carregar manutenções');
         this.carregando = false;
@@ -179,6 +179,8 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
       proximaManutencaoKm: manutencao.proximaManutencaoKm,
       proximaManutencaoData: manutencao.proximaManutencaoData ? new Date(manutencao.proximaManutencaoData) : undefined,
       status: manutencao.status,
+      dataConclusao: manutencao.dataConclusao,
+      dataInicio : manutencao.dataInicio,
       veiculo: manutencao.veiculo || {
         id: manutencao.veiculoId,
         matricula: manutencao.veiculoMatricula,
@@ -573,6 +575,104 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     return data.toLocaleDateString('pt-BR');
   }
 
+formatarDataFlexivel(dataInput?: any): string {
+  if (!dataInput) return 'Não definida';
+
+  try {
+    // Se for string JSON, converter
+    if (typeof dataInput === 'string') {
+      try {
+        dataInput = JSON.parse(dataInput);
+      } catch {
+        // Se não for JSON, tentar como string de data normal
+        return this.formatarStringData(dataInput);
+      }
+    }
+
+    // Se for array
+    if (Array.isArray(dataInput)) {
+      return this.formatarArrayData(dataInput);
+    }
+
+    // Se for objeto Date
+    if (dataInput instanceof Date) {
+      return dataInput.toLocaleDateString('pt-BR');
+    }
+
+    return 'Formato não suportado';
+  } catch (error) {
+    console.error('Erro ao formatar data:', error, dataInput);
+    return 'Data inválida';
+  }
+}
+
+// Função auxiliar para arrays
+private formatarArrayData(dataArray: number[]): string {
+  if (dataArray.length < 3) return 'Data incompleta';
+
+  const [ano, mes, dia, hora = 0, minuto = 0, segundo = 0] = dataArray;
+
+  // Formatação direta (mais confiável)
+  const diaStr = dia.toString().padStart(2, '0');
+  const mesStr = mes.toString().padStart(2, '0');
+  const anoStr = ano.toString();
+  const horaStr = hora.toString().padStart(2, '0');
+  const minutoStr = minuto.toString().padStart(2, '0');
+  const segundoStr = segundo.toString().padStart(2, '0');
+
+  return `${diaStr}/${mesStr}/${anoStr} ${horaStr}:${minutoStr}:${segundoStr}`;
+}
+
+// Função auxiliar para strings
+private formatarStringData(dataString: string): string {
+  try {
+    const data = new Date(dataString);
+    if (isNaN(data.getTime())) return 'Data inválida';
+    return data.toLocaleDateString('pt-BR') + ' ' +
+           data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  } catch {
+    return 'Formato não suportado';
+  }
+}
+formatarDataConclusao(dataString?: any): string {
+  console.log('Função chamada com:', dataString);
+
+  // Verificação mais robusta
+  if (dataString === null || dataString === undefined || dataString === '') {
+    console.log('Retornando "Não definida" - valor é:', dataString);
+    return 'Não definida';
+  }
+
+  // Converte para string se não for
+  const str = String(dataString).trim();
+
+  if (str === '' || str === 'null' || str === 'undefined') {
+    return 'Não definida';
+  }
+
+  try {
+    // Formato esperado: "2026-01-05 20:32"
+    const [dataParte, horaParte] = str.split(' ');
+
+    if (!dataParte || !horaParte) {
+      return 'Formato inválido';
+    }
+
+    const [ano, mes, dia] = dataParte.split('-');
+    const [hora, minuto] = horaParte.split(':');
+
+    // Validações
+    if (!ano || !mes || !dia || !hora || !minuto) {
+      return 'Formato incompleto';
+    }
+
+    // Formata no padrão brasileiro
+    return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano} ${hora.padStart(2, '0')}:${minuto.padStart(2, '0')}`;
+  } catch (error) {
+    console.error('Erro ao formatar:', error, 'Dado:', dataString);
+    return 'Erro na formatação';
+  }
+}
   formatarMoeda(valor?: number): string {
     if (!valor) return 'R$ 0,00';
     return new Intl.NumberFormat('pt-BR', {

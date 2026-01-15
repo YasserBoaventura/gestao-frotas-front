@@ -89,7 +89,7 @@ export class MotoristadetalisComponent implements OnInit, OnDestroy {
       return idade >= idadeMinima ? null : { idadeInvalida: true };
     };
   }
-
+ 
   salvarMotorista(): void {
     this.motoristaForm.markAllAsTouched();
 
@@ -148,8 +148,7 @@ export class MotoristadetalisComponent implements OnInit, OnDestroy {
           next: (response: any) => {
             Swal.close();
             console.log(' Motorista criado:', response);
-
-            Swal.fire({
+             Swal.fire({
               title: "Sucesso!",
               text: "Motorista cadastrado com sucesso",
               icon: "success",

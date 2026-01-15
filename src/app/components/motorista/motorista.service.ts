@@ -17,9 +17,9 @@ export class MotoristaService {
       return this.http.get<Motorista[]>(this.apiUrl+"/findAll" );
     }
 
-   salvar(motorista: any): Observable<string> {
+   salvar(motorista: any): Observable<any> {
     return this.http.post(this.apiUrl+"/save", motorista, {
-      responseType: 'text'
+      responseType: 'text' as 'json'
     });
     // Não especifique responseType, deixe o Angular detectar como JSON (padrão)
   }
