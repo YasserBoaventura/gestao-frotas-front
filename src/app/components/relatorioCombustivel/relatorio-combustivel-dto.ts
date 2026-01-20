@@ -3,7 +3,7 @@ export class RelatorioCombustivelDTO {
   totalLitros: number;
   totalGasto: number;
   mediaPorLitro: number;
-
+ 
   constructor(veiculo: string, totalLitros: number, totalGasto: number, mediaPorLitro: number) {
     this.veiculo = veiculo;
     this.totalLitros = totalLitros || 0;

@@ -13,7 +13,7 @@ import { RouterModule } from '@angular/router';
   styleUrl: './relatorio-combustivel.component.css'
 })
 export class RelatorioCombustivelComponent implements OnInit {
-    relatorios: RelatorioCombustivelDTO[] = [];
+   relatorios: RelatorioCombustivelDTO[] = [];
   relatoriosFiltrados: RelatorioCombustivelDTO[] = [];
   dataInicio: string = '';
   dataFim: string = '';

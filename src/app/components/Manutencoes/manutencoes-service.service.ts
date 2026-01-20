@@ -151,7 +151,7 @@ export class ManutencoesServiceService {
 
   cancelarManutencao(id: number, motivo: string): Observable<Manutencao> {
     return this.http.put<Manutencao>(`${this.apiUrl}/cancelarManutencao/${id}`, { motivo });
-   } 
+   }
   /**
    * Busca próximas manutenções (próximos 30 dias)
    */

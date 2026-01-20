@@ -148,7 +148,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
         this.dataSource.data = this.manutencoes;
         this.carregando = false;
       },
-      error: (error) => {  
+      error: (error) => {
         console.error('Erro ao carregar manutenções:', error);
         this.mostrarErro('Erro ao carregar manutenções');
         this.carregando = false;
@@ -202,6 +202,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
       }
     });
   }
+  
 
   // ============ MODAL CADASTRO/EDIÇÃO ============
   abrirModalCadastro(manutencao?: Manutencao): void {
