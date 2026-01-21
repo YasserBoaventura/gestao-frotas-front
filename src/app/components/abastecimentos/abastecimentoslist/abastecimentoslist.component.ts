@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Abastecimento } from '../abastecimento';
 import { AbstecimeserviceService as AbastecimentoService } from '../abstecimeservice.service';
@@ -12,7 +12,7 @@ import { VeiculosService } from '../../Veiculos/veiculos.service';
 import { ViagensServiceService } from '../../viagens/viagens-service.service';
 import { PageEvent, MatPaginatorModule } from '@angular/material/paginator';
 import Swal from 'sweetalert2';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map } from 'rxjs';
 
 // Importações do Angular Material
 import { MatIconModule } from '@angular/material/icon';
@@ -25,6 +25,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-abastecimento-list',
@@ -46,49 +47,44 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatTooltipModule
+    MatTooltipModule,
+    RouterModule
   ]
 })
 export class AbastecimentoListComponent implements OnInit {
-  @ViewChild('fileInput') fileInput!: ElementRef;
-
   // Forms
   abastecimentoForm!: FormGroup;
-  filtroForm!: FormGroup;
 
   // Dados
   abastecimentos: Abastecimento[] = [];
-  veiculos: Veiculo[] = [];
-  viagens: Viagem[] = []; // Todas as viagens
-  viagensDoVeiculo: Viagem[] = []; // Viagens filtradas por veículo
   filteredAbastecimentos: Abastecimento[] = [];
+  veiculos: Veiculo[] = [];
+  viagens: Viagem[] = [];
+  viagensDoVeiculo: Viagem[] = [];
 
   // Estados
   editando = false;
   carregando = false;
-  mostrarFormulario = false;
+  carregandoModal = false;
+  mostrarModal = false;
+  mostrarModalExclusao = false;
   valorCalculado = 0;
+  debugMode = true; // Modo debug para ver logs
+
+  // Filtros
+  filtroVeiculo = '';
+  filtroTipoCombustivel = '';
+  filtroStatus = '';
+  filtroDataInicio = '';
+  filtroDataFim = '';
 
   // Paginação
   pageSize = 10;
   pageIndex = 0;
   pageSizeOptions = [5, 10, 25, 50];
-  totalItems = 0;
 
   // Seleção
   selection = new SelectionModel<Abastecimento>(true, []);
-  displayedColumns: string[] = [
-    'select',
-    'dataAbastecimento',
-    'veiculo',
-    'kilometragem',
-    'combustivel',
-    'status',
-    'quantidade',
-    'preco',
-    'valorTotal',
-    'acoes'
-  ];
 
   // Estatísticas
   estatisticas = {
@@ -98,19 +94,8 @@ export class AbastecimentoListComponent implements OnInit {
     consumoMedio: 0
   };
 
-  // Tipos de combustível
-  tiposCombustivel = [
-    { value: 'GASOLINA', label: 'Gasolina', icon: 'local_gas_station', cor: '#FF5722' },
-    { value: 'DIESEL', label: 'Diesel', icon: 'local_gas_station', cor: '#795548' },
-    { value: 'ETANOL', label: 'Etanol', icon: 'eco', cor: '#4CAF50' },
-    { value: 'GNV', label: 'GNV', icon: 'gas_meter', cor: '#2196F3' },
-    { value: 'ELETRICO', label: 'Elétrico', icon: 'bolt', cor: '#FFC107' }
-  ];
-
-  statusCombustivel = [
-    { value: 'PLANEADA', label: 'Planejada' },
-    { value: 'REALIZADA', label: 'Realizada' }
-  ];
+  // Abastecimento selecionado
+  abastecimentoSelecionado: Abastecimento | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -121,12 +106,11 @@ export class AbastecimentoListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.inicializarForms();
+    this.inicializarForm();
     this.carregarDados();
   }
 
-  inicializarForms(): void {
-    // Formulário principal
+  inicializarForm(): void {
     const dataAtual = new Date();
     const dataFormatada = this.formatarDataParaInput(dataAtual);
 
@@ -150,22 +134,16 @@ export class AbastecimentoListComponent implements OnInit {
     this.abastecimentoForm.get('precoPorLitro')?.valueChanges.subscribe(() => {
       this.calcularValorTotal();
     });
-
-    // Formulário de filtros
-    this.filtroForm = this.fb.group({
-      veiculoId: [null],
-      tipoCombustivel: [null],
-      status: [null],
-      dataInicio: [null],
-      dataFim: [null]
-    });
   }
 
   formatarDataParaInput(date: Date): string {
     const pad = (n: number) => n < 10 ? '0' + n : n.toString();
-    // Ajustar para timezone local
-    const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
-    return localDate.toISOString().slice(0, 16);
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
   carregarDados(): void {
@@ -177,43 +155,87 @@ export class AbastecimentoListComponent implements OnInit {
       viagens: this.viagemService.getViagens()
     }).subscribe({
       next: ({ veiculos, abastecimentos, viagens }) => {
+        console.log('Dados carregados:', { veiculos, abastecimentos, viagens });
+
         this.veiculos = veiculos;
         this.viagens = viagens;
 
-        console.log('Veículos carregados:', veiculos);
-        console.log('Abastecimentos carregados:', abastecimentos);
+        // Processar abastecimentos para garantir que temos o veiculoId
+        this.abastecimentos = abastecimentos.map(abastecimento => {
+          // Extrair veiculoId de diferentes formas possíveis
+          let veiculoId = 0;
+          if (abastecimento.veiculoId) {
+            veiculoId = abastecimento.veiculoId;
+          } else if (abastecimento.veiculo && abastecimento.veiculo.id) {
+            veiculoId = abastecimento.veiculo.id;
+          } else if (abastecimento.veiculo && typeof abastecimento.veiculo === 'object') {
+            // Tentar extrair ID do objeto veiculo
+            const veiculoObj = abastecimento.veiculo as any;
+            veiculoId = veiculoObj.id || 0;
+          }
 
-        // Garantir que todos os abastecimentos têm status
-        this.abastecimentos = abastecimentos.map(abastecimento => ({
-          ...abastecimento,
-          // Se o abastecimento tiver um objeto veiculo, extrair o ID
-          veiculoId: abastecimento.veiculo?.id || abastecimento.veiculoId,
-          // Garantir status
-          statusAbastecimento: abastecimento.statusAbastecimento || 'PLANEADA'
-        }));
+          // Extrair viagemId de forma similar
+          let viagemId = null;
+          if (abastecimento.viagemId) {
+            viagemId = abastecimento.viagemId;
+          } else if (abastecimento.viagem && abastecimento.viagem.id) {
+            viagemId = abastecimento.viagem.id;
+          }
+
+          return {
+            ...abastecimento,
+            veiculoId: veiculoId,
+            viagemId: viagemId,
+            statusAbastecimento: abastecimento.statusAbastecimento || 'PLANEADA'
+          };
+        });
+
+        console.log('Abastecimentos processados:', this.abastecimentos);
 
         this.filteredAbastecimentos = [...this.abastecimentos];
-        this.totalItems = this.abastecimentos.length;
         this.calcularEstatisticas();
         this.carregando = false;
       },
       error: (error) => {
         console.error('Erro ao carregar dados:', error);
-        this.mostrarErro('Erro ao carregar dados');
+        this.mostrarErro('Erro ao carregar dados: ' + error.message);
         this.carregando = false;
       }
     });
   }
 
   onVeiculoChange(veiculoId: number | null): void {
+    console.log('Veículo selecionado ID:', veiculoId);
+
     if (veiculoId) {
-      // Filtrar viagens por veículo
-      this.viagensDoVeiculo = this.viagens.filter(viagem =>
-        viagem.veiculo?.id === veiculoId
-      );
-      console.log('Viagens filtradas para veículo', veiculoId, ':', this.viagensDoVeiculo);
+      // Buscar viagens do veículo da API
+      console.log('Buscando viagens para veículo ID:', veiculoId);
+      this.abastecimentoService.getViagensPorVeiculo(veiculoId).subscribe({
+        next: (viagens) => {
+          console.log('Viagens retornadas da API:', viagens);
+          this.viagensDoVeiculo = viagens;
+
+          // Atualizar o cache de viagens
+          viagens.forEach(viagem => {
+            if (!this.viagens.find(v => v.id === viagem.id)) {
+              this.viagens.push(viagem);
+            }
+          });
+        },
+        error: (error) => {
+          console.error('Erro ao buscar viagens do veículo:', error);
+          this.viagensDoVeiculo = [];
+          // Tentar filtrar do cache se a API falhar
+          this.viagensDoVeiculo = this.viagens.filter(viagem => {
+            const viagemVeiculoId = viagem.veiculo?.id || viagem.veiculo;
+            return viagemVeiculoId === veiculoId;
+          });
+          console.log('Viagens do cache após erro:', this.viagensDoVeiculo);
+        }
+      });
     } else {
       this.viagensDoVeiculo = [];
+      console.log('Nenhum veículo selecionado, limpando lista de viagens');
     }
   }
 
@@ -225,17 +247,13 @@ export class AbastecimentoListComponent implements OnInit {
 
   novoAbastecimento(): void {
     if (this.veiculos.length === 0) {
-      this.snackBar.open('Não há veículos disponíveis. Cadastre um veículo primeiro.', 'Fechar', {
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
+      this.mostrarErro('Não há veículos disponíveis. Cadastre um veículo primeiro.');
       return;
     }
 
     this.editando = false;
-    this.mostrarFormulario = true;
+    this.mostrarModal = true;
 
-    // Resetar formulário com valores padrão
     const dataAtual = new Date();
     this.abastecimentoForm.reset({
       dataAbastecimento: this.formatarDataParaInput(dataAtual),
@@ -250,49 +268,60 @@ export class AbastecimentoListComponent implements OnInit {
 
     this.viagensDoVeiculo = [];
     this.valorCalculado = 0;
-
-    // Scroll para o formulário
-    setTimeout(() => {
-      document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
   }
 
   editarAbastecimento(abastecimento: Abastecimento): void {
+    console.log('=== EDITANDO ABASTECIMENTO ===');
+    console.log('Dados do abastecimento:', abastecimento);
+    console.log('Veículos disponíveis:', this.veiculos);
+
     if (this.veiculos.length === 0) {
-      this.snackBar.open('Não há veículos disponíveis.', 'Fechar', {
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
+      this.mostrarErro('Não há veículos disponíveis.');
       return;
     }
 
     this.editando = true;
-    this.mostrarFormulario = true;
+    this.mostrarModal = true;
 
-    console.log('Editando abastecimento:', abastecimento);
+    // Extrair veiculoId corretamente
+    let veiculoId = 0;
+    if (abastecimento.veiculoId) {
+      veiculoId = abastecimento.veiculoId;
+    } else if (abastecimento.veiculo && abastecimento.veiculo.id) {
+      veiculoId = abastecimento.veiculo.id;
+    } else if (abastecimento.veiculo && typeof abastecimento.veiculo === 'object') {
+      const veiculoObj = abastecimento.veiculo as any;
+      veiculoId = veiculoObj.id || 0;
+    }
 
-    // Obter o ID do veículo (pode vir de diferentes propriedades)
-    const veiculoId = abastecimento.veiculo?.id || abastecimento.veiculoId;
-    console.log('Veículo ID:', veiculoId);
+    console.log('Veículo ID extraído:', veiculoId);
+    console.log('Veículo correspondente:', this.veiculos.find(v => v.id === veiculoId));
 
-    // Formatar data para input
-    const dataFormatada = this.formatarDataParaInput(new Date(abastecimento.dataAbastecimento));
+    // Extrair viagemId corretamente
+    let viagemId = null;
+    if (abastecimento.viagemId) {
+      viagemId = abastecimento.viagemId;
+    } else if (abastecimento.viagem && abastecimento.viagem.id) {
+      viagemId = abastecimento.viagem.id;
+    }
 
-    // Primeiro setar o veículo para carregar as viagens
-    this.abastecimentoForm.patchValue({
-      veiculoId: veiculoId
-    });
+    // Limpar o formulário primeiro
+    this.abastecimentoForm.reset();
+    this.viagensDoVeiculo = [];
 
-    // Carregar viagens do veículo
+    // Carregar viagens do veículo primeiro
     if (veiculoId) {
       this.onVeiculoChange(veiculoId);
     }
 
-    // Aguardar um pouco para carregar as viagens antes de preencher o restante
+    // Usar setTimeout para garantir que as viagens foram carregadas
     setTimeout(() => {
+      const dataFormatada = this.formatarDataParaInput(new Date(abastecimento.dataAbastecimento!));
+
       this.abastecimentoForm.patchValue({
         id: abastecimento.id,
-        viagemId: abastecimento.viagemId,
+        veiculoId: veiculoId || null,
+        viagemId: viagemId || null,
         dataAbastecimento: dataFormatada,
         statusAbastecimento: abastecimento.statusAbastecimento || 'PLANEADA',
         tipoCombustivel: abastecimento.tipoCombustivel,
@@ -301,14 +330,12 @@ export class AbastecimentoListComponent implements OnInit {
         precoPorLitro: abastecimento.precoPorLitro
       });
 
-      this.calcularValorTotal();
       console.log('Formulário preenchido:', this.abastecimentoForm.value);
-    }, 300);
+      console.log('Viagens disponíveis para seleção:', this.viagensDoVeiculo);
+      console.log('Viagem ID a ser selecionada:', viagemId);
 
-    // Scroll para o formulário
-    setTimeout(() => {
-      document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+      this.calcularValorTotal();
+    }, 500);
   }
 
   salvarAbastecimento(): void {
@@ -319,53 +346,50 @@ export class AbastecimentoListComponent implements OnInit {
     });
 
     if (this.abastecimentoForm.invalid) {
-      this.snackBar.open('Preencha todos os campos obrigatórios corretamente', 'Fechar', {
-        duration: 3000,
-        panelClass: ['error-snackbar']
-      });
+      this.mostrarErro('Preencha todos os campos obrigatórios corretamente');
       return;
     }
 
-    this.carregando = true;
+    this.carregandoModal = true;
     const formValue = this.abastecimentoForm.value;
 
-    console.log('Salvando abastecimento:', formValue);
-
-    // Converter a data para o formato ISO (ajustar timezone)
+    // Converter data para ISO string
     const dataLocal = new Date(formValue.dataAbastecimento);
     const dataISO = dataLocal.toISOString();
 
-    // Preparar dados para enviar
-    const abastecimento: Abastecimento = {
-      ...formValue,
+    // Preparar objeto abastecimento para envio
+    const abastecimentoParaEnviar: any = {
+      veiculoId: formValue.veiculoId,
+      viagemId: formValue.viagemId || null,
       dataAbastecimento: dataISO,
-      // Garantir que o status não seja undefined
-      statusAbastecimento: formValue.statusAbastecimento || 'REALIZADA'
+      tipoCombustivel: formValue.tipoCombustivel,
+      statusAbastecimento: formValue.statusAbastecimento || 'REALIZADA',
+      kilometragemVeiculo: formValue.kilometragemVeiculo,
+      quantidadeLitros: formValue.quantidadeLitros,
+      precoPorLitro: formValue.precoPorLitro
     };
 
-    // Se viagemId for null ou undefined, enviar como null
-    if (!abastecimento.viagemId) {
-      abastecimento.viagemId = 0;
+    // Se estiver editando, adicionar ID
+    if (this.editando && formValue.id) {
+      abastecimentoParaEnviar.id = formValue.id;
     }
 
-    const observavel = this.editando && abastecimento.id
-      ? this.abastecimentoService.updateAbastecimento(abastecimento.id!, abastecimento)
-      : this.abastecimentoService.createAbastecimento(abastecimento);
+    console.log('Salvando abastecimento:', abastecimentoParaEnviar);
+
+    const observavel = this.editando && formValue.id
+      ? this.abastecimentoService.updateAbastecimento(formValue.id, abastecimentoParaEnviar)
+      : this.abastecimentoService.createAbastecimento(abastecimentoParaEnviar);
 
     observavel.subscribe({
       next: (response) => {
-        this.snackBar.open(
+        console.log('Resposta do servidor:', response);
+        this.mostrarSucesso(
           this.editando
             ? 'Abastecimento atualizado com sucesso!'
-            : 'Abastecimento registrado com sucesso!',
-          'Fechar',
-          {
-            duration: 3000,
-            panelClass: ['success-snackbar']
-          }
+            : 'Abastecimento registrado com sucesso!'
         );
         this.carregarDados();
-        this.cancelarFormulario();
+        this.fecharModal();
       },
       error: (error) => {
         console.error('Erro ao salvar abastecimento:', error);
@@ -377,22 +401,26 @@ export class AbastecimentoListComponent implements OnInit {
           mensagemErro += `: ${error.message}`;
         }
 
-        this.snackBar.open(mensagemErro, 'Fechar', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
-        this.carregando = false;
+        this.mostrarErro(mensagemErro);
+        this.carregandoModal = false;
       },
       complete: () => {
-        this.carregando = false;
+        this.carregandoModal = false;
       }
     });
   }
 
-  excluirAbastecimento(abastecimento: Abastecimento): void {
+  confirmarExclusaoModal(abastecimento: Abastecimento): void {
+    this.abastecimentoSelecionado = abastecimento;
+    this.mostrarModalExclusao = true;
+  }
+
+  confirmarExclusao(): void {
+    if (!this.abastecimentoSelecionado) return;
+
     Swal.fire({
       title: 'Excluir Abastecimento',
-      text: `Tem certeza que deseja excluir o abastecimento de ${this.formatarDataHora(abastecimento.dataAbastecimento)}?`,
+      text: `Tem certeza que deseja excluir o abastecimento de ${this.formatarDataHora(this.abastecimentoSelecionado.dataAbastecimento!)}?`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sim, excluir',
@@ -401,15 +429,19 @@ export class AbastecimentoListComponent implements OnInit {
       cancelButtonColor: '#6c757d',
       reverseButtons: true
     }).then((result) => {
-      if (result.isConfirmed) {
+      if (result.isConfirmed && this.abastecimentoSelecionado?.id) {
         this.carregando = true;
-        this.abastecimentoService.deleteAbastecimento(abastecimento.id!).subscribe({
+        this.abastecimentoService.deleteAbastecimento(this.abastecimentoSelecionado.id).subscribe({
           next: () => {
             Swal.fire('Sucesso', 'Abastecimento excluído com sucesso!', 'success');
             this.carregarDados();
+            this.fecharModal();
           },
           error: (error) => {
             Swal.fire('Erro', `Erro ao excluir abastecimento: ${error.message || 'Erro desconhecido'}`, 'error');
+            this.carregando = false;
+          },
+          complete: () => {
             this.carregando = false;
           }
         });
@@ -417,45 +449,50 @@ export class AbastecimentoListComponent implements OnInit {
     });
   }
 
-  cancelarFormulario(): void {
-    this.mostrarFormulario = false;
+  fecharModal(): void {
+    this.mostrarModal = false;
+    this.mostrarModalExclusao = false;
     this.editando = false;
+    this.abastecimentoSelecionado = null;
     this.abastecimentoForm.reset();
     this.viagensDoVeiculo = [];
     this.valorCalculado = 0;
+    this.carregandoModal = false;
   }
 
   aplicarFiltros(): void {
-    const filtros = this.filtroForm.value;
     this.filteredAbastecimentos = this.abastecimentos.filter(abastecimento => {
       // Filtro por veículo
-      if (filtros.veiculoId && abastecimento.veiculoId !== parseInt(filtros.veiculoId)) {
-        return false;
+      if (this.filtroVeiculo) {
+        const veiculoInfo = this.getVeiculoInfo(abastecimento.veiculoId!).toLowerCase();
+        if (!veiculoInfo.includes(this.filtroVeiculo.toLowerCase())) {
+          return false;
+        }
       }
 
       // Filtro por tipo de combustível
-      if (filtros.tipoCombustivel && abastecimento.tipoCombustivel !== filtros.tipoCombustivel) {
+      if (this.filtroTipoCombustivel && abastecimento.tipoCombustivel !== this.filtroTipoCombustivel) {
         return false;
       }
 
       // Filtro por status
-      if (filtros.status && abastecimento.statusAbastecimento !== filtros.status) {
+      if (this.filtroStatus && abastecimento.statusAbastecimento !== this.filtroStatus) {
         return false;
       }
 
       // Filtro por data
-      const dataAbastecimento = new Date(abastecimento.dataAbastecimento);
+      const dataAbastecimento = new Date(abastecimento.dataAbastecimento!);
 
-      if (filtros.dataInicio) {
-        const dataInicio = new Date(filtros.dataInicio);
+      if (this.filtroDataInicio) {
+        const dataInicio = new Date(this.filtroDataInicio);
         dataInicio.setHours(0, 0, 0, 0);
         if (dataAbastecimento < dataInicio) {
           return false;
         }
       }
 
-      if (filtros.dataFim) {
-        const dataFim = new Date(filtros.dataFim);
+      if (this.filtroDataFim) {
+        const dataFim = new Date(this.filtroDataFim);
         dataFim.setHours(23, 59, 59, 999);
         if (dataAbastecimento > dataFim) {
           return false;
@@ -465,14 +502,17 @@ export class AbastecimentoListComponent implements OnInit {
       return true;
     });
 
-    this.totalItems = this.filteredAbastecimentos.length;
     this.pageIndex = 0;
     this.calcularEstatisticas();
     this.selection.clear();
   }
 
   limparFiltros(): void {
-    this.filtroForm.reset();
+    this.filtroVeiculo = '';
+    this.filtroTipoCombustivel = '';
+    this.filtroStatus = '';
+    this.filtroDataInicio = '';
+    this.filtroDataFim = '';
     this.aplicarFiltros();
   }
 
@@ -488,60 +528,16 @@ export class AbastecimentoListComponent implements OnInit {
     const totalLitros = dados.reduce((sum, item) => sum + item.quantidadeLitros, 0);
     const mediaPreco = totalLitros > 0 ? totalGasto / totalLitros : 0;
 
-    // Calcular consumo médio (aproximado)
-    let totalConsumo = 0;
-    let contadorConsumo = 0;
-
-    // Agrupar por veículo
-    const abastecimentosPorVeiculo: { [key: number]: Abastecimento[] } = {};
-
-    dados.forEach(abastecimento => {
-      if (abastecimento.veiculoId) {
-        if (!abastecimentosPorVeiculo[abastecimento.veiculoId]) {
-          abastecimentosPorVeiculo[abastecimento.veiculoId] = [];
-        }
-        abastecimentosPorVeiculo[abastecimento.veiculoId].push(abastecimento);
-      }
-    });
-
-    // Calcular para cada veículo
-    Object.values(abastecimentosPorVeiculo).forEach(abastecimentosVeiculo => {
-      // Ordenar por data
-      abastecimentosVeiculo.sort((a, b) =>
-        new Date(a.dataAbastecimento).getTime() - new Date(b.dataAbastecimento).getTime()
-      );
-
-      // Calcular entre abastecimentos consecutivos
-      for (let i = 1; i < abastecimentosVeiculo.length; i++) {
-        const anterior = abastecimentosVeiculo[i - 1];
-        const atual = abastecimentosVeiculo[i];
-
-        const kmPercorridos = atual.kilometragemVeiculo - anterior.kilometragemVeiculo;
-        const litrosConsumidos = atual.quantidadeLitros;
-
-        if (kmPercorridos > 0 && litrosConsumidos > 0) {
-          const consumo = kmPercorridos / litrosConsumidos;
-          totalConsumo += consumo;
-          contadorConsumo++;
-        }
-      }
-    });
-
-    const consumoMedio = contadorConsumo > 0 ? totalConsumo / contadorConsumo : 0;
-
     this.estatisticas = {
       totalGasto,
       totalLitros,
       mediaPreco,
-      consumoMedio
+      consumoMedio: 0 // Removido o cálculo complexo por enquanto
     };
   }
 
-  // Métodos auxiliares
-  getCurrentPageItems(): Abastecimento[] {
-    const startIndex = this.pageIndex * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    return this.filteredAbastecimentos.slice(startIndex, endIndex);
+  getTotalAbastecimentos(): number {
+    return this.filteredAbastecimentos.length;
   }
 
   onPageChange(event: PageEvent): void {
@@ -549,60 +545,59 @@ export class AbastecimentoListComponent implements OnInit {
     this.pageSize = event.pageSize;
   }
 
-  // Seleção
-  toggleSelection(row: Abastecimento): void {
-    this.selection.toggle(row);
-  }
-
-  toggleAllSelection(): void {
-    const pageItems = this.getCurrentPageItems();
-    if (this.isAllSelected()) {
-      this.selection.deselect(...pageItems);
-    } else {
-      this.selection.select(...pageItems);
-    }
-  }
-
-  isAllSelected(): boolean {
-    const pageItems = this.getCurrentPageItems();
-    if (pageItems.length === 0) return false;
-    return this.selection.selected.length === pageItems.length;
-  }
-
-  // Getters para descrições
+  // Método CORRIGIDO para obter informações do veículo
   getVeiculoInfo(veiculoId: number): string {
-    if (!veiculoId) return 'Não informado';
+    console.log('Buscando info do veículo ID:', veiculoId);
+    console.log('Veículos disponíveis:', this.veiculos);
+
+    if (!veiculoId || veiculoId === 0) {
+      return 'Não informado';
+    }
 
     const veiculo = this.veiculos.find(v => v.id === veiculoId);
+    console.log('Veículo encontrado:', veiculo);
+
     if (veiculo) {
       return `${veiculo.matricula} - ${veiculo.modelo}`;
     }
 
-    return 'Veículo não encontrado';
+    // Tentar encontrar em abastecimentos
+    const abastecimento = this.abastecimentos.find(a => a.veiculoId === veiculoId);
+    if (abastecimento && abastecimento.veiculo) {
+      const veiculoObj = abastecimento.veiculo as any;
+      if (veiculoObj.matricula && veiculoObj.modelo) {
+        return `${veiculoObj.matricula} - ${veiculoObj.modelo}`;
+      }
+    }
+
+    return `Veículo #${veiculoId} (não encontrado)`;
   }
 
   getTipoCombustivelLabel(tipo: string): string {
-    const combustivel = this.tiposCombustivel.find(t => t.value === tipo);
-    return combustivel ? combustivel.label : tipo;
+    const tipos: { [key: string]: string } = {
+      'GASOLINA': 'Gasolina',
+      'DIESEL': 'Diesel',
+      'ETANOL': 'Etanol',
+      'GNV': 'GNV',
+      'ELETRICO': 'Elétrico'
+    };
+    return tipos[tipo] || tipo;
   }
 
   getStatusLabel(status: string): string {
-    const statusObj = this.statusCombustivel.find(s => s.value === status);
-    return statusObj ? statusObj.label : status;
+    const statuses: { [key: string]: string } = {
+      'REALIZADA': 'Realizada',
+      'PLANEADA': 'Planejada'
+    };
+    return statuses[status] || status;
   }
 
-  getStatusClass(status: string): string {
-    return status === 'PLANEADA' ? 'status-badge status-planeada' : 'status-badge status-realizada';
-  }
-
-  getCorCombustivel(tipo: string): string {
-    const combustivel = this.tiposCombustivel.find(t => t.value === tipo);
-    return combustivel ? combustivel.cor : '#000';
-  }
-
-  getIconCombustivel(tipo: string): string {
-    const combustivel = this.tiposCombustivel.find(t => t.value === tipo);
-    return combustivel ? combustivel.icon : 'local_gas_station';
+  getStatusColor(status: string): string {
+    const cores: { [key: string]: string } = {
+      'REALIZADA': '#28a745',
+      'PLANEADA': '#ffc107'
+    };
+    return cores[status] || '#6c757d';
   }
 
   // Formatação
@@ -610,7 +605,7 @@ export class AbastecimentoListComponent implements OnInit {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(valor);
+    }).format(valor || 0);
   }
 
   formatarDataHora(dataString: string | Date): string {
@@ -631,53 +626,48 @@ export class AbastecimentoListComponent implements OnInit {
     }
   }
 
+  // Método de debug
+  testarViagens(): void {
+    console.log('=== DEBUG COMPLETO ===');
+    console.log('Veículos:', this.veiculos);
+    console.log('Abastecimentos:', this.abastecimentos);
+    console.log('Todas as viagens:', this.viagens);
+    console.log('Viagens do veículo selecionado:', this.viagensDoVeiculo);
+    console.log('Veículo ID selecionado:', this.abastecimentoForm.get('veiculoId')?.value);
+
+    // Mostrar cada abastecimento com seu veículo
+    this.abastecimentos.forEach((abast, index) => {
+      console.log(`Abastecimento ${index + 1}:`, {
+        id: abast.id,
+        veiculoId: abast.veiculoId,
+        veiculo: abast.veiculo,
+        infoVeiculo: this.getVeiculoInfo(abast.veiculo)
+      });
+    });
+
+    this.mostrarSucesso('Check console para debug info');
+  }
+
   // Mensagens
   mostrarSucesso(mensagem: string): void {
     this.snackBar.open(mensagem, 'Fechar', {
       duration: 3000,
-      panelClass: ['sucesso-snackbar']
+      panelClass: ['success-snackbar']
     });
   }
 
   mostrarErro(mensagem: string): void {
     this.snackBar.open(mensagem, 'Fechar', {
       duration: 5000,
-      panelClass: ['erro-snackbar']
+      panelClass: ['error-snackbar']
     });
   }
 
-  // Método para recarregar dados
-  recarregarLista(): void {
-    this.carregando = true;
-    this.carregarDados();
-  }
-
-  trackByAbastecimento(index: number, abastecimento: Abastecimento): number {
-    return abastecimento.id || index;
-  }
-
-  // Métodos de exportação
   exportarExcel(): void {
     this.mostrarSucesso('Funcionalidade de exportação Excel em desenvolvimento');
   }
 
   exportarPDF(): void {
     this.mostrarSucesso('Funcionalidade de exportação PDF em desenvolvimento');
-  }
-
-  importarAbastecimentos(): void {
-    this.fileInput.nativeElement.click();
-  }
-
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    this.carregando = true;
-    setTimeout(() => {
-      this.mostrarSucesso('Arquivo importado com sucesso!');
-      this.carregando = false;
-      this.fileInput.nativeElement.value = '';
-    }, 2000);
   }
 }

@@ -70,7 +70,7 @@
                   <label>Data Início</label>
                   <input type="date" class="filter-input" [(ngModel)]="dataInicio" [max]="hojeString">
                 </div>
- 
+
                 <div class="date-group">
                   <label>Data Fim</label>
                   <input type="date" class="filter-input" [(ngModel)]="dataFim" [max]="hojeString" [min]="dataInicio">
@@ -204,6 +204,7 @@
             <th (click)="ordenarPor('mediaPorLitro')" style="cursor: pointer; text-align: right;">
               Média por Litro <i class="fas fa-sort"></i>
             </th>
+            <th> status</th>
           </tr>
         </thead>
         <tbody>
@@ -240,7 +241,7 @@
               <span class="media-badge">
                 {{ relatorio.mediaPorLitro | currency:'BRL':'symbol':'1.2-2' }}
               </span>
-            </td>
+            
           </tr>
         </tbody>
 
@@ -257,6 +258,7 @@
                 </span>
               </div>
             </td>
+
           </tr>
         </tfoot>
       </table>
