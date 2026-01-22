@@ -216,7 +216,7 @@
                   <i class="fas fa-car"></i>
                 </div>
                 <div class="veiculo-detalhes">
-                  <strong>{{ relatorio.veiculo || 'Não informado' }}</strong>
+                  <strong>{{ relatorio.matricula }}</strong>
                   <span>Registro de combustível</span>
                 </div>
               </div>
@@ -225,23 +225,27 @@
             <!-- Coluna Litros -->
             <td class="litros-cell">
               <span class="litros-badge">
-                {{ relatorio.totalLitros | number:'1.2-2' }} L
+                {{ relatorio.totalLitros| number:'1.2-2' }} L
               </span>
             </td>
 
             <!-- Coluna Gasto -->
             <td class="valor-cell">
               <span class="gasto-badge">
-                {{ relatorio.totalGasto | currency:'BRL':'symbol':'1.2-2' }}
+                {{ relatorio.valorTotal | currency:'BRL':'symbol':'1.2-2' }}
               </span>
             </td>
 
             <!-- Coluna Média -->
             <td class="valor-cell">
               <span class="media-badge">
-                {{ relatorio.mediaPorLitro | currency:'BRL':'symbol':'1.2-2' }}
+                {{ relatorio.mediaPorLitro |  number: '1.2-2' }} L
               </span>
-            
+         <td class="valor-cell">
+              <span class="media-badge">
+                {{ relatorio.status }}
+              </span>
+            </td>
           </tr>
         </tbody>
 

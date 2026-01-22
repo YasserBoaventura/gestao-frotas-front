@@ -112,8 +112,8 @@ export class RelatorioCombustivelComponent implements OnInit {
   extrairVeiculos(): void {
     const veiculosUnicos = new Set<string>();
     this.relatorios.forEach(relatorio => {
-      if (relatorio.veiculo) {
-        veiculosUnicos.add(relatorio.veiculo);
+      if (relatorio.matricula) {
+        veiculosUnicos.add(relatorio.matricula);
       }
     });
     this.veiculos = Array.from(veiculosUnicos).sort();
@@ -123,7 +123,7 @@ export class RelatorioCombustivelComponent implements OnInit {
   aplicarFiltroVeiculo(): void {
     if (this.veiculoSelecionado) {
       this.relatoriosFiltrados = this.relatorios.filter(relatorio =>
-        relatorio.veiculo === this.veiculoSelecionado
+        relatorio.matricula === this.veiculoSelecionado
       );
     } else {
       this.relatoriosFiltrados = [...this.relatorios];
@@ -144,7 +144,7 @@ export class RelatorioCombustivelComponent implements OnInit {
       total + (relatorio.totalLitros || 0), 0);
 
     this.totalGeralGasto = this.relatoriosFiltrados.reduce((total, relatorio) =>
-      total + (relatorio.totalGasto || 0), 0);
+      total + (relatorio.valorTotal || 0), 0);
   }
 
   // Limpar todos os filtros
@@ -190,11 +190,11 @@ export class RelatorioCombustivelComponent implements OnInit {
     this.relatoriosFiltrados.sort((a, b) => {
       switch(coluna) {
         case 'veiculo':
-          return a.veiculo.localeCompare(b.veiculo);
+          return a.matricula.localeCompare(b.matricula);
         case 'totalLitros':
           return (b.totalLitros || 0) - (a.totalLitros || 0);
         case 'totalGasto':
-          return (b.totalGasto || 0) - (a.totalGasto || 0);
+          return (b.valorTotal || 0) - (a.valorTotal || 0);
         case 'mediaPorLitro':
           return (b.mediaPorLitro || 0) - (a.mediaPorLitro || 0);
         default:
@@ -211,9 +211,9 @@ export class RelatorioCombustivelComponent implements OnInit {
   if (this.relatoriosFiltrados.length === 0) return;
 
   const data = this.relatoriosFiltrados.map(item => ({
-    'Veículo': item.veiculo || 'Não informado',
+    'Veículo': item.matricula || 'Não informado',
     'Total Litros': item.totalLitros,
-    'Total Gasto': item.totalGasto,
+    'Total Gasto': item.valorTotal,
     'Média por Litro': item.mediaPorLitro,
     'Total Litros Formatado': item.getTotalLitrosFormatado(),
     'Total Gasto Formatado': item.getTotalGastoFormatado(),
@@ -241,7 +241,7 @@ temTendenciaPositiva(): boolean {
 
 // Método para contar veículos únicos
 getVeiculosUnicos(): number {
-  const veiculos = new Set(this.relatoriosFiltrados.map(r => r.veiculo));
+  const veiculos = new Set(this.relatoriosFiltrados.map(r => r.matricula));
   return veiculos.size;
 }
 
