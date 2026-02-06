@@ -161,7 +161,7 @@
           <h3>Excluir Abastecimento</h3>
 
           <div class="acao-info" *ngIf="abastecimentoSelecionado">
-            <p><strong>Veículo:</strong> {{getVeiculoInfo(abastecimentoSelecionado.veiculoId!)}}</p>
+            <p><strong>Veículo:</strong> {{getVeiculoInfo(abastecimentoSelecionado.veiculo_Id!)}}</p>
             <p><strong>Data:</strong> {{formatarDataHora(abastecimentoSelecionado.dataAbastecimento!)}}</p>
             <p><strong>Combustível:</strong> {{getTipoCombustivelLabel(abastecimentoSelecionado.tipoCombustivel)}}</p>
             <p><strong>Quantidade:</strong> {{abastecimentoSelecionado.quantidadeLitros}} L</p>
@@ -198,7 +198,7 @@
     </div>
     <div class="header-actions">
       <!-- Debug button (temporário) -->
-      <button *ngIf="debugMode" class="btn-debug" (click)="testarViagens()" title="Debug">
+      <button *ngIf="debugMode" class="btn-debug"  title="Debug">
         <mat-icon>bug_report</mat-icon>
       </button>
       <button class="btn-reload" (click)="carregarDados()" [disabled]="carregando" title="Recarregar lista">
@@ -391,18 +391,21 @@
             </td>
 
             <!-- Coluna Veículo -->
-           <td class="veiculo-cell">
+      <td class="veiculo-cell">
   <div class="veiculo-info">
     <mat-icon class="veiculo-icon">directions_car</mat-icon>
     <div class="veiculo-detalhes">
-      <strong>{{getVeiculoInfo(abastecimento.veiculoId!)}}</strong>
-      <span *ngIf="debugMode" class="debug-veiculo-id">
-        (ID: {{abastecimento.veiculoId}})
+
+      <div *ngIf="debugMode" class="debug-veiculo-id">
+         Veículo Matricula: {{abastecimento.veiculo?.matricula}}
+      </div>
+      <span *ngIf="abastecimento.viagemId" class="viagem-info">
+        <mat-icon class="small-icon">directions</mat-icon>
+        Viagem #{{abastecimento.viagemId}}
       </span>
-      <span *ngIf="abastecimento.viagemId" class="viagem-info">Viagem #{{abastecimento.viagemId}}</span>
     </div>
   </div>
-</td>
+</td> 
 
             <!-- Coluna Combustível -->
             <td class="combustivel-cell">

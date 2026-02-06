@@ -243,7 +243,7 @@ temTendenciaPositiva(): boolean {
 getVeiculosUnicos(): number {
   const veiculos = new Set(this.relatoriosFiltrados.map(r => r.matricula));
   return veiculos.size;
-}
+}  
 
 // Método para mudança no tipo de relatório
 onTipoRelatorioChange(): void {

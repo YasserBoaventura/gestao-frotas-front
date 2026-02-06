@@ -58,11 +58,6 @@ export class ManutencoesServiceService {
 
   constructor(private http: HttpClient) {}
 
-  // ========== HEADERS ==========
-
-
-  // ========== CRUD MANUTENÇÕES ==========
-
   /**
    * Busca todas as manutenções
    */
@@ -107,7 +102,6 @@ export class ManutencoesServiceService {
 
   }
 
-  // ========== MÉTODOS ESPECÍFICOS ==========
 
   /**
    * Busca manutenções por veículo

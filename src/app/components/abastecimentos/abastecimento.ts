@@ -12,10 +12,10 @@ export class Abastecimento {
   statusAbastecimento?: string;
 
   // IDs (usados para forms)
-  veiculoId?: number;
+  veiculo_Id?: number;
   viagemId?: number | null;
 
   // Objetos completos (se vierem da API)
-  veiculo?: any;
-  viagem?: any;
+  veiculo!:  Veiculo;
+  viagem!: Viagem;
 }

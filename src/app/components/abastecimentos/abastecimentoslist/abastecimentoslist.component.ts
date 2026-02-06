@@ -146,63 +146,87 @@ export class AbastecimentoListComponent implements OnInit {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
-  carregarDados(): void {
-    this.carregando = true;
+ carregarDados(): void {
+  this.carregando = true;
 
-    forkJoin({
-      veiculos: this.veiculoService.getVehicles(),
-      abastecimentos: this.abastecimentoService.getAbastecimentos(),
-      viagens: this.viagemService.getViagens()
-    }).subscribe({
-      next: ({ veiculos, abastecimentos, viagens }) => {
-        console.log('Dados carregados:', { veiculos, abastecimentos, viagens });
+  forkJoin({
+    veiculos: this.veiculoService.getVehicles(),
+    abastecimentos: this.abastecimentoService.getAbastecimentos(),
+    viagens: this.viagemService.getViagens()
+  }).subscribe({
+    next: ({ veiculos, abastecimentos, viagens }) => {
+      console.log('Dados carregados:', { veiculos, abastecimentos, viagens });
 
-        this.veiculos = veiculos;
-        this.viagens = viagens;
+      this.veiculos = veiculos;
+      this.viagens = viagens;
 
-        // Processar abastecimentos para garantir que temos o veiculoId
-        this.abastecimentos = abastecimentos.map(abastecimento => {
-          // Extrair veiculoId de diferentes formas possíveis
-          let veiculoId = 0;
-          if (abastecimento.veiculoId) {
-            veiculoId = abastecimento.veiculoId;
-          } else if (abastecimento.veiculo && abastecimento.veiculo.id) {
-            veiculoId = abastecimento.veiculo.id;
-          } else if (abastecimento.veiculo && typeof abastecimento.veiculo === 'object') {
-            // Tentar extrair ID do objeto veiculo
-            const veiculoObj = abastecimento.veiculo as any;
-            veiculoId = veiculoObj.id || 0;
-          }
+      // Processar abastecimentos para garantir que temos o veiculoId
+      this.abastecimentos = abastecimentos.map(abastecimento => {
+        // Extrair veiculoId de diferentes formas possíveis
+        let veiculoId = 0;
+        if (abastecimento.veiculoId) {
+          veiculoId = abastecimento.veiculoId;
+        } else if (abastecimento.veiculo && abastecimento.veiculo.id) {
+          veiculoId = abastecimento.veiculo.id;
+        } else if (abastecimento.veiculo && typeof abastecimento.veiculo === 'object') {
+          // Tentar extrair ID do objeto veiculo
+          const veiculoObj = abastecimento.veiculo as any;
+          veiculoId = veiculoObj.id || 0;
+        }
 
-          // Extrair viagemId de forma similar
-          let viagemId = null;
-          if (abastecimento.viagemId) {
-            viagemId = abastecimento.viagemId;
-          } else if (abastecimento.viagem && abastecimento.viagem.id) {
-            viagemId = abastecimento.viagem.id;
-          }
+        // Encontrar o veículo completo na lista de veículos
+        const veiculoCompleto = this.veiculos.find(v => v.id === veiculoId);
 
-          return {
-            ...abastecimento,
-            veiculoId: veiculoId,
-            viagemId: viagemId,
-            statusAbastecimento: abastecimento.statusAbastecimento || 'PLANEADA'
-          };
+        // Extrair viagemId de forma similar
+        let viagemId = null;
+        if (abastecimento.viagemId) {
+          viagemId = abastecimento.viagemId;
+        } else if (abastecimento.viagem && abastecimento.viagem.id) {
+          viagemId = abastecimento.viagem.id;
+        }
+
+        // Encontrar a viagem completa se existir
+        const viagemCompleta = viagemId ? this.viagens.find(v => v.id === viagemId) : null;
+
+        return {
+          ...abastecimento,
+          veiculoId: veiculoId,
+          viagemId: viagemId,
+          statusAbastecimento: abastecimento.statusAbastecimento || 'PLANEADA',
+          // ADICIONE ESTAS LINHAS:
+          veiculo: veiculoCompleto || {
+            id: veiculoId,
+            matricula: `VCL-${veiculoId}`,
+            modelo: 'Veículo não encontrado',
+            kilometragemAtual: 0
+          },
+          viagem: viagemCompleta
+        };
+      });
+
+      console.log('Abastecimentos processados:', this.abastecimentos);
+
+      // DEBUG: Verificar se os veículos estão sendo vinculados
+      this.abastecimentos.forEach((abast, index) => {
+        console.log(`Abastecimento ${index}:`, {
+          id: abast.id,
+          veiculoId: abast.veiculo_Id,
+          veiculo: abast.veiculo,
+          temVeiculo: !!abast.veiculo
         });
+      });
 
-        console.log('Abastecimentos processados:', this.abastecimentos);
-
-        this.filteredAbastecimentos = [...this.abastecimentos];
-        this.calcularEstatisticas();
-        this.carregando = false;
-      },
-      error: (error) => {
-        console.error('Erro ao carregar dados:', error);
-        this.mostrarErro('Erro ao carregar dados: ' + error.message);
-        this.carregando = false;
-      }
-    });
-  }
+      this.filteredAbastecimentos = [...this.abastecimentos];
+      this.calcularEstatisticas();
+      this.carregando = false;
+    },
+    error: (error) => {
+      console.error('Erro ao carregar dados:', error);
+      this.mostrarErro('Erro ao carregar dados: ' + error.message);
+      this.carregando = false;
+    }
+  });
+}
 
   onVeiculoChange(veiculoId: number | null): void {
     console.log('Veículo selecionado ID:', veiculoId);
@@ -285,8 +309,8 @@ export class AbastecimentoListComponent implements OnInit {
 
     // Extrair veiculoId corretamente
     let veiculoId = 0;
-    if (abastecimento.veiculoId) {
-      veiculoId = abastecimento.veiculoId;
+    if (abastecimento.veiculo_Id) {
+      veiculoId = abastecimento.veiculo_Id;
     } else if (abastecimento.veiculo && abastecimento.veiculo.id) {
       veiculoId = abastecimento.veiculo.id;
     } else if (abastecimento.veiculo && typeof abastecimento.veiculo === 'object') {
@@ -464,7 +488,7 @@ export class AbastecimentoListComponent implements OnInit {
     this.filteredAbastecimentos = this.abastecimentos.filter(abastecimento => {
       // Filtro por veículo
       if (this.filtroVeiculo) {
-        const veiculoInfo = this.getVeiculoInfo(abastecimento.veiculoId!).toLowerCase();
+        const veiculoInfo = this.getVeiculoInfo(abastecimento.veiculo_Id!).toLowerCase();
         if (!veiculoInfo.includes(this.filtroVeiculo.toLowerCase())) {
           return false;
         }
@@ -545,8 +569,8 @@ export class AbastecimentoListComponent implements OnInit {
     this.pageSize = event.pageSize;
   }
 
-  // Método CORRIGIDO para obter informações do veículo
-  getVeiculoInfo(veiculoId: number): string {
+  // Método para obter informações do veículo
+  getVeiculoInfo(veiculoId: any ): string {
     console.log('Buscando info do veículo ID:', veiculoId);
     console.log('Veículos disponíveis:', this.veiculos);
 
@@ -562,7 +586,7 @@ export class AbastecimentoListComponent implements OnInit {
     }
 
     // Tentar encontrar em abastecimentos
-    const abastecimento = this.abastecimentos.find(a => a.veiculoId === veiculoId);
+    const abastecimento = this.abastecimentos.find(a => a.veiculo_Id === veiculoId);
     if (abastecimento && abastecimento.veiculo) {
       const veiculoObj = abastecimento.veiculo as any;
       if (veiculoObj.matricula && veiculoObj.modelo) {
@@ -573,6 +597,32 @@ export class AbastecimentoListComponent implements OnInit {
     return `Veículo #${veiculoId} (não encontrado)`;
   }
 
+   getViagemInfo(viagemId: any ): string {
+    console.log('Buscando info do viagen ID:', viagemId);
+    console.log('Viagem disponíveis:', this.viagens);
+
+    if (!viagemId || viagemId === 0) {
+      return 'Não informado';
+    }
+
+    const viagem = this.viagens.find(v => v.id === viagemId);
+    console.log('Viagem encontrado:', viagem );
+
+    if (viagem) {
+      return `${viagem.rota?.origem} - ${viagem.rota?.destino}`;
+    }
+
+    // Tentar encontrar em abastecimentos
+    const abastecimento = this.abastecimentos.find(a => a.veiculo_Id === viagemId);
+    if (abastecimento && abastecimento.veiculo) {
+      const veiculoObj = abastecimento.veiculo as any;
+      if (veiculoObj.matriculo && veiculoObj.modelo) {
+        return `${veiculoObj.matricula} - ${veiculoObj.modelo}`;
+      }
+    }
+
+    return `Viagem #${viagemId} (não encontrado)`;
+  }
   getTipoCombustivelLabel(tipo: string): string {
     const tipos: { [key: string]: string } = {
       'GASOLINA': 'Gasolina',
@@ -627,27 +677,6 @@ export class AbastecimentoListComponent implements OnInit {
   }
 
   // Método de debug
-  testarViagens(): void {
-    console.log('=== DEBUG COMPLETO ===');
-    console.log('Veículos:', this.veiculos);
-    console.log('Abastecimentos:', this.abastecimentos);
-    console.log('Todas as viagens:', this.viagens);
-    console.log('Viagens do veículo selecionado:', this.viagensDoVeiculo);
-    console.log('Veículo ID selecionado:', this.abastecimentoForm.get('veiculoId')?.value);
-
-    // Mostrar cada abastecimento com seu veículo
-    this.abastecimentos.forEach((abast, index) => {
-      console.log(`Abastecimento ${index + 1}:`, {
-        id: abast.id,
-        veiculoId: abast.veiculoId,
-        veiculo: abast.veiculo,
-        infoVeiculo: this.getVeiculoInfo(abast.veiculo)
-      });
-    });
-
-    this.mostrarSucesso('Check console para debug info');
-  }
-
   // Mensagens
   mostrarSucesso(mensagem: string): void {
     this.snackBar.open(mensagem, 'Fechar', {

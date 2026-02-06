@@ -202,7 +202,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
       }
     });
   }
-  
+
 
   // ============ MODAL CADASTRO/EDIÇÃO ============
   abrirModalCadastro(manutencao?: Manutencao): void {
@@ -717,7 +717,7 @@ formatarDataConclusao(dataString?: any): string {
     const dados = this.dataSource.data || [];
     if (dados.length === 0) return 0;
     return dados.filter(m => this.verificarStatusManutencao(m) === 'VENCIDA').length;
-  }
+  }  
 
   getProximasCount(): number {
     const dados = this.dataSource.data || [];
@@ -766,7 +766,7 @@ formatarDataConclusao(dataString?: any): string {
     const hoje = new Date();
     const kmAtual = manutencao.veiculo?.kilometragemAtual || 0;
 
-    if (manutencao.proximaManutencaoData && new Date(manutencao.proximaManutencaoData) < hoje) {
+    if (manutencao.status!="CONCLUIDA" && manutencao.status!="EM_ANDAMENTO" && manutencao. proximaManutencaoData && new Date(manutencao.proximaManutencaoData) < hoje) {
       return 'VENCIDA';
     }
 
