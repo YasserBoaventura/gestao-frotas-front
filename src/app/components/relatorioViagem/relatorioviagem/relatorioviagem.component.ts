@@ -87,7 +87,7 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     // Limpar gráficos para evitar vazamento de memória
     if (this.statusChart) {
       this.statusChart.destroy();
-    }
+    } 
     if (this.consumoChart) {
       this.consumoChart.destroy();
     }

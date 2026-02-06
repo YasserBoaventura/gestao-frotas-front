@@ -39,5 +39,5 @@ export const routes: Routes = [
 {path: "relatoriosViagem", component: RelatorioviagemComponent},
 {path: "relatorioCombustivel", component: RelatorioCombustivelComponent}
 
-
+ 
 ];

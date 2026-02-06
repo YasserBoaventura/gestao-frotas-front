@@ -14,6 +14,12 @@ export class Manutencao {
   proximaManutencaoData?: Date;
   veiculo! : Veiculo;
     status?: string;
+
+dataInicio!:string;
+
+dataConclusao!: string;
+
+
 }
 
 export enum TipoManutencao {
