@@ -1,14 +1,19 @@
 export class RelatorioCombustivelDTO {
-  veiculo: string;
+  matricula: string;
   totalLitros: number;
-  totalGasto: number;
+  valorTotal: number;
   mediaPorLitro: number;
-
-  constructor(veiculo: string, totalLitros: number, totalGasto: number, mediaPorLitro: number) {
-    this.veiculo = veiculo;
+  precoMedio: number;
+  status: string; 
+  constructor(matricula: string, totalLitros: number,  valorTotal: number, mediaPorLitro: number , precoMedio: number, status: string) { 
+    this.matricula =matricula;
     this.totalLitros = totalLitros || 0;
-    this.totalGasto = totalGasto || 0;
+    this. valorTotal =  valorTotal || 0;
     this.mediaPorLitro = mediaPorLitro || 0;
+    this.precoMedio = precoMedio;
+    this.status = status; 
+  
+
   }
 
   getTotalLitrosFormatado(): string {
@@ -16,8 +21,8 @@ export class RelatorioCombustivelDTO {
   }
 
   getTotalGastoFormatado(): string {
-    return `R$ ${this.totalGasto.toFixed(2)}`;
-  }
+    return `R$ ${this.valorTotal.toFixed(2)}`;
+  } 
 
   getMediaPorLitroFormatado(): string {
     return `R$ ${this.mediaPorLitro.toFixed(2)}`;

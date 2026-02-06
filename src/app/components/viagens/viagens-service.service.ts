@@ -172,6 +172,8 @@ export class ViagensServiceService {
     return this.http.get<any[]>(`${this.apiUrl}/viagens`, { params });
   }
 
-
-
+getViagensPorVeiculo(veiculoId: number): Observable<Viagem[]> {
+  // IMPORTANTE: Teste este endpoint no Postman primeiro!
+  return this.http.get<Viagem[]>(`http://localhost:9001/api/viagens/veiculo/${veiculoId}`);
+}
 }

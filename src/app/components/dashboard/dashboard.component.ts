@@ -36,3 +36,4 @@ export class DashboardComponent {
     this.router.navigate([path]);
   }
 }
+ 

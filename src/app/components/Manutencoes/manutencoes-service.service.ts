@@ -58,11 +58,6 @@ export class ManutencoesServiceService {
 
   constructor(private http: HttpClient) {}
 
-  // ========== HEADERS ==========
-
-
-  // ========== CRUD MANUTENÇÕES ==========
-
   /**
    * Busca todas as manutenções
    */
@@ -107,7 +102,6 @@ export class ManutencoesServiceService {
 
   }
 
-  // ========== MÉTODOS ESPECÍFICOS ==========
 
   /**
    * Busca manutenções por veículo
@@ -151,7 +145,7 @@ export class ManutencoesServiceService {
 
   cancelarManutencao(id: number, motivo: string): Observable<Manutencao> {
     return this.http.put<Manutencao>(`${this.apiUrl}/cancelarManutencao/${id}`, { motivo });
-   } 
+   }
   /**
    * Busca próximas manutenções (próximos 30 dias)
    */

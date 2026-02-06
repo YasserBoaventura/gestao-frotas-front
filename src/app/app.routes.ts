@@ -17,6 +17,8 @@ import { RelatorioviagemComponent } from './components/relatorioViagem/relatorio
 import { AbastecimentoListComponent } from './components/abastecimentos/abastecimentoslist/abastecimentoslist.component';
 import { ManutencoesListComponent } from './components/Manutencoes/manutencoes-list/manutencoes-list.component';
 import { RelatorioCombustivelComponent } from './components/relatorioCombustivel/relatorio-combustivel/relatorio-combustivel.component';
+import { RelatorioManutencaoComponent } from './components/relatorioManutecao/relatorioManutecao/relatorio-manutencao/relatorio-manutencao.component';
+
 
 
 
@@ -37,7 +39,9 @@ export const routes: Routes = [
 {path: "abastecimentoslist", component: AbastecimentoListComponent},
 {path: "manutencoes", component: ManutencoesListComponent},
 {path: "relatoriosViagem", component: RelatorioviagemComponent},
-{path: "relatorioCombustivel", component: RelatorioCombustivelComponent}
+{path: "relatorioCombustivel", component: RelatorioCombustivelComponent},
+{path: "relatorioManutencao", component:  RelatorioManutencaoComponent}
 
- 
+
+
 ];

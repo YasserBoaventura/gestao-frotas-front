@@ -30,8 +30,7 @@ export class AbstecimeserviceService {
       responseType: 'json'
     }) ;
   }
- 
-  // No seu abastecimento.service.ts
+
 updateAbastecimento(id: number, abastecimentoDTO: any): Observable<string> {
   console.log('Atualizando abastecimento ID:', id, 'DTO:', abastecimentoDTO);
 
