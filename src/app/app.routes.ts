@@ -18,6 +18,7 @@ import { AbastecimentoListComponent } from './components/abastecimentos/abasteci
 import { ManutencoesListComponent } from './components/Manutencoes/manutencoes-list/manutencoes-list.component';
 import { RelatorioCombustivelComponent } from './components/relatorioCombustivel/relatorio-combustivel/relatorio-combustivel.component';
 import { RelatorioManutencaoComponent } from './components/relatorioManutecao/relatorioManutecao/relatorio-manutencao/relatorio-manutencao.component';
+import { CustoListComponentComponent } from './components/Custos/custo-list-component/custo-list-component.component';
 
 
 
@@ -40,7 +41,8 @@ export const routes: Routes = [
 {path: "manutencoes", component: ManutencoesListComponent},
 {path: "relatoriosViagem", component: RelatorioviagemComponent},
 {path: "relatorioCombustivel", component: RelatorioCombustivelComponent},
-{path: "relatorioManutencao", component:  RelatorioManutencaoComponent}
+{path: "relatorioManutencao", component:  RelatorioManutencaoComponent},
+{path: "CustoList", component:  CustoListComponentComponent},
 
 
 
