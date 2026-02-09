@@ -177,12 +177,12 @@
           </h6>
         </div>
         <div class="card-body">
-          <div *ngIf="custosPorTipo.length === 0" class="text-center py-4 text-muted">
+          <div *ngIf="custosPorTipo == null" class="text-center py-4 text-muted">
             <i class="bi bi-pie-chart display-4 d-block mb-2"></i>
             Nenhum dado disponível
           </div>
 
-          <div *ngIf="custosPorTipo.length > 0" class="table-responsive">
+          <div *ngIf="custosPorTipo != null " class="table-responsive">
             <table class="table table-sm">
               <thead>
                 <tr>
@@ -233,7 +233,7 @@
         Nenhum dado disponível
       </div>
 
-    
+
       <div *ngIf="dashboard?.veiculosMaisCaros && dashboard?.veiculosMaisCaros?.length != null " class="table-responsive">
         <table class="table table-sm">
           <thead>

@@ -181,7 +181,7 @@ export class CustoComponent implements OnInit {
       this.loading = false;
     });
 
-    // Configurar dropdowns
+    //  dropdowns
     this.tiposCusto = this.getTiposCusto();
     this.statusCusto = this.getStatusCusto();
     this.tiposCustoCompletos = this.getTiposCustoCompletos();
@@ -485,25 +485,97 @@ export class CustoComponent implements OnInit {
     this.processarCustosPorTipo();
   }
 
-  private processarCustosPorTipo(): void {
-    if (!this.dashboard?.custosPorTipo) {
-      this.custosPorTipo = [];
-      return;
-    }
 
-    const total = this.dashboard.totalMesAtual || 1;
-    const custosArray = this.dashboard.custosPorTipo as any[];
+getTipoDadosCustos(): string {
+  if (!this.dashboard?.custosPorTipo) return 'null/undefined';
 
-    this.custosPorTipo = custosArray
-      .filter(item => item.valor > 0)
-      .map(item => ({
-        tipo: item.tipo,
-        valor: item.valor,
-        porcentagem: (item.valor / total) * 100
-      }))
-      .sort((a, b) => b.valor - a.valor);
+  if (Array.isArray(this.dashboard.custosPorTipo)) {
+    return `Array com ${this.dashboard.custosPorTipo.length} itens`;
+  } else if (typeof this.dashboard.custosPorTipo === 'object') {
+    return `Objeto com ${Object.keys(this.dashboard.custosPorTipo).length} propriedades`;
+  }
+  return typeof this.dashboard.custosPorTipo;
+}
+
+getTotalCustosPorTipo(): number {
+  return this.custosPorTipo.reduce((sum, item) => sum + item.valor, 0);
+}
+ private processarCustosPorTipo(): void {
+  this.custosPorTipo = [];
+
+  if (!this.dashboard?.custosPorTipo) {
+    return;
   }
 
+  const custosObj = this.dashboard.custosPorTipo;
+  const total = this.dashboard.totalMesAtual || 1;
+
+  // Verifica se é realmente um objeto
+  if (typeof custosObj !== 'object' || custosObj === null) {
+    console.warn('custosPorTipo não é um objeto válido:', custosObj);
+    return;
+  }
+
+  // Processa cada tipo de custo
+  Object.entries(custosObj).forEach(([tipo, valor]) => {
+    const valorNumerico = Number(valor);
+
+    if (!isNaN(valorNumerico) && valorNumerico > 0) {
+      this.custosPorTipo.push({
+        tipo: this.formatarNomeTipo(tipo), // Formata o nome para exibição
+        valor: valorNumerico,
+        porcentagem: (valorNumerico / total) * 100
+      });
+    }
+  });
+
+
+  // Ordena do maior para o menor
+  this.custosPorTipo.sort((a, b) => b.valor - a.valor);
+
+  console.log(`${this.custosPorTipo.length} tipos de custos processados`);
+}
+// Formata o nome do tipo para exibição mais amigável
+private formatarNomeTipo(tipo: string): string {
+  const formatacoes: Record<string, string> = {
+    'COMBUSTIVEL': 'Combustível',
+    'MANUTENCAO_CORRETIVA': 'Manutenção Corretiva',
+    'MANUTENCAO_PREVENTIVA': 'Manutenção Preventiva',
+    'PEDAGIO': 'Pedágio',
+    'LAVAGEM': 'Lavagem',
+    'SEGURO': 'Seguro',
+    'LICENCIAMENTO': 'Licenciamento',
+    'MULTA': 'Multas',
+    'IPVA': 'IPVA',
+    'OUTROS': 'Outros'
+  };
+
+  return formatacoes[tipo] || tipo;
+}
+
+getCorPorTipo(tipo: string): string {
+  // Converte para o formato original  para encontrar a cor
+  const tipoOriginal = this.converterParaTipoOriginal(tipo);
+  const tipoEncontrado = this.tiposCustoCompletos.find(t => t.value === tipoOriginal);
+  return tipoEncontrado ? tipoEncontrado.cor : '#c8d6e5';
+}
+
+private converterParaTipoOriginal(tipoFormatado: string): string {
+  const mapeamento: Record<string, string> = {
+    'Combustível': 'COMBUSTIVEL',
+    'Manutenção Corretiva': 'MANUTENCAO_CORRETIVA',
+    'Manutenção Preventiva': 'MANUTENCAO_PREVENTIVA',
+    'Pedágio': 'PEDAGIO',
+    'Lavagem': 'LAVAGEM',
+    'Seguro': 'SEGURO',
+    'Licenciamento': 'LICENCIAMENTO',
+    'Multas': 'MULTA',
+    'IPVA': 'IPVA',
+    'Outros': 'OUTROS'
+  };
+
+  return mapeamento[tipoFormatado] || tipoFormatado;
+}
   // ============ CONFIGURAÇÕES ============
   private getTiposCusto(): any[] {
     return [
@@ -542,11 +614,6 @@ export class CustoComponent implements OnInit {
       { value: 'MULTAS', label: 'Multas', cor: '#ff9f43', icone: 'bi-exclamation-triangle' },
       { value: 'OUTROS', label: 'Outros', cor: '#c8d6e5', icone: 'bi-three-dots' }
     ];
-  }
-
-  getCorPorTipo(tipo: string): string {
-    const tipoEncontrado = this.tiposCustoCompletos.find(t => t.value === tipo);
-    return tipoEncontrado ? tipoEncontrado.cor : '#c8d6e5';
   }
 
   getIconePorTipo(tipo: string): string {
