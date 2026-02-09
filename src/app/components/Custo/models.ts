@@ -114,7 +114,7 @@ export interface DashboardCustosDTO {
   totalMesAtual: number;
   totalMesAnterior: number;
   variacaoPercentual: number;
-  custosPorTipo: Map<string, number>;
+   custosPorTipo: any;
   veiculosMaisCaros: VeiculoCustoDTO[];
   ultimosCustos: CustoDTO[];
 }

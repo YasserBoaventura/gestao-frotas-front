@@ -107,7 +107,7 @@ export class CustoSericeService {
   getNumeroCustosPorStatus(status: StatusCusto): Observable<number> {
     return this.http.get<number>(`${this.apiUrl}/numeroPorStatus/${status}`);
   }
-
+ 
   getNumeroCustosPorTipo(tipo: TipoCusto): Observable<number> {
     return this.http.get<number>(`${this.apiUrl}/numeroPorTipo/${tipo}`);
   }

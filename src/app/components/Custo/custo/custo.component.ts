@@ -1,30 +1,45 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CommonModule, NgIf, NgFor, NgClass } from '@angular/common';  // CORRIGIDO
-import { Custo, CustoListDTO, CustoRequestDTO, CustoUpdateDTO, CustoViagemDTO, DashboardCustosDTO, RelatorioCustosDetalhadoDTO, RelatorioFilterDTO, StatusCusto } from '../models';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { CommonModule, NgIf, NgFor, NgClass } from '@angular/common';
+import {
+  Custo,
+  CustoListDTO,
+  CustoRequestDTO,
+  CustoUpdateDTO,
+  CustoViagemDTO,
+  DashboardCustosDTO,
+  RelatorioCustosDetalhadoDTO,
+  RelatorioFilterDTO,
+  StatusCusto
+} from '../models';
 import { CustoSericeService } from '../custo-serice.service';
 import { VeiculosService } from '../../Veiculos/veiculos.service';
 import { ViagensServiceService } from '../../viagens/viagens-service.service';
 import { Veiculo } from '../../Veiculos/veiculos.model';
 import { Viagem } from '../../viagens/viagem';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-custo',
   standalone: true,
   imports: [
-    CommonModule,          // Para *ngIf, *ngFor, *ngClass
-    ReactiveFormsModule,   // Para formulários reativos
+    CommonModule,
+    ReactiveFormsModule,
   ],
   templateUrl: './custo.component.html',
-  styleUrl: './custo.component.css'
+  styleUrls: ['./custo.component.css']
 })
 export class CustoComponent implements OnInit {
+  // Dados principais
   custos: CustoListDTO[] = [];
-  custoSelecionado: Custo | null = null;
+  custoSelecionado: CustoListDTO | null = null;
   dashboard: DashboardCustosDTO | null = null;
   relatorio: RelatorioCustosDetalhadoDTO | null = null;
   veiculos: Veiculo[] = [];
   viagens: Viagem[] = [];
+
+  // Listas para dropdowns
   tiposCusto: any[] = [];
   statusCusto: any[] = [];
 
@@ -47,16 +62,16 @@ export class CustoComponent implements OnInit {
   showRelatorio = false;
   showDashboard = true;
 
-  // Filtros
-  filtroDataInicio: Date | null = null;
-  filtroDataFim: Date | null = null;
-  filtroVeiculoId: number | null = null;
+  // Dados processados para dashboard
+  custosPorTipo: { tipo: string, valor: number, porcentagem: number }[] = [];
+  tiposCustoCompletos: any[] = [];
 
   constructor(
     private custoService: CustoSericeService,
     private veiculoService: VeiculosService,
     private viagemService: ViagensServiceService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+      private snackBar: MatSnackBar,
   ) {
     this.initializeForms();
   }
@@ -68,7 +83,7 @@ export class CustoComponent implements OnInit {
       viagemId: [''],
       manutencaoId: [''],
       abastecimentoId: [''],
-      data: [new Date().toISOString().split('T')[0]],
+      data: [this.getDataAtual()],
       descricao: ['', [Validators.required, Validators.maxLength(200)]],
       valor: ['', [Validators.required, Validators.min(0)]],
       tipo: ['', Validators.required],
@@ -79,10 +94,10 @@ export class CustoComponent implements OnInit {
 
     // Formulário de atualização
     this.custoUpdateForm = this.fb.group({
-      descricao: [''],
-      valor: ['', Validators.min(0)],
-      tipo: [''],
-      status: [''],
+      descricao: ['', Validators.required],
+      valor: ['', [Validators.required, Validators.min(0)]],
+      tipo: ['', Validators.required],
+      status: [StatusCusto.PAGO],
       observacoes: ['']
     });
 
@@ -98,8 +113,8 @@ export class CustoComponent implements OnInit {
 
     // Formulário de relatório
     this.relatorioForm = this.fb.group({
-      dataInicio: ['', Validators.required],
-      dataFim: ['', Validators.required],
+      dataInicio: [this.getDataInicioMes(), Validators.required],
+      dataFim: [this.getDataAtual(), Validators.required],
       veiculoId: [''],
       dataInicioTop5VeiculosMaisCarro: [''],
       dataFimTop5VeiculosMaisCarro: ['']
@@ -110,12 +125,11 @@ export class CustoComponent implements OnInit {
     this.carregarDadosIniciais();
   }
 
-  // Métodos de notificação customizados
+  // ============ NOTIFICAÇÕES ============
   showSuccess(message: string): void {
     this.notificationMessage = message;
     this.notificationType = 'success';
     this.showNotification = true;
-    console.log('✅ ' + message);
     setTimeout(() => this.hideNotification(), 3000);
   }
 
@@ -123,7 +137,6 @@ export class CustoComponent implements OnInit {
     this.notificationMessage = message;
     this.notificationType = 'error';
     this.showNotification = true;
-    console.error('❌ ' + message);
     setTimeout(() => this.hideNotification(), 4000);
   }
 
@@ -131,7 +144,6 @@ export class CustoComponent implements OnInit {
     this.notificationMessage = message;
     this.notificationType = 'warning';
     this.showNotification = true;
-    console.warn('⚠️ ' + message);
     setTimeout(() => this.hideNotification(), 3000);
   }
 
@@ -139,7 +151,6 @@ export class CustoComponent implements OnInit {
     this.notificationMessage = message;
     this.notificationType = 'info';
     this.showNotification = true;
-    console.info('ℹ️ ' + message);
     setTimeout(() => this.hideNotification(), 3000);
   }
 
@@ -157,44 +168,23 @@ export class CustoComponent implements OnInit {
     }
   }
 
+  // ============ CARREGAMENTO DE DADOS ============
   carregarDadosIniciais(): void {
     this.loading = true;
 
-    // Carregar dados iniciais
-    this.carregarCustos();
-    this.carregarDashboard();
-    this.carregarVeiculos();
-    this.carregarViagens();
+    Promise.all([
+      this.carregarVeiculos(),
+      this.carregarViagens(),
+      this.carregarCustos(),
+      this.carregarDashboard()
+    ]).finally(() => {
+      this.loading = false;
+    });
 
     // Configurar dropdowns
     this.tiposCusto = this.getTiposCusto();
     this.statusCusto = this.getStatusCusto();
-
-    this.loading = false;
-  }
-
-  private getTiposCusto(): any[] {
-    return [
-      { value: 'COMBUSTIVEL', label: 'Combustível' },
-      { value: 'MANUTENCAO_PREVENTIVA', label: 'Manutenção Preventiva' },
-      { value: 'MANUTENCAO_CORRETIVA', label: 'Manutenção Corretiva' },
-      { value: 'PEDAGIO', label: 'Pedágio' },
-      { value: 'LAVAGEM', label: 'Lavagem' },
-      { value: 'SEGURO', label: 'Seguro' },
-      { value: 'IPVA', label: 'IPVA' },
-      { value: 'LICENCIAMENTO', label: 'Licenciamento' },
-      { value: 'MULTAS', label: 'Multas' },
-      { value: 'OUTROS', label: 'Outros' }
-    ];
-  }
-
-  private getStatusCusto(): any[] {
-    return [
-      { value: StatusCusto.PAGO, label: 'Pago' },
-      { value: StatusCusto.PENDENTE, label: 'Pendente' },
-      { value: StatusCusto.AGENDADO, label: 'Agendado' },
-      { value: StatusCusto.CANCELADO, label: 'Cancelado' }
-    ];
+    this.tiposCustoCompletos = this.getTiposCustoCompletos();
   }
 
   carregarCustos(): void {
@@ -204,7 +194,7 @@ export class CustoComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erro ao carregar custos:', error);
-        this.showError('Erro ao carregar custos: ' + error.message);
+        this.showError('Erro ao carregar custos');
       }
     });
   }
@@ -213,6 +203,7 @@ export class CustoComponent implements OnInit {
     this.custoService.getDashboard().subscribe({
       next: (dashboard) => {
         this.dashboard = dashboard;
+        this.processarDashboardData();
       },
       error: (error) => {
         console.error('Erro ao carregar dashboard:', error);
@@ -221,31 +212,39 @@ export class CustoComponent implements OnInit {
     });
   }
 
-  carregarVeiculos(): void {
-    this.veiculoService.getVehicles().subscribe({
-      next: (veiculos) => {
-        this.veiculos = veiculos;
-      },
-      error: (error) => {
-        console.error('Erro ao carregar veículos:', error);
-        this.showWarning('Erro ao carregar veículos');
-      }
+  carregarVeiculos(): Promise<void> {
+    return new Promise((resolve) => {
+      this.veiculoService.getVehicles().subscribe({
+        next: (veiculos) => {
+          this.veiculos = veiculos;
+          resolve();
+        },
+        error: (error) => {
+          console.error('Erro ao carregar veículos:', error);
+          this.showWarning('Erro ao carregar veículos');
+          resolve();
+        }
+      });
     });
   }
 
-  carregarViagens(): void {
-    this.viagemService.getViagens().subscribe({
-      next: (viagens) => {
-        this.viagens = viagens;
-      },
-      error: (error) => {
-        console.error('Erro ao carregar viagens:', error);
-        this.showWarning('Erro ao carregar viagens');
-      }
+  carregarViagens(): Promise<void> {
+    return new Promise((resolve) => {
+      this.viagemService.getViagens().subscribe({
+        next: (viagens) => {
+          this.viagens = viagens;
+          resolve();
+        },
+        error: (error) => {
+          console.error('Erro ao carregar viagens:', error);
+          this.showWarning('Erro ao carregar viagens');
+          resolve();
+        }
+      });
     });
   }
 
-  // Métodos CRUD
+  // ============ CRUD ============
   criarCusto(): void {
     if (this.custoForm.valid) {
       this.loading = true;
@@ -253,12 +252,14 @@ export class CustoComponent implements OnInit {
 
       this.custoService.criarCusto(custoData).subscribe({
         next: (custo) => {
-        console.log(custo);
           this.showSuccess('Custo criado com sucesso!');
           this.carregarCustos();
           this.carregarDashboard();
-          this.resetForm();
-          this.showCriarForm = false;
+          this.custoForm.reset({
+            data: this.getDataAtual(),
+            status: StatusCusto.PAGO
+          });
+          this.toggleForm('dashboard');
           this.loading = false;
         },
         error: (error) => {
@@ -266,18 +267,23 @@ export class CustoComponent implements OnInit {
           this.showError('Erro ao criar custo: ' + error.message);
           this.loading = false;
         }
-      }); 
+      });
     } else {
       this.showWarning('Preencha todos os campos obrigatórios');
+      this.marcarCamposInvalidos(this.custoForm);
     }
   }
 
-  selecionarCusto(custo: any): void {
+  editarCusto(custo: CustoListDTO): void {
+    this.custoSelecionado = custo;
     this.custoUpdateForm.patchValue({
       descricao: custo.descricao,
-      valor: custo.valor
+      valor: custo.valor,
+      tipo: custo.tipo,
+      status: custo.status,
+      observacoes: custo.descricao
     });
-    this.showUpdateForm = true;
+    this.toggleForm('atualizar');
   }
 
   atualizarCusto(id: number): void {
@@ -287,11 +293,11 @@ export class CustoComponent implements OnInit {
 
       this.custoService.atualizarCusto(id, updateData).subscribe({
         next: (mensagem) => {
-          this.showSuccess(mensagem);
+          this.showSuccess('Custo atualizado com sucesso!');
           this.carregarCustos();
           this.carregarDashboard();
-          this.resetForm();
-          this.showUpdateForm = false;
+          this.toggleForm('dashboard');
+          this.custoSelecionado = null;
           this.loading = false;
         },
         error: (error) => {
@@ -300,29 +306,43 @@ export class CustoComponent implements OnInit {
           this.loading = false;
         }
       });
+    } else {
+      this.showWarning('Preencha todos os campos obrigatórios');
     }
   }
 
-  excluirCusto(id: number): void {
-    if (confirm('Tem certeza que deseja excluir este custo?')) {
-      this.loading = true;
-      this.custoService.excluirCusto(id).subscribe({
-        next: (mensagem) => {
-          this.showSuccess(mensagem);
+
+  excluirCusto(custo: any): void {
+      Swal.fire({
+        title: 'Tem certeza?',
+        text: `Deseja excluir o custo do veículo ${custo.veiculo?.matricula || 'N/A'}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sim, excluir!',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed && custo.id) {
+        this.loading = true;
+        this.custoService.excluirCusto(custo.id!).subscribe({
+          next: (mensagem) => {
+            this.showSuccess('Custo excluído com sucesso!');
           this.carregarCustos();
           this.carregarDashboard();
           this.loading = false;
-        },
-        error: (error) => {
-          console.error('Erro ao excluir custo:', error);
+          },
+          error: (error) => {
+        console.error('Erro ao excluir custo:', error);
           this.showError('Erro ao excluir custo: ' + error.message);
           this.loading = false;
-        }
-      });
-    }
-  }
+          }
+        });
+      }
+    });
 
-  // Métodos para custos de viagem
+  }
+  // ============ CUSTOS DE VIAGEM ============
   criarCustoViagem(): void {
     if (this.custoViagemForm.valid) {
       this.loading = true;
@@ -333,8 +353,8 @@ export class CustoComponent implements OnInit {
           this.showSuccess('Custo de viagem criado com sucesso!');
           this.carregarCustos();
           this.carregarDashboard();
-          this.resetForm();
-          this.showViagemForm = false;
+          this.custoViagemForm.reset();
+          this.toggleForm('dashboard');
           this.loading = false;
         },
         error: (error) => {
@@ -348,7 +368,7 @@ export class CustoComponent implements OnInit {
     }
   }
 
-  // Métodos de relatório
+  // ============ RELATÓRIOS ============
   gerarRelatorio(): void {
     if (this.relatorioForm.valid) {
       this.loading = true;
@@ -357,8 +377,6 @@ export class CustoComponent implements OnInit {
       this.custoService.gerarRelatorio(filtro).subscribe({
         next: (relatorio) => {
           this.relatorio = relatorio;
-          this.showRelatorio = true;
-          this.showDashboard = false;
           this.loading = false;
           this.showSuccess('Relatório gerado com sucesso!');
         },
@@ -373,26 +391,32 @@ export class CustoComponent implements OnInit {
     }
   }
 
-  // Métodos auxiliares
-  resetForm(): void {
-    this.custoForm.reset({
-      data: new Date().toISOString().split('T')[0],
-      status: StatusCusto.PAGO
-    });
-    this.custoUpdateForm.reset();
-    this.custoViagemForm.reset();
-    this.relatorioForm.reset();
-  }
-
+  // ============ MÉTODOS AUXILIARES ============
   toggleForm(formType: string): void {
     this.showCriarForm = formType === 'criar';
     this.showUpdateForm = formType === 'atualizar';
     this.showViagemForm = formType === 'viagem';
     this.showRelatorio = formType === 'relatorio';
     this.showDashboard = formType === 'dashboard';
+
+    if (formType === 'dashboard') {
+      this.custoSelecionado = null;
+      this.relatorio = null;
+    }
+
     this.hideNotification();
   }
 
+  private marcarCamposInvalidos(form: FormGroup): void {
+    Object.keys(form.controls).forEach(key => {
+      const control = form.get(key);
+      if (control?.invalid) {
+        control.markAsTouched();
+      }
+    });
+  }
+
+  // ============ FORMATAÇÃO ============
   formatarData(data: any): string {
     if (!data) return '--';
 
@@ -400,10 +424,9 @@ export class CustoComponent implements OnInit {
       let date: Date;
 
       if (Array.isArray(data)) {
-        const [year, month, day, hour = 0, minute = 0] = data;
-        date = new Date(year, month - 1, day, hour, minute);
+        const [year, month, day] = data;
+        date = new Date(year, month - 1, day);
       } else if (typeof data === 'string') {
-        if (data.trim() === '') return '--';
         date = new Date(data);
       } else if (data instanceof Date) {
         date = data;
@@ -436,6 +459,16 @@ export class CustoComponent implements OnInit {
     }).format(valor);
   }
 
+  formatarTipoCusto(tipo: string): string {
+    const tipoEncontrado = this.tiposCusto.find(t => t.value === tipo);
+    return tipoEncontrado ? tipoEncontrado.label : tipo;
+  }
+
+  formatarStatusCusto(status: string): string {
+    const statusEncontrado = this.statusCusto.find(s => s.value === status);
+    return statusEncontrado ? statusEncontrado.label : status;
+  }
+
   getVariacaoColor(variacao: number | undefined): string {
     if (variacao === undefined) return 'text-secondary';
     return variacao >= 0 ? 'text-danger' : 'text-success';
@@ -444,5 +477,110 @@ export class CustoComponent implements OnInit {
   getVariacaoIcon(variacao: number | undefined): string {
     if (variacao === undefined) return '';
     return variacao >= 0 ? '↑' : '↓';
+  }
+
+  // ============ DASHBOARD ============
+  private processarDashboardData(): void {
+    if (!this.dashboard) return;
+    this.processarCustosPorTipo();
+  }
+
+  private processarCustosPorTipo(): void {
+    if (!this.dashboard?.custosPorTipo) {
+      this.custosPorTipo = [];
+      return;
+    }
+
+    const total = this.dashboard.totalMesAtual || 1;
+    const custosArray = this.dashboard.custosPorTipo as any[];
+
+    this.custosPorTipo = custosArray
+      .filter(item => item.valor > 0)
+      .map(item => ({
+        tipo: item.tipo,
+        valor: item.valor,
+        porcentagem: (item.valor / total) * 100
+      }))
+      .sort((a, b) => b.valor - a.valor);
+  }
+
+  // ============ CONFIGURAÇÕES ============
+  private getTiposCusto(): any[] {
+    return [
+      { value: 'COMBUSTIVEL', label: 'Combustível' },
+      { value: 'MANUTENCAO_PREVENTIVA', label: 'Manutenção Preventiva' },
+      { value: 'MANUTENCAO_CORRETIVA', label: 'Manutenção Corretiva' },
+      { value: 'PEDAGIO', label: 'Pedágio' },
+      { value: 'LAVAGEM', label: 'Lavagem' },
+      { value: 'SEGURO', label: 'Seguro' },
+      { value: 'IPVA', label: 'IPVA' },
+      { value: 'LICENCIAMENTO', label: 'Licenciamento' },
+      { value: 'MULTAS', label: 'Multas' },
+      { value: 'OUTROS', label: 'Outros' }
+    ];
+  }
+
+  private getStatusCusto(): any[] {
+    return [
+      { value: StatusCusto.PAGO, label: 'Pago' },
+      { value: StatusCusto.PENDENTE, label: 'Pendente' },
+      { value: StatusCusto.AGENDADO, label: 'Agendado' },
+      { value: StatusCusto.CANCELADO, label: 'Cancelado' }
+    ];
+  }
+
+  private getTiposCustoCompletos(): any[] {
+    return [
+      { value: 'COMBUSTIVEL', label: 'Combustível', cor: '#ff6b6b', icone: 'bi-fuel-pump' },
+      { value: 'MANUTENCAO_PREVENTIVA', label: 'Manutenção Preventiva', cor: '#4ecdc4', icone: 'bi-tools' },
+      { value: 'MANUTENCAO_CORRETIVA', label: 'Manutenção Corretiva', cor: '#45b7d1', icone: 'bi-wrench' },
+      { value: 'PEDAGIO', label: 'Pedágio', cor: '#96ceb4', icone: 'bi-signpost' },
+      { value: 'LAVAGEM', label: 'Lavagem', cor: '#feca57', icone: 'bi-droplet' },
+      { value: 'SEGURO', label: 'Seguro', cor: '#ff9ff3', icone: 'bi-shield-check' },
+      { value: 'IPVA', label: 'IPVA', cor: '#54a0ff', icone: 'bi-file-text' },
+      { value: 'LICENCIAMENTO', label: 'Licenciamento', cor: '#5f27cd', icone: 'bi-card-checklist' },
+      { value: 'MULTAS', label: 'Multas', cor: '#ff9f43', icone: 'bi-exclamation-triangle' },
+      { value: 'OUTROS', label: 'Outros', cor: '#c8d6e5', icone: 'bi-three-dots' }
+    ];
+  }
+
+  getCorPorTipo(tipo: string): string {
+    const tipoEncontrado = this.tiposCustoCompletos.find(t => t.value === tipo);
+    return tipoEncontrado ? tipoEncontrado.cor : '#c8d6e5';
+  }
+
+  getIconePorTipo(tipo: string): string {
+    const tipoEncontrado = this.tiposCustoCompletos.find(t => t.value === tipo);
+    return tipoEncontrado ? tipoEncontrado.icone : 'bi-three-dots';
+  }
+
+  // ============ CÁLCULOS ============
+  calcularTotalCustos(): number {
+    return this.custos.reduce((sum, c) => sum + (c.valor || 0), 0);
+  }
+
+  calcularTotalUltimosCustos(): number {
+    if (!this.dashboard?.ultimosCustos) return 0;
+    return this.dashboard.ultimosCustos.reduce((sum, c) => sum + (c.valor || 0), 0);
+  }
+
+  // ============ DATAS ============
+  getDataAtual(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  getDataInicioMes(): string {
+    const hoje = new Date();
+    return new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+  }
+
+  getDataAtualFormatada(): string {
+    const agora = new Date();
+    const dia = agora.getDate().toString().padStart(2, '0');
+    const mes = (agora.getMonth() + 1).toString().padStart(2, '0');
+    const ano = agora.getFullYear();
+    const hora = agora.getHours().toString().padStart(2, '0');
+    const minuto = agora.getMinutes().toString().padStart(2, '0');
+    return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
   }
 }
