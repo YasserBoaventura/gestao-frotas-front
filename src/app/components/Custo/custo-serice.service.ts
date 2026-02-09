@@ -1,7 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Custo, CustoListDTO, CustoRequestDTO, CustoUpdateDTO, CustoViagemDTO, DashboardCustosDTO, RelatorioCustosDetalhadoDTO, RelatorioFilterDTO, StatusCusto, TipoCusto, Veiculo } from './models';
+import { Custo, CustoListDTO, CustoRequestDTO, CustoUpdateDTO, CustoViagemDTO, DashboardCustosDTO, RelatorioCustosDetalhadoDTO, RelatorioFilterDTO, StatusCusto, TipoCusto } from './models';
+import { Veiculo } from '../Veiculos/veiculos.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,8 +14,9 @@ export class CustoSericeService {
   constructor(private http: HttpClient) {}
 
   // CRUD Básico
-  criarCusto(custo: CustoRequestDTO): Observable<Custo> {
-    return this.http.post<Custo>(`${this.apiUrl}/criarCusto`, custo);
+  criarCusto(custo: CustoRequestDTO): Observable<string> {
+    return this.http.post<string>(`${this.apiUrl}/criarCusto`, custo,{
+      responseType: 'json'    });
   }
 
   atualizarCusto(id: number, custo: CustoUpdateDTO): Observable<string> {

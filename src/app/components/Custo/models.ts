@@ -1,3 +1,4 @@
+import { Veiculo } from "../Veiculos/veiculos.model";
 
   export interface Custo {
   id?: number;
@@ -12,24 +13,13 @@
   abastecimentoId?: number;
   observacoes?: string;
   numeroDocumento?: string;
-  veiculo?: Veiculo;
+  veiculo: Veiculo;
   viagem?: Viagem;
   dataCriacao?: Date;
   dataAtualizacao?: Date;
 }
 
-export interface Veiculo {
-  id: number;
-  matricula: string;
-  modelo: string;
-  marca: string;
-  ano: number;
-  kilometragemAtual?: number;
-  custoTotal?: number;
-  custoCombustivel?: number;
-  custoManutencao?: number;
-  custoMedioPorKm?: number;
-}
+
 export interface CustoDTO{
 id: number;
     data: Date;
@@ -41,7 +31,7 @@ id: number;
   veiculoMatricula: string;
 observacoes: string;
  numeroDocumento: string;
-} 
+}
 
 export interface Viagem {
   id: number;
