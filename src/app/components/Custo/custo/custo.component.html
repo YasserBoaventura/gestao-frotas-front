@@ -217,53 +217,55 @@
       </div>
     </div>
 
-    <!-- Top 5 Veículos Mais Caros -->
-    <div class="col-xl-6 col-lg-6 mb-4">
-      <div class="card shadow h-100">
-        <div class="card-header bg-white py-3">
-          <h6 class="m-0 font-weight-bold text-primary">
-            <i class="bi bi-truck me-2"></i>Top 5 Veículos com Maiores Custos
-          </h6>
-        </div>
-        <div class="card-body">
-          <div *ngIf="!dashboard?.veiculosMaisCaros || dashboard?.veiculosMaisCaros?.length === 0"
-               class="text-center py-4 text-muted">
-            <i class="bi bi-truck display-4 d-block mb-2"></i>
-            Nenhum dado disponível
-          </div>
+   <!-- Top 5 Veículos Mais Caros -->
+<div class="col-xl-6 col-lg-6 mb-4">
+  <div class="card shadow h-100">
+    <div class="card-header bg-white py-3">
+      <h6 class="m-0 font-weight-bold text-primary">
+        <i class="bi bi-truck me-2"></i>Top 5 Veículos com Maiores Custos
+      </h6>
+    </div>
+    <div class="card-body">
 
-          <div *ngIf="dashboard?.veiculosMaisCaros && dashboard?.veiculosMaisCaros?.length === 0" class="table-responsive">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Veículo</th>
-                  <th>Modelo</th>
-                  <th class="text-end">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let veiculo of dashboard?.veiculosMaisCaros; let i = index">
-                  <td>
-                    <span class="badge" [ngClass]="{
-                      'bg-danger': i === 0,
-                      'bg-warning': i === 1,
-                      'bg-info': i === 2,
-                      'bg-secondary': i > 2
-                    }">
-                      {{ i + 1 }}
-                    </span>
-                  </td>
-                  <td><strong>{{ veiculo.matricula }}</strong></td>
-                  <td>{{ veiculo.modelo }}</td>
-                  <td class="text-end font-weight-bold">{{ formatarMoeda(veiculo.totalCusto) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div *ngIf="!dashboard?.veiculosMaisCaros || dashboard?.veiculosMaisCaros?.length === 0"
+           class="text-center py-4 text-muted">
+        <i class="bi bi-truck display-4 d-block mb-2"></i>
+        Nenhum dado disponível
+      </div>
+
+    
+      <div *ngIf="dashboard?.veiculosMaisCaros && dashboard?.veiculosMaisCaros?.length != null " class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Veículo</th>
+              <th>Modelo</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let veiculo of dashboard?.veiculosMaisCaros; let i = index">
+              <td>
+                <span class="badge" [ngClass]="{
+                  'bg-danger': i === 0,
+                  'bg-warning': i === 1,
+                  'bg-info': i === 2,
+                  'bg-secondary': i > 2
+                }">
+                  {{ i + 1 }}
+                </span>
+              </td>
+              <td><strong>{{ veiculo.matricula }}</strong></td>
+              <td>{{ veiculo.modelo }}</td>
+              <td class="text-end font-weight-bold">{{ formatarMoeda(veiculo.totalCusto) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
+  </div>
+</div>
 
     <!-- Lista Completa de Custos -->
     <div class="col-12 mb-4">
