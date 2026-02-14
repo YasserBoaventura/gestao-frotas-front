@@ -9,16 +9,18 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import Swal from 'sweetalert2';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 
-import { RelatorioMotoristaDTO } from '../../../models/relatorio-motorista-dto';
-import { RelatorioVeiculoDTO } from '../../../models/relatorio-veiculo-dto';
 import { ViagensServiceService } from '../../viagens/viagens-service.service';
 import { MotoristaService } from '../../motorista/motorista.service';
 import { VeiculosService } from '../../Veiculos/veiculos.service';
 
 // Importação do Chart.js
 import Chart from 'chart.js/auto';
+
+import { relatorioservice } from '../relatorioservice';
+import { RelatorioMotoristaDTO, RelatorioPorVeiculoDTO } from '../models';
+
 
 @Component({
   selector: 'app-relatorioviagem',
@@ -45,14 +47,21 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
 
   carregando = false;
   relatorioMotorista: RelatorioMotoristaDTO[] = [];
-  relatorioVeiculo: RelatorioVeiculoDTO[] = [];
+  relatorioVeiculo: RelatorioPorVeiculoDTO[] = [];
   motoristas: any[] = [];
   veiculos: any[] = [];
 
+  // Totais calculados
   totalViagens = 0;
   totalKmPercorridos = 0;
   totalLitrosAbastecidos = 0;
   mediaConsumo = 0;
+
+  // Estatísticas para os gráficos
+  viagensPorStatus: { status: string, quantidade: number }[] = [];
+  consumoPorMotorista: { nome: string, consumo: number }[] = [];
+  kmPorMes: { mes: string, km: number }[] = [];
+  viagensPorDia: { data: string, quantidade: number }[] = [];
 
   filtros = {
     dataInicio: '',
@@ -62,11 +71,6 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     veiculoId: ''
   };
 
-  // Dados para os gráficos
-  viagensPorStatus: any[] = [];
-  consumoPorMotorista: any[] = [];
-  kmPorMes: any[] = [];
-
   private statusChart: any;
   private consumoChart: any;
   private kmChart: any;
@@ -74,26 +78,20 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   constructor(
     private viagemService: ViagensServiceService,
     private motoristaService: MotoristaService,
-    private veiculoService: VeiculosService
+    private veiculoService: VeiculosService,
+    private relatorioViagem: relatorioservice
   ) {}
 
   ngOnInit(): void {
     this.setDatasPadrao();
     this.carregarDadosIniciais();
-    this.carregarRelatorios();
   }
 
   ngOnDestroy(): void {
-    // Limpar gráficos para evitar vazamento de memória
-    if (this.statusChart) {
-      this.statusChart.destroy();
-    } 
-    if (this.consumoChart) {
-      this.consumoChart.destroy();
-    }
-    if (this.kmChart) {
-      this.kmChart.destroy();
-    }
+    // Limpar gráficos para evitar vazamento 
+    if (this.statusChart) this.statusChart.destroy();
+    if (this.consumoChart) this.consumoChart.destroy();
+    if (this.kmChart) this.kmChart.destroy();
   }
 
   private setDatasPadrao(): void {
@@ -101,10 +99,13 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     const umMesAtras = new Date();
     umMesAtras.setMonth(hoje.getMonth() - 1);
 
+    // Ajustar para início e fim do dia
+    umMesAtras.setHours(0, 0, 0, 0);
+    hoje.setHours(23, 59, 59, 999);
+
     this.filtros.dataInicio = this.formatarDataParaInput(umMesAtras);
     this.filtros.dataFim = this.formatarDataParaInput(hoje);
   }
-
   private formatarDataParaInput(date: Date): string {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -113,8 +114,9 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   }
 
   private formatarDataParaAPI(date: string): string {
-    // O backend espera no formato ISO (YYYY-MM-DD)
-    return date;
+    if (!date) return '';
+    // Converter para LocalDateTime ISO (YYYY-MM-DDTHH:MM:SS)
+    return `${date}T00:00:00`;
   }
 
   carregarDadosIniciais(): void {
@@ -125,143 +127,230 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
       next: (result) => {
         this.motoristas = result.motoristas || [];
         this.veiculos = result.veiculos || [];
+        // Após carregar motoristas e veículos, carregar relatórios
+        this.carregarRelatorios();
       },
       error: (error) => {
         console.error('Erro ao carregar dados:', error);
         Swal.fire('Erro', 'Não foi possível carregar motoristas e veículos', 'error');
+        this.carregarRelatorios(); // Tentar carregar relatórios mesmo assim
       }
     });
   }
 
   carregarRelatorios(): void {
-    this.carregando = true;
-
     // Validar datas
-    if (this.filtros.dataInicio && this.filtros.dataFim) {
-      const dataInicio = new Date(this.filtros.dataInicio);
-      const dataFim = new Date(this.filtros.dataFim);
-
-      if (dataInicio > dataFim) {
-        Swal.fire('Erro', 'A data de início não pode ser maior que a data de fim', 'error');
-        this.carregando = false;
-        return;
-      }
+    if (!this.filtros.dataInicio || !this.filtros.dataFim) {
+      Swal.fire('Erro', 'Selecione o período para gerar o relatório', 'error');
+      return;
     }
 
-    this.executarCarregamentoRelatorios();
-  }
+    const dataInicio = new Date(this.filtros.dataInicio);
+    const dataFim = new Date(this.filtros.dataFim);
 
-  private executarCarregamentoRelatorios(): void {
-    console.log('Aplicando filtros:', this.filtros);
+    if (dataInicio > dataFim) {
+      Swal.fire('Erro', 'A data de início não pode ser maior que a data de fim', 'error');
+      return;
+    }
 
-    // Formatar datas para o padrão esperado pelo backend
-    const filtrosFormatados = {
-      ...this.filtros,
-      dataInicio: this.filtros.dataInicio ? this.formatarDataParaAPI(this.filtros.dataInicio) : '',
-      dataFim: this.filtros.dataFim ? this.formatarDataParaAPI(this.filtros.dataFim) : ''
+    this.carregando = true;
+
+    // Formatar datas para o backend
+    const inicio = this.formatarDataParaAPI(this.filtros.dataInicio);
+    const fim = this.formatarDataParaAPI(this.filtros.dataFim);
+
+    console.log('Buscando dados do backend:', { inicio, fim });
+
+    // Criar observables para as chamadas
+    const observables: {
+      motorista: Observable<RelatorioMotoristaDTO[]>;
+      veiculo: Observable<RelatorioPorVeiculoDTO[]>;
+    } = {
+      motorista: this.relatorioViagem.getRelatorioMotoristaPeriodo(inicio, fim),
+      veiculo: this.relatorioViagem.getRelatorioVeiculoPeriodo(inicio, fim)
     };
 
-    forkJoin({
-      motorista: this.viagemService.getRelatorioMotorista(filtrosFormatados),
-      veiculo: this.viagemService.getRelatorioVeiculo(filtrosFormatados),
-      geral: this.viagemService.getRelatorioGeral(filtrosFormatados.dataInicio, filtrosFormatados.dataFim)
-    }).subscribe({
+    forkJoin(observables).subscribe({
       next: (result) => {
-        console.log('Resultado completo:', result);
+        console.log('Dados recebidos do backend:', result);
 
         // Processar dados do motorista
-        this.relatorioMotorista = result.motorista ?
-          result.motorista.map((item: any) => ({
-            ...item,
-            id: item.id || Math.random().toString(36).substr(2, 9),
-            // Garantir que os nomes das propriedades estão corretos
-            nomeMotorista: item.nomeMotorista || item.nome || item.motorista || 'N/A',
-            totalViagens: item.totalViagens || item.quantidadeViagens || 0,
-            totalQuilometragem: item.totalQuilometragem || item.totalKilometragem || item.totalKm || 0,
-            totalCombustivel: item.totalCombustivel || item.totalLitrosAbastecidos || 0
-          })) : [];
+        this.relatorioMotorista = result.motorista || [];
 
         // Processar dados do veículo
-        this.relatorioVeiculo = result.veiculo ?
-          result.veiculo.map((item: any) => ({
-            ...item,
-            modelo: item.modelo || 'Não especificado',
-            matriculaVeiculo: item.matriculaVeiculo || item.matricula || item.veiculo || 'N/A',
-            totalViagens: item.totalViagens || item.quantidadeViagens || 0,
-            totalKm: item.totalKm || item.totalKilometragem || 0,
-            totalCombustivel: item.totalCombustivel || item.totalLitrosAbastecidos || 0
-          })) : [];
+        this.relatorioVeiculo = result.veiculo || [];
 
-        // Processar dados gerais
-        if (result.geral) {
-          this.totalViagens = result.geral.totalViagens || 0;
-          this.totalKmPercorridos = result.geral.totalKilometragem || 0;
-          this.totalLitrosAbastecidos = result.geral.totalLitrosAbastecidos || 0;
-          this.mediaConsumo = result.geral.mediaKilometragemPorViagem || 0;
-        } else {
-          // Calcular totais com base nos dados dos motoristas se não houver relatório geral
-          this.calcularTotais();
-        }
+        // Aplicar filtros adicionais (status, motoristaId, veiculoId) se necessário
+        this.aplicarFiltrosLocais();
 
-        // Carregar dados para gráficos
-        this.carregarDadosParaGraficos();
+        // Calcular totais e preparar dados para gráficos
+        this.calcularTotais();
+        this.prepararDadosGraficos();
 
         // Criar gráficos
         setTimeout(() => {
           this.criarGraficos();
-        }, 100);
+        }, 200);
 
         this.carregando = false;
 
-        // Mostrar mensagem de sucesso
-        if (this.relatorioMotorista.length > 0 || this.relatorioVeiculo.length > 0) {
-          Swal.fire('Sucesso!', 'Relatório gerado com sucesso', 'success');
+        // Mostrar mensagem de resultado
+        if (this.relatorioMotorista.length === 0 && this.relatorioVeiculo.length === 0) {
+          Swal.fire('Info', 'Nenhum dado encontrado no período selecionado', 'info');
         } else {
-          Swal.fire('Info', 'Nenhum dado encontrado com os filtros aplicados', 'info');
+          Swal.fire({
+            icon: 'success',
+            title: 'Relatório gerado!',
+            text: `Período: ${this.formatarDataExibicao(this.filtros.dataInicio)} a ${this.formatarDataExibicao(this.filtros.dataFim)}`,
+            timer: 2000,
+            showConfirmButton: false
+          });
         }
       },
       error: (error) => {
         console.error('Erro ao carregar relatórios:', error);
         Swal.fire('Erro', 'Não foi possível carregar os relatórios. Verifique a conexão com o servidor.', 'error');
         this.carregando = false;
+
+
       }
     });
   }
 
-  calcularTotais(): void {
+  private aplicarFiltrosLocais(): void {
+    // Filtrar por status se necessário
+    if (this.filtros.status) {
+      this.relatorioMotorista = this.relatorioMotorista.filter(
+        m => m.status === this.filtros.status
+      );
+    }
+
+    // Filtrar por motorista específico
+    if (this.filtros.motoristaId) {
+      // Nota: O DTO não tem ID, então precisamos filtrar por nome ou outro campo
+      // Esta é uma abordagem simplificada - ajuste conforme necessário
+      const motoristaSelecionado = this.motoristas.find(m => m.id === this.filtros.motoristaId);
+      if (motoristaSelecionado) {
+        this.relatorioMotorista = this.relatorioMotorista.filter(
+          m => m.nomeMotorista === motoristaSelecionado.nome
+        );
+      }
+    }
+
+    // Filtrar por veículo específico
+    if (this.filtros.veiculoId) {
+      const veiculoSelecionado = this.veiculos.find(v => v.id === this.filtros.veiculoId);
+      if (veiculoSelecionado) {
+        this.relatorioVeiculo = this.relatorioVeiculo.filter(
+          v => v.veiculo === veiculoSelecionado.matricula
+        );
+      }
+    }
+  }
+
+  private calcularTotais(): void {
+    // Totais dos motoristas
     this.totalViagens = this.relatorioMotorista.reduce((sum, item) => sum + (item.totalViagens || 0), 0);
     this.totalKmPercorridos = this.relatorioMotorista.reduce((sum, item) => sum + (item.totalQuilometragem || 0), 0);
     this.totalLitrosAbastecidos = this.relatorioMotorista.reduce((sum, item) => sum + (item.totalCombustivel || 0), 0);
+
+    // Média de consumo
     this.mediaConsumo = this.totalLitrosAbastecidos > 0
       ? this.totalKmPercorridos / this.totalLitrosAbastecidos
       : 0;
   }
 
-  carregarDadosParaGraficos(): void {
-    // Dados para gráfico de status (simulado para agora)
-    this.viagensPorStatus = [
-      { status: 'CONCLUIDA', quantidade: Math.floor(Math.random() * 50) + 30 },
-      { status: 'EM_ANDAMENTO', quantidade: Math.floor(Math.random() * 20) + 10 },
-      { status: 'CANCELADA', quantidade: Math.floor(Math.random() * 15) + 5 },
-      { status: 'AGENDADA', quantidade: Math.floor(Math.random() * 10) + 5 }
-    ];
+  private prepararDadosGraficos(): void {
+    // 1. Gráfico de status - Agrupar por status
+    const statusMap = new Map<string, number>();
+    this.relatorioMotorista.forEach(item => {
+      const status = item.status || 'DESCONHECIDO';
+      statusMap.set(status, (statusMap.get(status) || 0) + item.totalViagens);
+    });
 
-    // Dados para gráfico de consumo por motorista
+    this.viagensPorStatus = Array.from(statusMap.entries()).map(([status, quantidade]) => ({
+      status,
+      quantidade
+    }));
+
+    // Se não houver dados, criar dados de exemplo
+    if (this.viagensPorStatus.length === 0) {
+      this.viagensPorStatus = [
+        { status: 'CONCLUIDA', quantidade: 45 },
+        { status: 'EM_ANDAMENTO', quantidade: 12 },
+        { status: 'CANCELADA', quantidade: 8 },
+        { status: 'AGENDADA', quantidade: 15 }
+      ];
+    }
+
+    // 2. Gráfico de consumo por motorista
     this.consumoPorMotorista = this.relatorioMotorista
-      .filter(item => item.totalCombustivel > 0)
+      .filter(item => item.totalCombustivel > 0 && item.totalQuilometragem > 0)
       .map(item => ({
         nome: item.nomeMotorista,
         consumo: item.totalQuilometragem / item.totalCombustivel
       }))
-      .sort((a, b) => b.consumo - a.consumo);
+      .sort((a, b) => b.consumo - a.consumo)
+      .slice(0, 10); // Limitar a 10 motoristas
 
-    // Dados para gráfico de km por mês (simulado)
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    this.kmPorMes = meses.map((mes, index) => ({
-      mes,
-      km: Math.floor(Math.random() * 3000) + 1000
-    }));
+    // 3. Dados para gráfico de km por mês (simulado - ajustar conforme disponibilidade do backend)
+    this.gerarDadosMensais();
   }
+
+  private gerarDadosMensais(): void {
+    // Extrair mês/ano das datas do período
+    const dataInicio = new Date(this.filtros.dataInicio);
+    const dataFim = new Date(this.filtros.dataFim);
+
+    const meses = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+
+    this.kmPorMes = [];
+    this.viagensPorDia = [];
+
+    // Se temos dados reais, distribuir pelos meses
+    if (this.relatorioVeiculo.length > 0 && this.relatorioMotorista.length > 0) {
+      // Distribuição proporcional baseada nos dados existentes
+      const totalKm = this.totalKmPercorridos;
+      const numMeses = Math.max(1, this.diferencaEmMeses(dataInicio, dataFim));
+
+      // Gerar dados mensais simulados baseados nos reais
+      for (let i = 0; i < numMeses; i++) {
+        const mesIndex = (dataInicio.getMonth() + i) % 12;
+        const ano = dataInicio.getFullYear() + Math.floor((dataInicio.getMonth() + i) / 12);
+        const fator = 0.7 + Math.random() * 0.6; // Variação entre 70% e 130%
+
+        this.kmPorMes.push({
+          mes: `${meses[mesIndex]}/${ano}`,
+          km: Math.round((totalKm / numMeses) * fator)
+        });
+      }
+    } else {
+      // Dados de exemplo
+      this.kmPorMes = [
+        { mes: 'Janeiro/2024', km: 2850 },
+        { mes: 'Fevereiro/2024', km: 3100 },
+        { mes: 'Março/2024', km: 2950 },
+        { mes: 'Abril/2024', km: 3300 },
+        { mes: 'Maio/2024', km: 3600 },
+        { mes: 'Junho/2024', km: 3400 }
+      ];
+    }
+  }
+
+  private diferencaEmMeses(data1: Date, data2: Date): number {
+    return (data2.getFullYear() - data1.getFullYear()) * 12 +
+           (data2.getMonth() - data1.getMonth()) + 1;
+  }
+
+  private formatarDataExibicao(data: string): string {
+    if (!data) return '';
+    const [ano, mes, dia] = data.split('-');
+    return `${dia}/${mes}/${ano}`;
+  }
+
 
   aplicarFiltros(): void {
     this.carregarRelatorios();
@@ -273,37 +362,49 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     this.filtros.motoristaId = '';
     this.filtros.veiculoId = '';
 
-    Swal.fire('Sucesso!', 'Filtros limpos com sucesso', 'success').then(() => {
+    Swal.fire({
+      title: 'Filtros limpos!',
+      text: 'Período restaurado para os últimos 30 dias',
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false
+    }).then(() => {
       this.carregarRelatorios();
     });
   }
 
   criarGraficos(): void {
-    // Destruir gráficos existentes
-    if (this.statusChart) this.statusChart.destroy();
-    if (this.consumoChart) this.consumoChart.destroy();
-    if (this.kmChart) this.kmChart.destroy();
-
-    // Criar novos gráficos
-    this.criarGraficoStatus();
-    this.criarGraficoConsumo();
-    this.criarGraficoKmPorMes();
+    // Aguardar o DOM estar pronto
+    setTimeout(() => {
+      this.criarGraficoStatus();
+      this.criarGraficoConsumo();
+      this.criarGraficoKmPorMes();
+    }, 100);
   }
 
   criarGraficoStatus(): void {
-    const ctx = this.statusChartRef?.nativeElement?.getContext('2d');
+    if (!this.statusChartRef?.nativeElement) return;
+
+    // Destruir gráfico existente
+    if (this.statusChart) this.statusChart.destroy();
+
+    const ctx = this.statusChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
+    // Traduzir status
     const labels = this.viagensPorStatus.map(item => {
       switch(item.status) {
         case 'CONCLUIDA': return 'Concluídas';
         case 'EM_ANDAMENTO': return 'Em Andamento';
         case 'CANCELADA': return 'Canceladas';
         case 'AGENDADA': return 'Agendadas';
+        case 'PLANEADA': return 'Planejadas';
         default: return item.status;
       }
     });
+
     const dados = this.viagensPorStatus.map(item => item.quantidade);
+    const cores = ['#4ecdc4', '#fdbb2d', '#ff6b6b', '#667eea', '#a8e6cf'];
 
     this.statusChart = new Chart(ctx, {
       type: 'doughnut',
@@ -311,21 +412,27 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
         labels: labels,
         datasets: [{
           data: dados,
-          backgroundColor: ['#4ecdc4', '#fdbb2d', '#667eea', '#ff6b6b'],
-          borderWidth: 2
+          backgroundColor: cores.slice(0, dados.length),
+          borderWidth: 2,
+          borderColor: '#ffffff'
         }]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: {
             position: 'bottom',
             labels: {
               padding: 20,
-              font: {
-                size: 12
-              }
+              font: { size: 12 }
             }
+          },
+          title: {
+            display: true,
+            text: 'Distribuição por Status',
+            font: { size: 16, weight: 'bold' },
+            padding: { bottom: 20 }
           }
         }
       }
@@ -333,11 +440,14 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   }
 
   criarGraficoConsumo(): void {
-    const ctx = this.consumoChartRef?.nativeElement?.getContext('2d');
-    if (!ctx || this.consumoPorMotorista.length === 0) return;
+    if (!this.consumoChartRef?.nativeElement) return;
+
+    if (this.consumoChart) this.consumoChart.destroy();
+
+    const ctx = this.consumoChartRef.nativeElement.getContext('2d');
+    if (!ctx) return;
 
     const labels = this.consumoPorMotorista.map(m => {
-      // Limitar o nome a 15 caracteres
       const nome = m.nome || 'Motorista';
       return nome.length > 15 ? nome.substring(0, 15) + '...' : nome;
     });
@@ -369,28 +479,22 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
             title: {
               display: true,
               text: 'km por Litro',
-              font: {
-                size: 14,
-                weight: 'bold'
-              }
+              font: { size: 14, weight: 'bold' }
             },
-            grid: {
-              color: 'rgba(0,0,0,0.05)'
-            }
+            grid: { color: 'rgba(0,0,0,0.05)' }
           },
           x: {
-            grid: {
-              display: false
-            },
-            ticks: {
-              maxRotation: 45,
-              minRotation: 45
-            }
+            grid: { display: false },
+            ticks: { maxRotation: 45, minRotation: 45 }
           }
         },
         plugins: {
-          legend: {
-            display: false
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Consumo por Motorista',
+            font: { size: 16, weight: 'bold' },
+            padding: { bottom: 20 }
           }
         }
       }
@@ -398,7 +502,11 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   }
 
   criarGraficoKmPorMes(): void {
-    const ctx = this.kmChartRef?.nativeElement?.getContext('2d');
+    if (!this.kmChartRef?.nativeElement) return;
+
+    if (this.kmChart) this.kmChart.destroy();
+
+    const ctx = this.kmChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
     const labels = this.kmPorMes.map(item => item.mes);
@@ -431,19 +539,20 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
             title: {
               display: true,
               text: 'Quilometragem (km)',
-              font: {
-                size: 14,
-                weight: 'bold'
-              }
+              font: { size: 14, weight: 'bold' }
             },
-            grid: {
-              color: 'rgba(0,0,0,0.05)'
-            }
+            grid: { color: 'rgba(0,0,0,0.05)' }
           },
           x: {
-            grid: {
-              color: 'rgba(0,0,0,0.05)'
-            }
+            grid: { color: 'rgba(0,0,0,0.05)' }
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Evolução Mensal',
+            font: { size: 16, weight: 'bold' },
+            padding: { bottom: 20 }
           }
         }
       }
@@ -455,7 +564,7 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     if (event.index === 2) {
       setTimeout(() => {
         this.criarGraficos();
-      }, 100);
+      }, 200);
     }
   }
 
@@ -464,12 +573,12 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     Swal.fire({
       title: 'Exportar Relatório',
       text: 'Selecione o formato de exportação',
-      icon: 'info',
+      icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'PDF',
-      cancelButtonText: 'Excel',
+      confirmButtonText: '📄 PDF',
+      cancelButtonText: '📊 Excel',
       showDenyButton: true,
-      denyButtonText: 'CSV'
+      denyButtonText: '📝 CSV'
     }).then((result) => {
       if (result.isConfirmed) {
         this.exportarPDF();
@@ -484,17 +593,19 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   exportarPDF(): void {
     Swal.fire({
       title: 'Gerando PDF...',
-      text: 'Por favor, aguarde',
+      html: 'Por favor, aguarde',
       icon: 'info',
       allowOutsideClick: false,
       didOpen: () => {
         Swal.showLoading();
         setTimeout(() => {
-          Swal.fire(
-            'Sucesso!',
-            'PDF gerado com sucesso',
-            'success'
-          );
+          Swal.fire({
+            icon: 'success',
+            title: 'PDF Gerado!',
+            text: 'Relatório exportado com sucesso',
+            timer: 2000,
+            showConfirmButton: false
+          });
         }, 2000);
       }
     });
@@ -503,17 +614,19 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   exportarExcel(): void {
     Swal.fire({
       title: 'Gerando Excel...',
-      text: 'Por favor, aguarde',
+      html: 'Por favor, aguarde',
       icon: 'info',
       allowOutsideClick: false,
       didOpen: () => {
         Swal.showLoading();
         setTimeout(() => {
-          Swal.fire(
-            'Sucesso!',
-            'Excel gerado com sucesso',
-            'success'
-          );
+          Swal.fire({
+            icon: 'success',
+            title: 'Excel Gerado!',
+            text: 'Arquivo exportado com sucesso',
+            timer: 2000,
+            showConfirmButton: false
+          });
         }, 2000);
       }
     });
@@ -522,40 +635,44 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
   exportarCSV(): void {
     Swal.fire({
       title: 'Gerando CSV...',
-      text: 'Por favor, aguarde',
+      html: 'Por favor, aguarde',
       icon: 'info',
       allowOutsideClick: false,
       didOpen: () => {
         Swal.showLoading();
         setTimeout(() => {
-          Swal.fire(
-            'Sucesso!',
-            'CSV gerado com sucesso',
-            'success'
-          );
+          Swal.fire({
+            icon: 'success',
+            title: 'CSV Gerado!',
+            text: 'Arquivo exportado com sucesso',
+            timer: 2000,
+            showConfirmButton: false
+          });
         }, 2000);
       }
     });
   }
 
-  verDetalhesMotorista(motorista: any): void {
-    const nome = motorista.nomeMotorista || 'N/A';
-    const totalViagens = motorista.totalViagens || 0;
-    const totalKm = motorista.totalQuilometragem || motorista.totalKm || 0;
-    const totalCombustivel = motorista.totalCombustivel || motorista.totalLitrosAbastecidos || 0;
-    const mediaConsumo = totalCombustivel > 0 ? (totalKm / totalCombustivel).toFixed(2) : '0.00';
-    const participacao = this.totalViagens > 0 ? ((totalViagens / this.totalViagens) * 100).toFixed(0) : '0';
+  verDetalhesMotorista(motorista: RelatorioMotoristaDTO): void {
+    const mediaConsumo = motorista.totalCombustivel > 0
+      ? (motorista.totalQuilometragem / motorista.totalCombustivel).toFixed(2)
+      : '0.00';
+
+    const participacao = this.totalViagens > 0
+      ? ((motorista.totalViagens / this.totalViagens) * 100).toFixed(1)
+      : '0';
 
     Swal.fire({
-      title: `Detalhes: ${nome}`,
+      title: motorista.nomeMotorista,
       html: `
-        <div style="text-align: left; font-size: 14px;">
-          <p><strong>Nome:</strong> ${nome}</p>
-          <p><strong>Total de Viagens:</strong> ${totalViagens}</p>
-          <p><strong>Km Percorridos:</strong> ${totalKm.toFixed(0)} km</p>
-          <p><strong>Combustível Consumido:</strong> ${totalCombustivel.toFixed(0)} L</p>
-          <p><strong>Média de Consumo:</strong> ${mediaConsumo} km/L</p>
-          <p><strong>Participação:</strong> ${participacao}% das viagens</p>
+        <div style="text-align: left;">
+          <p><strong>📞 Telefone:</strong> ${motorista.telefone || 'Não informado'}</p>
+          <p><strong>📊 Status:</strong> ${motorista.status || 'Ativo'}</p>
+          <p><strong>🚗 Total de Viagens:</strong> ${motorista.totalViagens}</p>
+          <p><strong>🛣️ Km Percorridos:</strong> ${motorista.totalQuilometragem.toFixed(0)} km</p>
+          <p><strong>⛽ Combustível:</strong> ${motorista.totalCombustivel.toFixed(0)} L</p>
+          <p><strong>📈 Média Consumo:</strong> ${mediaConsumo} km/L</p>
+          <p><strong>📊 Participação:</strong> ${participacao}% das viagens</p>
         </div>
       `,
       icon: 'info',
@@ -564,39 +681,29 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     });
   }
 
-  verDetalhesVeiculo(veiculo: any): void {
-    const matricula = veiculo.matriculaVeiculo || veiculo.veiculo || 'N/A';
-    const modelo = veiculo.modelo || 'Não especificado';
-    const totalViagens = veiculo.totalViagens || 0;
-    const totalKm = veiculo.totalQuilometragem || veiculo.totalKm || 0;
-    const totalCombustivel = veiculo.totalCombustivel || veiculo.totalLitrosAbastecidos || 0;
-    const mediaConsumo = totalCombustivel > 0 ? (totalKm / totalCombustivel).toFixed(2) : '0.00';
+  verDetalhesVeiculo(veiculo: RelatorioPorVeiculoDTO): void {
+    const mediaConsumo = veiculo.totalCombustivel > 0
+      ? (veiculo.totalKm / veiculo.totalCombustivel).toFixed(2)
+      : '0.00';
 
     let eficiencia = 'Não calculada';
-    if (totalCombustivel > 0) {
-      const consumo = totalKm / totalCombustivel;
-      if (consumo > 12) {
-        eficiencia = 'Excelente';
-      } else if (consumo > 8) {
-        eficiencia = 'Boa';
-      } else if (consumo > 6) {
-        eficiencia = 'Média';
-      } else {
-        eficiencia = 'Baixa';
-      }
+    if (veiculo.totalCombustivel > 0) {
+      const consumo = veiculo.totalKm / veiculo.totalCombustivel;
+      eficiencia = consumo > 12 ? '⚡ Excelente' :
+                  consumo > 8 ? '👍 Boa' :
+                  consumo > 6 ? '🆗 Média' : '⚠️ Baixa';
     }
 
     Swal.fire({
-      title: `Detalhes: ${matricula}`,
+      title: veiculo.veiculo,
       html: `
-        <div style="text-align: left; font-size: 14px;">
-          <p><strong>Matrícula:</strong> ${matricula}</p>
-          <p><strong>Modelo:</strong> ${modelo}</p>
-          <p><strong>Total de Viagens:</strong> ${totalViagens}</p>
-          <p><strong>Km Percorridos:</strong> ${totalKm.toFixed(0)} km</p>
-          <p><strong>Combustível Consumido:</strong> ${totalCombustivel.toFixed(0)} L</p>
-          <p><strong>Média de Consumo:</strong> ${mediaConsumo} km/L</p>
-          <p><strong>Eficiência:</strong> ${eficiencia}</p>
+        <div style="text-align: left;">
+          <p><strong>🚙 Modelo:</strong> ${veiculo.modelo}</p>
+          <p><strong>📊 Total de Viagens:</strong> ${veiculo.totalViagens}</p>
+          <p><strong>🛣️ Km Percorridos:</strong> ${veiculo.totalKm.toFixed(0)} km</p>
+          <p><strong>⛽ Combustível:</strong> ${veiculo.totalCombustivel.toFixed(0)} L</p>
+          <p><strong>📈 Média Consumo:</strong> ${mediaConsumo} km/L</p>
+          <p><strong>⚡ Eficiência:</strong> ${eficiencia}</p>
         </div>
       `,
       icon: 'info',
@@ -605,39 +712,43 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     });
   }
 
-  gerarRelatorioIndividual(item: any): void {
+  gerarRelatorioIndividual(motorista: RelatorioMotoristaDTO): void {
     Swal.fire({
-      title: 'Gerando Relatório Individual',
-      text: 'Por favor, aguarde',
+      title: `Relatório: ${motorista.nomeMotorista}`,
+      text: 'Gerando relatório individual...',
       icon: 'info',
       allowOutsideClick: false,
       didOpen: () => {
         Swal.showLoading();
         setTimeout(() => {
-          Swal.fire(
-            'Sucesso!',
-            'Relatório individual gerado com sucesso',
-            'success'
-          );
+          Swal.fire({
+            icon: 'success',
+            title: 'Relatório gerado!',
+            text: 'O PDF foi gerado com sucesso',
+            timer: 1500,
+            showConfirmButton: false
+          });
         }, 1500);
       }
     });
   }
 
-  gerarRelatorioVeiculo(item: any): void {
+  gerarRelatorioVeiculo(veiculo: RelatorioPorVeiculoDTO): void {
     Swal.fire({
-      title: 'Gerando Relatório do Veículo',
-      text: 'Por favor, aguarde',
+      title: `Relatório: ${veiculo.matricula}`,
+      text: 'Gerando relatório do veículo...',
       icon: 'info',
       allowOutsideClick: false,
       didOpen: () => {
         Swal.showLoading();
         setTimeout(() => {
-          Swal.fire(
-            'Sucesso!',
-            'Relatório do veículo gerado com sucesso',
-            'success'
-          );
+          Swal.fire({
+            icon: 'success',
+            title: 'Relatório gerado!',
+            text: 'O PDF foi gerado com sucesso',
+            timer: 1500,
+            showConfirmButton: false
+          });
         }, 1500);
       }
     });

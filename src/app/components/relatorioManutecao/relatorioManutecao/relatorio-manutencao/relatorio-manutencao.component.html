@@ -14,6 +14,8 @@
       <button class="btn-print" (click)="imprimirRelatorio()" [disabled]="relatoriosFiltrados.length === 0" title="Imprimir">
         <i class="fas fa-print"></i> Imprimir
       </button>
+       <button class="btn-print" (click)="navegateTO('manutencoes')"> voltar
+      </button>
       <button class="btn-export" (click)="exportarParaExcel()" [disabled]="relatoriosFiltrados.length === 0" title="Exportar para Excel">
         <i class="fas fa-file-excel"></i> Exportar
       </button>
@@ -232,7 +234,7 @@
               </span>
             </td>
 
-           
+
           <td class="valor-cell">
               <span class="media-badge">
                 {{ relatorio.status }}

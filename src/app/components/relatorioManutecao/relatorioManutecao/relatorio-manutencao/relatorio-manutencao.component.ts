@@ -1,11 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import { relatorioservice } from '../../../relatorioViagem/relatorioservice';
 import { RelatorioManutencaoService } from '../../relatorio-service.service';
 import { RelatorioManutencaoDTO } from '../../relatorio-manutencao-dto';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+
 
 @Component({
   selector: 'app-relatorio-manutencao',
@@ -15,6 +16,7 @@ import { RouterModule } from '@angular/router';
   styleUrl: './relatorio-manutencao.component.css'
 })
 export class RelatorioManutencaoComponent {
+router = inject(Router);
 
     relatorios:  RelatorioManutencaoDTO[] = [];
     relatoriosFiltrados: RelatorioManutencaoDTO[] = [];
@@ -257,5 +259,8 @@ export class RelatorioManutencaoComponent {
     }
     this.veiculoSelecionado = '';
   }
-
+//
+navegateTO(path: string){
+  this.router.navigate([path]); 
+}
 }

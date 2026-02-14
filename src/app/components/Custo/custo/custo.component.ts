@@ -283,8 +283,10 @@ export class CustoComponent implements OnInit {
       status: custo.status,
       observacoes: custo.descricao
     });
+
     this.toggleForm('atualizar');
-  }
+
+}
 
   atualizarCusto(id: number): void {
     if (this.custoUpdateForm.valid && id) {
@@ -312,10 +314,10 @@ export class CustoComponent implements OnInit {
   }
 
 
-  excluirCusto(custo: any): void {
+  excluirCusto(custo: CustoListDTO): void {
       Swal.fire({
         title: 'Tem certeza?',
-        text: `Deseja excluir o custo do veículo ${custo.veiculo?.matricula || 'N/A'}?`,
+        text: `Deseja excluir o custo do veículo ${custo.veiculoMatricula || 'N/A'}?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -325,7 +327,7 @@ export class CustoComponent implements OnInit {
       }).then((result) => {
         if (result.isConfirmed && custo.id) {
         this.loading = true;
-        this.custoService.excluirCusto(custo.id!).subscribe({
+        this.custoService.excluirCusto(custo.id!).subscribe({ 
           next: (mensagem) => {
             this.showSuccess('Custo excluído com sucesso!');
           this.carregarCustos();

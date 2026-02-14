@@ -215,6 +215,8 @@
         <mat-icon>add</mat-icon>
         Nova Manutenção
       </button>
+       <button class="btn-add" (click)="navegateTO('relatorioManutencao')"> ver relatorios
+      </button>
     </div>
   </div>
 
@@ -519,10 +521,11 @@
         <p *ngIf="!filtroVeiculo && !filtroTipo && !filtroStatus">
           Comece registrando sua primeira manutenção
         </p>
-        <button class="btn-add-empty" (click)="abrirModalCadastro()">
+          <button class="btn-add-empty" (click)=" navegateTO('relatorioManutencao')">
           <mat-icon>add</mat-icon>
-          Nova Manutenção
+          ver relatorios
         </button>
+
       </div>
     </ng-template>
   </div>

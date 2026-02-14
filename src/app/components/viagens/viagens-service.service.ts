@@ -2,9 +2,8 @@ import { Injectable } from '@angular/core';
 import { Viagem } from './viagem';
 import { map, Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { RelatorioMotoristaDTO } from '../../models/relatorio-motorista-dto';
-import { RelatorioVeiculoDTO } from '../../models/relatorio-veiculo-dto';
-import { RelatorioGeralDTO } from '../relatorioViagem/relatorioservice';
+import { RelatorioGeralDTO, RelatorioMotoristaDTO, RelatorioPorVeiculoDTO } from '../relatorioViagem/models';
+
 
 @Injectable({
   providedIn: 'root'
@@ -111,7 +110,7 @@ export class ViagensServiceService {
     return this.http.get<RelatorioMotoristaDTO[]>(`${this.apiUrl}/motoristas`, { params });
   }
 
-  getRelatorioVeiculo(filtros?: any): Observable<RelatorioVeiculoDTO[]> {
+  getRelatorioVeiculo(filtros?: any): Observable<RelatorioPorVeiculoDTO[]> {
     let params = new HttpParams();
 
     if (filtros) {
@@ -132,7 +131,7 @@ export class ViagensServiceService {
       }
     }
 
-    return this.http.get<RelatorioVeiculoDTO[]>(`${this.apiUrl}/veiculos`, { params });
+    return this.http.get<RelatorioPorVeiculoDTO[]>(`${this.apiUrl}/veiculos`, { params });
   }
 
   getRelatorioGeral(dataInicio?: string, dataFim?: string): Observable<RelatorioGeralDTO> {
