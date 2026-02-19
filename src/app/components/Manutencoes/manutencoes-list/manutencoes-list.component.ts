@@ -28,6 +28,7 @@ import {
 import { Manutencao } from '../manutencao';
 import { Veiculo } from '../../Veiculos/veiculos.model';
 import { Router } from '@angular/router';
+import { LoginService } from '../../auth/login.service';
 
 
 @Component({
@@ -58,10 +59,12 @@ import { Router } from '@angular/router';
   styleUrls: ['./manutencoes-list.component.css']
 })
 export class ManutencoesListComponent implements OnInit, AfterViewInit {
- 
- router = inject(Router);   
+
+ router = inject(Router);
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+
+  loginService = inject(LoginService); 
 
   // Tabela
   displayedColumns: string[] = [
@@ -829,7 +832,7 @@ formatarDataConclusao(dataString?: any): string {
   }
  //pra a utilizacao de routas
   navegateTO(path: string){
-    this.router.navigate([path]); 
+    this.router.navigate([path]);
 
   }
 }

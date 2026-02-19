@@ -108,7 +108,7 @@ export interface RelatorioFilterDTO {
   dataInicioTop5VeiculosMaisCarro?: Date;
   dataFimTop5VeiculosMaisCarro?: Date;
 }
-
+ 
 export interface DashboardCustosDTO {
   mensagem: string;
   totalMesAtual: number;
@@ -125,7 +125,7 @@ export interface RelatorioCustosDetalhadoDTO {
   periodoFim: Date;
   totalPeriodo: number;
   quantidadeCustos: number;
-  mediaCustoPeriodo: number; 
+  mediaCustoPeriodo: number;
   totalPorVeiculo: Map<string, number>;
   totalPorTipo: Map<string, number>;
   top5VeiculosMaisCaros: VeiculoCustoDTO[];

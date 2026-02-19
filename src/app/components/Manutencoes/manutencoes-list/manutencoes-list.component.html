@@ -215,7 +215,12 @@
         <mat-icon>add</mat-icon>
         Nova Manutenção
       </button>
+     @if(loginService.hasRole('ADMIN')){
        <button class="btn-add" (click)="navegateTO('relatorioManutencao')"> ver relatorios
+      </button>
+    }
+         <button class="btn-add" (click)="navegateTO('dashboard')">
+         voltar
       </button>
     </div>
   </div>
@@ -495,10 +500,11 @@
                       class="btn-warning" (click)="abrirModalAcao('cancelar', manutencao)" title="Cancelar Manutenção">
                 <mat-icon>cancel</mat-icon>
               </button>
-
+        @if(loginService.hasRole('ADMIN')){
               <button class="btn-delete" (click)="excluirManutencao(manutencao)" title="Excluir">
                 <mat-icon>delete</mat-icon>
               </button>
+            }
             </td>
           </tr>
         </tbody>

@@ -327,7 +327,7 @@ export class CustoComponent implements OnInit {
       }).then((result) => {
         if (result.isConfirmed && custo.id) {
         this.loading = true;
-        this.custoService.excluirCusto(custo.id!).subscribe({ 
+        this.custoService.excluirCusto(custo.id!).subscribe({
           next: (mensagem) => {
             this.showSuccess('Custo excluído com sucesso!');
           this.carregarCustos();
@@ -379,6 +379,7 @@ export class CustoComponent implements OnInit {
       this.custoService.gerarRelatorio(filtro).subscribe({
         next: (relatorio) => {
           this.relatorio = relatorio;
+          console.log(" relatorio: "+ relatorio);
           this.loading = false;
           this.showSuccess('Relatório gerado com sucesso!');
         },
@@ -537,6 +538,7 @@ getTotalCustosPorTipo(): number {
 
   console.log(`${this.custosPorTipo.length} tipos de custos processados`);
 }
+
 // Formata o nome do tipo para exibição mais amigável
 private formatarNomeTipo(tipo: string): string {
   const formatacoes: Record<string, string> = {

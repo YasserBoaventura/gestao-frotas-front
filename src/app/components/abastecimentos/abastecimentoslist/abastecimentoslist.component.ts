@@ -26,6 +26,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
+import { LoginService } from '../../auth/login.service';
+
 
 @Component({
   selector: 'app-abastecimento-list',
@@ -54,6 +56,9 @@ import { Router, RouterModule } from '@angular/router';
 export class AbastecimentoListComponent implements OnInit {
 
 router = inject(Router);
+
+//login Service
+ loginService = inject(LoginService);
   // Forms
   abastecimentoForm!: FormGroup;
 
@@ -704,5 +709,5 @@ router = inject(Router);
   //router
   navegateTO(path: string){
     this.router.navigate([path]);
-  } 
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +20,7 @@ import Chart from 'chart.js/auto';
 
 import { relatorioservice } from '../relatorioservice';
 import { RelatorioMotoristaDTO, RelatorioPorVeiculoDTO } from '../models';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -82,13 +83,14 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     private relatorioViagem: relatorioservice
   ) {}
 
+ private router = inject(Router);
   ngOnInit(): void {
     this.setDatasPadrao();
     this.carregarDadosIniciais();
   }
 
   ngOnDestroy(): void {
-    // Limpar gráficos para evitar vazamento 
+    // Limpar gráficos para evitar vazamento
     if (this.statusChart) this.statusChart.destroy();
     if (this.consumoChart) this.consumoChart.destroy();
     if (this.kmChart) this.kmChart.destroy();
@@ -752,5 +754,10 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
         }, 1500);
       }
     });
+  }
+
+  navegateTO(path: string){
+    this.router.navigate([path]);
+
   }
 }
