@@ -109,6 +109,22 @@
         NUIT é obrigatório
       </div>
     </div>
+      <!-- codigo verificacao -->
+    <div class="form-group">
+      <label for="nuit">CodigoVerificacao *</label>
+      <div class="input-container">
+        <mat-icon class="input-icon">badge</mat-icon>
+        <input
+          type="text"
+          id="codigoVerificacao"
+          formControlName="codigoVerificacao"
+          placeholder="Digite  o codigo de verificação"
+          class="form-input">
+      </div>
+      <div class="error-message" *ngIf="resetForm.get('codigoVerficao')?.invalid && resetForm.get('nuit')?.touched">
+     o Codigo de Verificação é obrigatório
+      </div>
+    </div>
 
     <!-- Resposta de Segurança -->
     <div class="form-group">

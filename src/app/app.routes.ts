@@ -41,8 +41,8 @@ export const routes: Routes = [
 {path: "viagenslist", component: ViagenslistComponent},
 {path: "abastecimentoslist", component: AbastecimentoListComponent},
 {path: "manutencoes", component: ManutencoesListComponent},
-{path: "relatoriosViagem" , component: RelatorioviagemComponent, canActivate: [guardGuard] }, 
-{path: "relatorioCombustivel", component: RelatorioCombustivelComponent, canActivate: [guardGuard] },
+{path: "relatoriosViagem" , component: RelatorioviagemComponent, canActivate: [guardGuard] },
+{path: "relatorioCombustivel", component: RelatorioCombustivelComponent, canActivate: [guardGuard] }, 
 {path: "relatorioManutencao", component:  RelatorioManutencaoComponent,canActivate: [guardGuard] },
 {path: "CustoList", component:  CustoComponent,canActivate: [guardGuard] },
 
