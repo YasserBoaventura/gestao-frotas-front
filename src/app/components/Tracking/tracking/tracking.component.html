@@ -1,0 +1,19 @@
+<!-- src/app/components/tracking-map/tracking-map.component.html -->
+<div class="tracking-container">
+  <div class="controls">
+    <h2>Rastreamento Veicular</h2>
+    <p>Veículo: {{ vehicleId }}</p>
+    <div *ngIf="currentLocation" class="location-info">
+      <p><strong>Última atualização:</strong> {{ currentLocation?.timestamp| date:'medium' }}</p>
+      <p><strong>Latitude:</strong> {{ currentLocation?.latitude | number:'1.6-6' }}</p>
+      <p><strong>Longitude:</strong> {{ currentLocation?.longitude| number:'1.6-6' }}</p>
+      <p><strong>Velocidade:</strong> {{ currentLocation?.speed }} km/h</p>
+      <p><strong>Status:</strong> {{ currentLocation?.status }}</p>
+    </div>
+    <button (click)="simulateLocationUpdate()" class="simulate-btn">
+      Simular Atualização
+    </button>
+  </div>
+
+  <div #mapContainer class="map-container"></div>
+</div>

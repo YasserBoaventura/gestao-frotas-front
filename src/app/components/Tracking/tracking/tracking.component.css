@@ -1,0 +1,40 @@
+/* src/app/components/tracking-map/tracking-map.component.css */
+.tracking-container {
+  display: flex;
+  height: 100vh;
+}
+
+.controls {
+  width: 300px;
+  padding: 20px;
+  background-color: #f5f5f5;
+  overflow-y: auto;
+}
+
+.map-container {
+  flex: 1;
+  height: 100%;
+}
+
+.location-info {
+  background-color: white;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 15px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.simulate-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.simulate-btn:hover {
+  background-color: #0056b3;
+}

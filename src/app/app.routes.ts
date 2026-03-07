@@ -20,6 +20,7 @@ import { RelatorioCombustivelComponent } from './components/relatorioCombustivel
 import { RelatorioManutencaoComponent } from './components/relatorioManutecao/relatorioManutecao/relatorio-manutencao/relatorio-manutencao.component';
 import { CustoComponent } from './components/Custo/custo/custo.component';
 import { guardGuard } from './components/auth/guard.guard';
+import { TrackingComponent } from './components/Tracking/tracking/tracking.component';
 
 
 
@@ -42,9 +43,10 @@ export const routes: Routes = [
 {path: "abastecimentoslist", component: AbastecimentoListComponent},
 {path: "manutencoes", component: ManutencoesListComponent},
 {path: "relatoriosViagem" , component: RelatorioviagemComponent, canActivate: [guardGuard] },
-{path: "relatorioCombustivel", component: RelatorioCombustivelComponent, canActivate: [guardGuard] }, 
+{path: "relatorioCombustivel", component: RelatorioCombustivelComponent, canActivate: [guardGuard] },
 {path: "relatorioManutencao", component:  RelatorioManutencaoComponent,canActivate: [guardGuard] },
 {path: "CustoList", component:  CustoComponent,canActivate: [guardGuard] },
+{path: "Tracking", component: TrackingComponent}
 
 
 
