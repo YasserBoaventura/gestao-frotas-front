@@ -14,4 +14,13 @@ export interface VehicleLocation {
   speed: number;
   status: string;
   timestamp: Date;
-} 
+}
+export interface LocationHistoryItem{
+    id: number;
+  time: string;
+  latitude: string;
+  longitude: string;
+  speed: string;
+  status: string;
+  color: string;
+}
