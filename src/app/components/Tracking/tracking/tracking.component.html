@@ -9,9 +9,17 @@
       <!-- Seletor de veículo -->
       <div class="vehicle-selector">
         <label>Veículo:</label>
-        <select [(ngModel)]="vehicleId" (change)="changeVehicle(vehicleId)" class="form-select">
-          <option *ngFor="let id of vehicleIds" [value]="id">{{ id }}</option>
+        <select
+          [ngModel]="veiculoId"
+          (ngModelChange)="changeVehicle($event)"
+          class="form-select">
+          <option *ngFor="let v of vehicleOptions" [value]="v.id">
+            {{ v.plate }}
+          </option>
         </select>
+      </div>
+      <div class="selected-plate" *ngIf="selectedPlate">
+        Placa: <strong>{{ selectedPlate }}</strong>
       </div>
     </div>
 
@@ -49,6 +57,11 @@
             </span>
           </div>
         </div>
+
+        <!-- NOVO: Indicador de trajeto ativo -->
+        <div class="trajectory-status" *ngIf="showTrajectory">
+          <span class="trajectory-badge">🛣️ Trajeto visível no mapa</span>
+        </div>
       </div>
 
       <!-- Botões de ação -->
@@ -58,6 +71,12 @@
         </button>
         <button (click)="showHistory = true; loadHistory()" class="btn btn-secondary">
           📊 Ver Histórico
+        </button>
+        <!-- NOVO: Botão para alternar trajeto -->
+        <button *ngIf="locationHistory.length > 0"
+                (click)="toggleTrajectory()"
+                class="btn btn-info">
+          {{ showTrajectory ? '🙈 Ocultar Trajeto' : '👁️ Mostrar Trajeto' }}
         </button>
       </div>
     </div>
@@ -70,7 +89,7 @@
   <div class="modal" [class.show]="showHistory" (click)="closeHistory()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>📊 Histórico do Veículo {{ vehicleId }}</h3>
+        <h3>📊 Histórico do Veículo {{ selectedPlate }}</h3>
         <button class="close-btn" (click)="closeHistory()">×</button>
       </div>
 
@@ -136,6 +155,11 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- NOVO: Aviso sobre trajeto -->
+        <div class="history-note" *ngIf="locationHistory.length > 0">
+          <p>💡 O trajeto permanece visível no mapa mesmo após fechar esta janela.</p>
         </div>
       </div>
     </div>

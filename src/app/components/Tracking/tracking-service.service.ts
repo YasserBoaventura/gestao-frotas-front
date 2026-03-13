@@ -9,7 +9,7 @@ import SockJS from 'sockjs-client';
   providedIn: 'root'
 })
 export class TrackingServiceService {
-private apiUrl = 'http://localhost:9001/api/tracking';
+  private apiUrl = 'http://localhost:9001/api/tracking';
   private stompClient: any = null;
   private connected: boolean = false;
 
@@ -51,48 +51,63 @@ private apiUrl = 'http://localhost:9001/api/tracking';
 
   // POST - Enviar nova localização
   updateLocation(location: LocationDTO): Observable<VehicleLocation> {
-    console.log('📤 Enviando localização:', location);
+    console.log('📤 Enviando localização para veículo ID:', location.vehicleId);
     return this.http.post<VehicleLocation>(`${this.apiUrl}/location`, location);
   }
 
-  // GET - Buscar última localização de um veículo
-  getLastLocation(vehicleId: string): Observable<VehicleLocation> {
-    console.log('📥 Buscando última localização do:', vehicleId);
-    return this.http.get<VehicleLocation>(`${this.apiUrl}/location/${vehicleId}/last`);
+  // GET - Buscar última localização por ID do veículo
+  getLastLocation(veiculoId: number): Observable<VehicleLocation> {
+    console.log('📥 Buscando última localização do veículo ID:', veiculoId);
+    return this.http.get<VehicleLocation>(`${this.apiUrl}/location/${veiculoId}/last`);
   }
 
-  // GET - Buscar histórico de localizações
-  getLocationHistory(vehicleId: string, since?: Date): Observable<VehicleLocation[]> {
-    let url = `${this.apiUrl}/location/${vehicleId}/history`;
+  // GET - Buscar última localização por placa
+  getLastLocationByPlate(plate: string): Observable<VehicleLocation> {
+    console.log('📥 Buscando última localização da placa:', plate);
+    return this.http.get<VehicleLocation>(`${this.apiUrl}/location/plate/${plate}/last`);
+  }
+
+  // GET - Buscar histórico de localizações por ID do veículo
+  getLocationHistory(veiculoId: number, since?: Date): Observable<VehicleLocation[]> {
+    let url = `${this.apiUrl}/location/${veiculoId}/history`;
     if (since) {
       url += `?since=${since.toISOString()}`;
     }
-    console.log('📥 Buscando histórico do:', vehicleId);
+    console.log('📥 Buscando histórico do veículo ID:', veiculoId);
+    return this.http.get<VehicleLocation[]>(url);
+  }
+
+  // GET - Buscar histórico por placa
+  getLocationHistoryByPlate(plate: string, since?: Date): Observable<VehicleLocation[]> {
+    let url = `${this.apiUrl}/location/plate/${plate}/history`;
+    if (since) {
+      url += `?since=${since.toISOString()}`;
+    }
     return this.http.get<VehicleLocation[]>(url);
   }
 
   // GET - Buscar histórico das últimas 24 horas
-  getLast24HoursHistory(vehicleId: string): Observable<VehicleLocation[]> {
+  getLast24HoursHistory(veiculoId: number): Observable<VehicleLocation[]> {
     const since = new Date();
     since.setHours(since.getHours() - 24);
-    return this.getLocationHistory(vehicleId, since);
+    return this.getLocationHistory(veiculoId, since);
   }
 
   // GET - Buscar histórico de hoje
-  getTodayHistory(vehicleId: string): Observable<VehicleLocation[]> {
+  getTodayHistory(veiculoId: number): Observable<VehicleLocation[]> {
     const since = new Date();
     since.setHours(0, 0, 0, 0);
-    return this.getLocationHistory(vehicleId, since);
+    return this.getLocationHistory(veiculoId, since);
   }
 
   // ============ WEBSOCKET SUBSCRIBE ============
-  subscribeToLocationUpdates(vehicleId: string, callback: (location: VehicleLocation) => void) {
-    console.log('🔄 Assinando atualizações para:', vehicleId);
+  subscribeToLocationUpdates(veiculoId: number, callback: (location: VehicleLocation) => void) {
+    console.log('🔄 Assinando atualizações para veículo ID:', veiculoId);
 
     this.connectWebSocket()
       .then(() => {
         if (this.stompClient && this.connected) {
-          this.stompClient.subscribe(`/topic/locations/${vehicleId}`, (message: any) => {
+          this.stompClient.subscribe(`/topic/locations/${veiculoId}`, (message: any) => {
             try {
               const location: VehicleLocation = JSON.parse(message.body);
               console.log('📡 Nova localização recebida:', location);
@@ -105,9 +120,8 @@ private apiUrl = 'http://localhost:9001/api/tracking';
       })
       .catch(error => {
         console.error('❌ WebSocket falhou, usando polling:', error);
-        // Fallback: polling a cada 10 segundos
         setInterval(() => {
-          this.getLastLocation(vehicleId).subscribe({
+          this.getLastLocation(veiculoId).subscribe({
             next: (location) => callback(location),
             error: (err) => console.error('Erro no fallback:', err)
           });
@@ -123,5 +137,4 @@ private apiUrl = 'http://localhost:9001/api/tracking';
       });
     }
   }
-
 }

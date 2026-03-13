@@ -1,6 +1,6 @@
 export interface LocationDTO {
-  vehicleId: string;
-  latitude: number;
+  vehicleId: number;
+  latitude: number;  
   longitude: number;
   speed?: number;
   status?: string;
@@ -8,7 +8,11 @@ export interface LocationDTO {
 
 export interface VehicleLocation {
   id: number;
-  vehicleId: string;
+  veiculo: {        //object veicle
+    id: number;
+    matricula: string;
+    modelo?: string;
+  };
   latitude: number;
   longitude: number;
   speed: number;
