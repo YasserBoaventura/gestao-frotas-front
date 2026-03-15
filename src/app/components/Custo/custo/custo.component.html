@@ -1,0 +1,731 @@
+<!-- Notificação Customizada -->
+<div *ngIf="showNotification" class="notification-container" [ngClass]="getNotificationClass()">
+<div class="notification-content">
+  <span class="notification-icon">
+    <span *ngIf="notificationType === 'success'">✅</span>
+    <span *ngIf="notificationType === 'error'">❌</span>
+    <span *ngIf="notificationType === 'warning'">⚠️</span>
+    <span *ngIf="notificationType === 'info'">ℹ️</span>
+  </span>
+  <span class="notification-message">{{ notificationMessage }}</span>
+  <button class="notification-close" (click)="hideNotification()">×</button>
+</div>
+</div>
+
+<div class="container-fluid">
+<!-- Loading -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Carregando...</span>
+  </div>
+</div>
+
+<!-- Menu Principal -->
+<div class="row mb-4" *ngIf="!loading">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Gestão de Custos</h4>
+      </div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-success" (click)="toggleForm('criar')">
+            <i class="bi bi-plus-circle"></i> Novo Custo
+          </button>
+          <button class="btn btn-info" (click)="toggleForm('viagem')">
+            <i class="bi bi-car-front"></i> Custo para Viagem
+          </button>
+          <button class="btn btn-warning" (click)="toggleForm('relatorio')">
+            <i class="bi bi-file-earmark-text"></i> Relatório
+          </button>
+          <button class="btn btn-secondary" (click)="toggleForm('dashboard')">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </button>
+          <button class="btn btn-outline-primary" (click)="carregarCustos()">
+            <i class="bi bi-arrow-clockwise"></i> Atualizar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div *ngIf="showDashboard" class="row">
+  <!-- Cabeçalho do Dashboard -->
+  <div class="col-12 mb-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <div>
+          <h4 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard de Custos</h4>
+          <small class="text-white-50">Visão geral dos custos da frota</small>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-light btn-sm" (click)="carregarDashboard()" title="Atualizar">
+            <i class="bi bi-arrow-clockwise"></i> Atualizar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cards de Resumo -->
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-primary shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+              Mês Atual
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              {{ dashboard ? formatarMoeda(dashboard.totalMesAtual) : 'R$ 0,00' }}
+            </div>
+            <div class="mt-2">
+              <small class="text-muted">Total de custos no período</small>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-calendar-check fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-success shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+              Mês Anterior
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              {{ dashboard ? formatarMoeda(dashboard.totalMesAnterior) : 'R$ 0,00' }}
+            </div>
+            <div class="mt-2">
+              <small class="text-muted">Comparativo com período anterior</small>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-calendar-minus fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-info shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+              Variação
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <span [ngClass]="getVariacaoColor(dashboard?.variacaoPercentual)">
+                {{ getVariacaoIcon(dashboard?.variacaoPercentual) }}
+                {{ dashboard ? (dashboard.variacaoPercentual?.toFixed(2) || '0.00') : '0.00' }}%
+              </span>
+            </div>
+            <div class="mt-2">
+              <small class="text-muted" [ngClass]="getVariacaoColor(dashboard?.variacaoPercentual)">
+                {{ (dashboard?.variacaoPercentual || 0) >= 0 ? 'Aumento' : 'Redução' }} em relação ao mês anterior
+              </small>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-graph-up-arrow fa-2x text-gray-300" *ngIf="(dashboard?.variacaoPercentual || 0) >= 0"></i>
+            <i class="bi bi-graph-down-arrow fa-2x text-gray-300" *ngIf="(dashboard?.variacaoPercentual || 0) < 0"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-warning shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+              Total de Custos
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              {{ dashboard?.totalCustos }}
+            </div>
+            <div class="mt-2">
+              <small class="text-muted">Registros totais</small>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-receipt fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distribuição por Tipo -->
+  <div class="col-xl-6 col-lg-6 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header bg-white py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="bi bi-pie-chart me-2"></i>Distribuição por Tipo
+        </h6>
+      </div>
+      <div class="card-body">
+        <div *ngIf="custosPorTipo == null" class="text-center py-4 text-muted">
+          <i class="bi bi-pie-chart display-4 d-block mb-2"></i>
+          Nenhum dado disponível
+        </div>
+
+        <div *ngIf="custosPorTipo != null " class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th class="text-end">Valor</th>
+                <th class="text-end">%</th>
+                <th style="width: 120px;">Progresso</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of custosPorTipo">
+                <td>
+                  <i class="bi me-2" [ngClass]="getIconePorTipo(item.tipo)"></i>
+                  {{ item.tipo }}
+                </td>
+                <td class="text-end font-weight-bold">{{ formatarMoeda(item.valor) }}</td>
+                <td class="text-end">{{ item.porcentagem.toFixed(1) }}%</td>
+                <td>
+                  <div class="progress" style="height: 6px;">
+                    <div class="progress-bar"
+                          [style.background-color]="getCorPorTipo(item.tipo)"
+                          [style.width.%]="item.porcentagem"
+                          role="progressbar">
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top 5 Veículos Mais Caros -->
+<div class="col-xl-6 col-lg-6 mb-4">
+<div class="card shadow h-100">
+  <div class="card-header bg-white py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="bi bi-truck me-2"></i>Top 5 Veículos com Maiores Custos
+    </h6>
+  </div>
+  <div class="card-body">
+
+    <div *ngIf="!dashboard?.veiculosMaisCaros || dashboard?.veiculosMaisCaros?.length === 0"
+          class="text-center py-4 text-muted">
+      <i class="bi bi-truck display-4 d-block mb-2"></i>
+      Nenhum dado disponível
+    </div>
+
+
+    <div *ngIf="dashboard?.veiculosMaisCaros && dashboard?.veiculosMaisCaros?.length != null " class="table-responsive">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Veículo</th>
+            <th>Modelo</th>
+            <th class="text-end">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let veiculo of dashboard?.veiculosMaisCaros; let i = index">
+            <td>
+              <span class="badge" [ngClass]="{
+                'bg-danger': i === 0,
+                'bg-warning': i === 1,
+                'bg-info': i === 2,
+                'bg-secondary': i > 2
+              }">
+                {{ i + 1 }}
+              </span>
+            </td>
+            <td><strong>{{ veiculo.matricula }}</strong></td>
+            <td>{{ veiculo.modelo }}</td>
+            <td class="text-end font-weight-bold">{{ formatarMoeda(veiculo.totalCusto) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+  <!-- Lista Completa de Custos -->
+  <div class="col-12 mb-4">
+    <div class="card shadow">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="bi bi-list-ul me-2"></i>Lista Completa de Custos
+        </h6>
+        <span class="badge bg-primary">{{ custos.length }} custos</span>
+      </div>
+      <div class="card-body">
+        <div *ngIf="custos.length === 0" class="text-center py-4 text-muted">
+          <i class="bi bi-receipt display-4 d-block mb-2"></i>
+          Nenhum custo registrado
+        </div>
+
+        <div *ngIf="custos.length > 0" class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Tipo</th>
+                <th>Veículo</th>
+                <th class="text-end">Valor</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let custo of custos">
+                <td class="text-nowrap">
+                  <small class="text-muted">{{ formatarData(custo.data) }}</small>
+                </td>
+                <td>
+                  <div class="fw-bold">{{ custo.descricao }}</div>
+                  <small *ngIf="custo.descricao" class="text-muted">{{ custo.descricao }}</small>
+                </td>
+                <td>
+                  <span class="badge" [style.background-color]="getCorPorTipo(custo.tipo)">
+                    {{ formatarTipoCusto(custo.tipo) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark">
+                    {{ custo.veiculoMatricula || '--' }}
+                  </span>
+                </td>
+                <td class="text-end fw-bold">
+                  {{ formatarMoeda(custo.valor) }}
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="{
+                    'bg-success': custo.status === 'PAGO',
+                    'bg-warning': custo.status === 'PENDENTE',
+                    'bg-info': custo.status === 'AGENDADO',
+                    'bg-danger': custo.status === 'CANCELADO',
+                    'bg-secondary': true
+                  }">
+                    {{ formatarStatusCusto(custo.status) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" (click)="editarCusto(custo)" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" (click)="excluirCusto(custo)" title="Excluir">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="table-light">
+                <td colspan="4" class="text-end"><strong>Total Geral:</strong></td>
+                <td class="text-end">
+                  <strong>{{ formatarMoeda(calcularTotalCustos()) }}</strong>
+                </td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rodapé do Dashboard -->
+  <div class="col-12 mt-3">
+    <div class="card">
+      <div class="card-body text-center py-2">
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Dashboard atualizado em {{ getDataAtualFormatada() }}
+          • Total geral: {{ formatarMoeda(dashboard?.totalMesAtual || 0) }}
+          • {{ custos.length }} custos registrados
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formulário de Criação -->
+<div *ngIf="showCriarForm" class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Registrar Novo Custo</h5>
+        <button type="button" class="btn btn-light btn-sm" (click)="toggleForm('dashboard')">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="custoForm" (ngSubmit)="criarCusto()">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Veículo *</label>
+              <select class="form-select" formControlName="veiculoId">
+                <option value="">Selecione um veículo</option>
+                <option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                  {{ veiculo.matricula }} - {{ veiculo.modelo }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data *</label>
+              <input type="date" class="form-control" formControlName="data" [value]="getDataAtual()">
+            </div>
+
+            <div class="col-12 mb-3">
+              <label class="form-label">Descrição *</label>
+              <input type="text" class="form-control" formControlName="descricao"
+                      placeholder="Descreva o custo..." maxlength="200">
+              <div class="form-text text-end">{{ custoForm.get('descricao')?.value?.length || 0 }}/200</div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Valor *</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="number" step="0.01" class="form-control" formControlName="valor"
+                        placeholder="0.00" min="0">
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Tipo *</label>
+              <select class="form-select" formControlName="tipo">
+                <option value="">Selecione o tipo</option>
+                <option *ngFor="let tipo of tiposCusto" [value]="tipo.value">
+                  {{ tipo.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Status</label>
+              <select class="form-select" formControlName="status">
+                <option *ngFor="let status of statusCusto" [value]="status.value">
+                  {{ status.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Número do Documento</label>
+              <input type="text" class="form-control" formControlName="numeroDocumento"
+                      placeholder="Opcional">
+            </div>
+
+            <div class="col-12 mb-3">
+              <label class="form-label">Observações</label>
+              <textarea class="form-control" formControlName="observacoes" rows="3"
+                        placeholder="Observações adicionais..."></textarea>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" (click)="toggleForm('dashboard')">
+                  <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="submit" class="btn btn-success" [disabled]="!custoForm.valid || loading">
+                  <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+                  <i class="bi bi-check-circle"></i> Salvar Custo
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formulário de Edição -->
+<div *ngIf="showUpdateForm && custoSelecionado" class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Editar Custo</h5>
+        <button type="button" class="btn btn-light btn-sm" (click)="toggleForm('dashboard')">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="custoUpdateForm" (ngSubmit)="atualizarCusto(custoSelecionado.id)">
+          <div class="row">
+            <div class="col-12 mb-3">
+              <label class="form-label">Descrição *</label>
+              <input type="text" class="form-control" formControlName="descricao" maxlength="200">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Valor *</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="number" step="0.01" class="form-control" formControlName="valor" min="0">
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Tipo *</label>
+              <select class="form-select" formControlName="tipo">
+                <option *ngFor="let tipo of tiposCusto" [value]="tipo.value">
+                  {{ tipo.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Status</label>
+              <select class="form-select" formControlName="status">
+                <option *ngFor="let status of statusCusto" [value]="status.value">
+                  {{ status.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-12 mb-3">
+              <label class="form-label">Observações</label>
+              <textarea class="form-control" formControlName="observacoes" rows="3"></textarea>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" (click)="toggleForm('dashboard')">
+                  Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="!custoUpdateForm.valid || loading">
+                  <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+                  Atualizar
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formulário de Custo para Viagem -->
+<div *ngIf="showViagemForm" class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card">
+      <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Custo para Viagem</h5>
+        <button type="button" class="btn btn-light btn-sm" (click)="toggleForm('dashboard')">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="custoViagemForm" (ngSubmit)="criarCustoViagem()">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Viagem *</label>
+              <select class="form-select" formControlName="viagemId">
+                <option value="">Selecione uma viagem</option>
+                <option *ngFor="let viagem of viagens" [value]="viagem.id">
+                  {{ viagem.rota?.origem || '--' }} → {{ viagem.rota?.destino || '--' }} ({{ formatarData(viagem.date) }})
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Veículo *</label>
+              <select class="form-select" formControlName="veiculoId">
+                <option value="">Selecione um veículo</option>
+                <option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                  {{ veiculo.matricula }} - {{ veiculo.modelo }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-12 mb-3">
+              <label class="form-label">Descrição *</label>
+              <input type="text" class="form-control" formControlName="descricao"
+                      placeholder="Descreva o custo da viagem...">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Tipo *</label>
+              <select class="form-select" formControlName="tipo">
+                <option value="">Selecione o tipo</option>
+                <option *ngFor="let tipo of tiposCusto" [value]="tipo.value">
+                  {{ tipo.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Valor *</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="number" step="0.01" class="form-control" formControlName="valor"
+                        placeholder="0.00" min="0">
+              </div>
+            </div>
+
+            <div class="col-12 mb-3">
+              <label class="form-label">Observações</label>
+              <textarea class="form-control" formControlName="observacoes" rows="2"
+                        placeholder="Observações sobre o custo da viagem..."></textarea>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" (click)="toggleForm('dashboard')">
+                  Cancelar
+                </button>
+                <button type="submit" class="btn btn-info" [disabled]="!custoViagemForm.valid || loading">
+                  <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+                  <i class="bi bi-car-front"></i> Salvar Custo de Viagem
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formulário de Relatório -->
+<div *ngIf="showRelatorio" class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Relatório de Custos</h5>
+        <button type="button" class="btn btn-light btn-sm" (click)="toggleForm('dashboard')">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="relatorioForm" (ngSubmit)="gerarRelatorio()">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Data Início *</label>
+              <input type="date" class="form-control" formControlName="dataInicio" [value]="getDataInicioMes()">
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Data Fim *</label>
+              <input type="date" class="form-control" formControlName="dataFim" [value]="getDataAtual()">
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Veículo (opcional)</label>
+              <select class="form-select" formControlName="veiculoId">
+                <option value="">Todos os veículos</option>
+                <option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                  {{ veiculo.matricula }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" (click)="toggleForm('dashboard')">
+                  <i class="bi bi-arrow-left"></i> Voltar
+                </button>
+                <button type="submit" class="btn btn-warning" [disabled]="loading">
+                  <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+                  <i class="bi bi-file-earmark-text"></i> Gerar Relatório
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Resultado do Relatório -->
+        <div *ngIf="relatorio" class="mt-4">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <div class="card">
+                <div class="card-body text-center">
+                  <h6 class="text-muted">Total do Período</h6>
+                  <h2 class="text-warning">{{ formatarMoeda(relatorio.totalPeriodo) }}</h2>
+                  <small class="text-muted">{{ relatorio.quantidadeCustos }} custos registrados</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <div class="card">
+                <div class="card-body  text-center">
+                  <h6 class="text-muted">Média por Custo</h6>
+                  <h2 class="text-primary">{{ formatarMoeda(relatorio.mediaCustoPeriodo) }}</h2>
+                  <small class="text-muted">Valor médio</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <div class="card">
+                <div class="card-body text-center">
+                  <h6 class="text-muted">Período</h6>
+                  <h5>{{ formatarData(relatorio.periodoInicio) }} a {{ formatarData(relatorio.periodoFim) }}</h5>
+                  <small class="text-muted">Data do relatório</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela de detalhes do relatório -->
+          <div class="card mt-3">
+            <div class="card-header">
+              <h6 class="mb-0">Detalhes do Relatório</h6>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Descrição</th>
+                      <th>Tipo</th>
+                      <th>Veículo</th>
+                      <th class="text-end">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let custo of relatorio.custosDetalhados">
+                      <td>{{ formatarData(custo.data) }}</td>
+                      <td>{{ custo.descricao }}</td>
+                      <td>{{ formatarTipoCusto(custo.tipo) }}</td>
+                      <td>{{ custo.veiculoMatricula }}</td>
+                      <td class="text-end">{{ formatarMoeda(custo.valor) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

@@ -208,6 +208,11 @@
         <mat-icon>add</mat-icon>
         Novo Abastecimento
       </button>
+     @if( loginService.hasRole("ADMIN")){
+       <button class="btn-add" (click)="navegateTO('relatorioCombustivel')">
+       ver relatorio
+      </button>
+    }
     </div>
   </div>
 
@@ -405,7 +410,7 @@
       </span>
     </div>
   </div>
-</td> 
+</td>
 
             <!-- Coluna Combustível -->
             <td class="combustivel-cell">
@@ -452,9 +457,11 @@
               <button class="btn-view" (click)="editarAbastecimento(abastecimento)" title="Editar">
                 <mat-icon>edit</mat-icon>
               </button>
+              @if(loginService.hasRole("ADMIN")){
               <button class="btn-delete" (click)="confirmarExclusaoModal(abastecimento)" title="Excluir">
                 <mat-icon>delete</mat-icon>
               </button>
+            }
             </td>
           </tr>
         </tbody>
@@ -487,6 +494,7 @@
           <mat-icon>add</mat-icon>
           Novo Abastecimento
         </button>
+
       </div>
     </ng-template>
   </div>

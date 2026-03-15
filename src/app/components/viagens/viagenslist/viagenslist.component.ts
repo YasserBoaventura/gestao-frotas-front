@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, inject } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
@@ -27,6 +27,7 @@ import { ViagensServiceService } from '../viagens-service.service';
 import { MotoristaService } from '../../motorista/motorista.service';
 import { VeiculosService } from '../../Veiculos/veiculos.service';
 import { RotasServiceService } from '../../Rotas/rotas-service.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-viagenslist',
@@ -51,6 +52,8 @@ import { RotasServiceService } from '../../Rotas/rotas-service.service';
   styleUrls: ['./viagenslist.component.css']
 })
 export class ViagenslistComponent implements OnInit, AfterViewInit {
+ router = inject(Router);
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
@@ -256,7 +259,7 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
       const dataChegadaFormatada = this.formatarDataParaInput(viagem.dataHoraChegada);
 
       this.viagemForm.patchValue({
-        ...viagem, 
+        ...viagem,
         dataHoraPartida: dataPartidaFormatada,
         dataHoraChegada: dataChegadaFormatada,
         motoristaId: viagem.motorista?.id || '',
@@ -874,4 +877,8 @@ cancelarViagem(viagem: Viagem): void {
       icon: 'info'
     });
   }
+  //router
+  navegateTO(path: string){
+    this.router.navigate([path]);
+  } 
 }

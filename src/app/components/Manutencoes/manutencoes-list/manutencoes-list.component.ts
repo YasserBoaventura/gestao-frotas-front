@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -27,6 +27,9 @@ import {
 } from '../manutencoes-service.service';
 import { Manutencao } from '../manutencao';
 import { Veiculo } from '../../Veiculos/veiculos.model';
+import { Router } from '@angular/router';
+import { LoginService } from '../../auth/login.service';
+
 
 @Component({
   selector: 'app-manutencoes-list',
@@ -56,8 +59,12 @@ import { Veiculo } from '../../Veiculos/veiculos.model';
   styleUrls: ['./manutencoes-list.component.css']
 })
 export class ManutencoesListComponent implements OnInit, AfterViewInit {
+
+ router = inject(Router);
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+
+  loginService = inject(LoginService); 
 
   // Tabela
   displayedColumns: string[] = [
@@ -717,7 +724,7 @@ formatarDataConclusao(dataString?: any): string {
     const dados = this.dataSource.data || [];
     if (dados.length === 0) return 0;
     return dados.filter(m => this.verificarStatusManutencao(m) === 'VENCIDA').length;
-  }  
+  }
 
   getProximasCount(): number {
     const dados = this.dataSource.data || [];
@@ -822,5 +829,10 @@ formatarDataConclusao(dataString?: any): string {
            !!this.filtroStatus ||
            !!this.filtroDataInicio ||
            !!this.filtroDataFim;
+  }
+ //pra a utilizacao de routas
+  navegateTO(path: string){
+    this.router.navigate([path]);
+
   }
 }

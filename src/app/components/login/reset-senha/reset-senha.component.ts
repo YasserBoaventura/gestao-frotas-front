@@ -56,6 +56,7 @@ export class ResetSenhaComponent {
       token: ['', [Validators.required]], // ← CAMPO TOKEN ADICIONADO
       respostaSeguranca: ['', [Validators.required]],
       nuit: ['', [Validators.required]],
+      codigoVerificacao: ['', [Validators.required]], // ← CAMPO CODIGO DE VERIFICAÇÃO ADICIONADO
       novaSenha: ['', [Validators.required, Validators.minLength(6)]],
       confirmarSenha: ['', [Validators.required]]
     }, {
@@ -98,7 +99,7 @@ export class ResetSenhaComponent {
             // Armazena a pergunta e token
             this.perguntaSeguranca = response.perguntaSeguranca;
             this.tokenGerado = response.token;
- 
+
             // Preenche automaticamente o token no formulário
             this.resetForm.patchValue({
               token: this.tokenGerado
@@ -147,6 +148,7 @@ onResetPassword(): void {
       email: this.validatedUserData.email,
       token: this.tokenGerado,
       nuit: this.resetForm.get('nuit')?.value,
+      codigoVerificacao: this.resetForm.get('codigoVerificacao')?.value, 
       respostaSeguranca: this.resetForm.get('respostaSeguranca')?.value,
       novaSenha: this.resetForm.get('novaSenha')?.value
     };

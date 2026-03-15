@@ -2,64 +2,10 @@ import { HttpClient, HttpParams } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 
-export interface RelatorioMotoristaDTO {
-  nome: string;
-  telefone: string;
-  status: string;
-  quantidadeViagens: number;
-  totalKilometragem: number;
-  totalLitrosAbastecidos: number;
-}
+import { Viagem } from "../viagens/viagem";
+import { RelatorioDiarioDTO, RelatorioGeralDTO, RelatorioMensalDTO, RelatorioMotoristaDTO, RelatorioPorVeiculoDTO, RelatorioTopMotoristasDTO } from "./models";
 
-export interface RelatorioPorVeiculoDTO {
-  matricula: string;
-  modelo: string;
-  quantidadeViagens: number;
-  totalKilometragem: number;
-  totalLitrosAbastecidos: number;
-}
 
-export interface RelatorioDiarioDTO {
-  data: string;
-  quantidadeViagens: number;
-  totalKilometragem: number;
-  totalLitrosAbastecidos: number;
-}
-
-export interface RelatorioMensalDTO {
-  ano: number;
-  mes: number;
-  quantidadeViagens: number;
-  totalKilometragem: number;
-  totalLitrosAbastecidos: number;
-}
-
-export interface RelatorioGeralDTO {
-  totalViagens: number;
-  totalMotoristas: number;
-  totalVeiculos: number;
-  totalKilometragem: number;
-  totalLitrosAbastecidos: number;
-  mediaKilometragemPorViagem: number;
-}
-
-export interface RelatorioTopMotoristasDTO {
-  nomeMotorista: string;
-  totalViagens: number;
-  totalKilometragem: number;
-}
-
-export interface Viagem {
-  id: number;
-  dataHoraPartida: string;
-  dataHoraChegada: string;
-  kilometragemInicial: number;
-  kilometragemFinal: number;
-  status: string;
-  motorista: any;
-  veiculo: any;
-  observacoes: string;
-}
 
 @Injectable({
   providedIn: 'root'
@@ -79,14 +25,23 @@ export class relatorioservice {
         });
     });
   }
+  // relatorio por periodo-motorista
+getRelatorioMotoristaPeriodo(inicio: string, fim: string): Observable<RelatorioMotoristaDTO[]> {
 
-  // Relatório por motorista
-  getRelatorioMotorista(dataInicio?: string, dataFim?: string): Observable<RelatorioMotoristaDTO[]> {
-    let params = new HttpParams();
-    if (dataInicio) params = params.set('dataInicio', dataInicio);
-    if (dataFim) params = params.set('dataFim', dataFim);
-    return this.http.get<RelatorioMotoristaDTO[]>(`${this.apiUrl}/motoristas`, { params });
-  }
+  return this.http.get<RelatorioMotoristaDTO[]>(
+    `${this.apiUrl}/relatorio-periodo-por-motorista`,
+    { params: { inicio, fim } }
+  );
+}
+//relatorio por-veiculoPeriodo
+getRelatorioVeiculoPeriodo(inicio: string, fim: string): Observable<RelatorioPorVeiculoDTO[]> {
+  return this.http.get<RelatorioPorVeiculoDTO[]>(
+    `${this.apiUrl}/relatorio-periodo-por-veiculo`,
+    { params: { inicio, fim } }
+  );
+}
+
+
 
   // Relatório por veículo
   getRelatorioVeiculo(): Observable<RelatorioPorVeiculoDTO[]> {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Abastecimento } from '../abastecimento';
 import { AbstecimeserviceService as AbastecimentoService } from '../abstecimeservice.service';
@@ -25,7 +25,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { LoginService } from '../../auth/login.service';
+
 
 @Component({
   selector: 'app-abastecimento-list',
@@ -52,6 +54,11 @@ import { RouterModule } from '@angular/router';
   ]
 })
 export class AbastecimentoListComponent implements OnInit {
+
+router = inject(Router);
+
+//login Service
+ loginService = inject(LoginService);
   // Forms
   abastecimentoForm!: FormGroup;
 
@@ -698,5 +705,9 @@ export class AbastecimentoListComponent implements OnInit {
 
   exportarPDF(): void {
     this.mostrarSucesso('Funcionalidade de exportação PDF em desenvolvimento');
+  }
+  //router
+  navegateTO(path: string){
+    this.router.navigate([path]);
   }
 }

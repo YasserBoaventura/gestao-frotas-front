@@ -18,6 +18,9 @@ import { AbastecimentoListComponent } from './components/abastecimentos/abasteci
 import { ManutencoesListComponent } from './components/Manutencoes/manutencoes-list/manutencoes-list.component';
 import { RelatorioCombustivelComponent } from './components/relatorioCombustivel/relatorio-combustivel/relatorio-combustivel.component';
 import { RelatorioManutencaoComponent } from './components/relatorioManutecao/relatorioManutecao/relatorio-manutencao/relatorio-manutencao.component';
+import { CustoComponent } from './components/Custo/custo/custo.component';
+import { guardGuard } from './components/auth/guard.guard';
+
 
 
 
@@ -38,9 +41,10 @@ export const routes: Routes = [
 {path: "viagenslist", component: ViagenslistComponent},
 {path: "abastecimentoslist", component: AbastecimentoListComponent},
 {path: "manutencoes", component: ManutencoesListComponent},
-{path: "relatoriosViagem", component: RelatorioviagemComponent},
-{path: "relatorioCombustivel", component: RelatorioCombustivelComponent},
-{path: "relatorioManutencao", component:  RelatorioManutencaoComponent}
+{path: "relatoriosViagem" , component: RelatorioviagemComponent, canActivate: [guardGuard] },
+{path: "relatorioCombustivel", component: RelatorioCombustivelComponent, canActivate: [guardGuard] }, 
+{path: "relatorioManutencao", component:  RelatorioManutencaoComponent,canActivate: [guardGuard] },
+{path: "CustoList", component:  CustoComponent,canActivate: [guardGuard] },
 
 
 
