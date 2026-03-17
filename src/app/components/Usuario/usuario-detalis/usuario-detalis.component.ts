@@ -53,7 +53,7 @@ cadastroForm: FormGroup;
       if (formValue.dataNascimento) {
         formValue.dataNascimento = new Date(formValue.dataNascimento).toISOString();
       }
-
+ 
       this.loginService.autoCadastro(formValue).subscribe({
         next: (response) => {
             Swal.fire({
@@ -61,7 +61,7 @@ cadastroForm: FormGroup;
                     icon: 'success',
                     confirmButtonText: 'Ok'
                   });
-        
+
           this.router.navigate(['/login']);
         },
         error: (error) => {

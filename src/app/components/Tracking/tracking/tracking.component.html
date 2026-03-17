@@ -23,7 +23,29 @@
       </div>
     </div>
 
-    <!-- Conteúdo -->
+    <!-- Tabs de navegação -->
+    <div class="tabs">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === 0"
+        (click)="activeTab = 0">
+        🗺️ Mapa
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === 1"
+        (click)="activeTab = 1">
+        ⛽ Combustível
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === 2"
+        (click)="activeTab = 2">
+        📊 Estatísticas
+      </button>
+    </div>
+
+    <!-- Conteúdo das Tabs -->
     <div class="content">
       <!-- Loading -->
       <div *ngIf="isLoading" class="loading">
@@ -31,53 +53,207 @@
         <p>Carregando...</p>
       </div>
 
-      <!-- Informações da localização atual -->
-      <div *ngIf="!isLoading && currentLocation" class="current-info card">
-        <h3>📍 Localização Atual</h3>
-        <p class="timestamp">{{ currentLocation.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}</p>
+      <!-- ===== TAB 0: MAPA ===== -->
+      <div *ngIf="activeTab === 0 && !isLoading">
+        <!-- Informações da localização atual -->
+        <div *ngIf="currentLocation" class="current-info card">
+          <h3>📍 Localização Atual</h3>
+          <p class="timestamp">{{ currentLocation.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}</p>
 
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="label">Latitude:</span>
-            <span class="value">{{ currentLocation.latitude | number:'1.6-6' }}</span>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Latitude:</span>
+              <span class="value">{{ currentLocation.latitude | number:'1.6-6' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Longitude:</span>
+              <span class="value">{{ currentLocation.longitude | number:'1.6-6' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Velocidade:</span>
+              <span class="value">{{ currentLocation.speed?.toFixed(1) || 0 }} km/h</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Status:</span>
+              <span class="value" [class.status-moving]="currentLocation.status === 'moving'"
+                    [class.status-stopped]="currentLocation.status !== 'moving'">
+                {{ currentLocation.status === 'moving' ? 'Em movimento' : 'Parado' }}
+              </span>
+            </div>
           </div>
-          <div class="info-item">
-            <span class="label">Longitude:</span>
-            <span class="value">{{ currentLocation.longitude | number:'1.6-6' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Velocidade:</span>
-            <span class="value">{{ currentLocation.speed?.toFixed(1) || 0 }} km/h</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Status:</span>
-            <span class="value" [class.status-moving]="currentLocation.status === 'moving'"
-                  [class.status-stopped]="currentLocation.status !== 'moving'">
-              {{ currentLocation.status === 'moving' ? 'Em movimento' : 'Parado' }}
-            </span>
+
+          <!-- Indicador de trajeto -->
+          <div class="trajectory-status" *ngIf="showTrajectory">
+            <span class="trajectory-badge">🛣️ Trajeto visível no mapa</span>
           </div>
         </div>
 
-        <!-- NOVO: Indicador de trajeto ativo -->
-        <div class="trajectory-status" *ngIf="showTrajectory">
-          <span class="trajectory-badge">🛣️ Trajeto visível no mapa</span>
+        <!-- Botões de ação -->
+        <div class="action-buttons">
+          <button (click)="simulateLocationUpdate()" class="btn btn-primary">
+            🎲 Simular Movimento
+          </button>
+          <button (click)="showHistory = true; loadHistory()" class="btn btn-secondary">
+            📊 Ver Histórico
+          </button>
+          <button *ngIf="locationHistory.length > 0"
+                  (click)="toggleTrajectory()"
+                  class="btn btn-info">
+            {{ showTrajectory ? '🙈 Ocultar Trajeto' : '👁️ Mostrar Trajeto' }}
+          </button>
         </div>
       </div>
 
-      <!-- Botões de ação -->
-      <div class="action-buttons">
-        <button (click)="simulateLocationUpdate()" class="btn btn-primary">
-          🎲 Simular Movimento
-        </button>
-        <button (click)="showHistory = true; loadHistory()" class="btn btn-secondary">
-          📊 Ver Histórico
-        </button>
-        <!-- NOVO: Botão para alternar trajeto -->
-        <button *ngIf="locationHistory.length > 0"
-                (click)="toggleTrajectory()"
-                class="btn btn-info">
-          {{ showTrajectory ? '🙈 Ocultar Trajeto' : '👁️ Mostrar Trajeto' }}
-        </button>
+      <!-- ===== TAB 1: COMBUSTÍVEL ===== -->
+      <div *ngIf="activeTab === 1 && !isLoading">
+        <!-- Card de Combustível -->
+        <div class="fuel-card card" [class.alerta]="nivelCombustivel < 20">
+          <div class="fuel-header">
+            <span class="fuel-icon">⛽</span>
+            <h3>Combustível</h3>
+            <span class="fuel-level" [style.color]="getNivelColor()">
+              {{ nivelCombustivel.toFixed(1) }}%
+            </span>
+          </div>
+
+          <!-- Barra de combustível -->
+          <div class="fuel-bar-container">
+            <div class="fuel-bar"
+                 [style.width]="nivelCombustivel + '%'"
+                 [style.background]="getBarColor()">
+            </div>
+          </div>
+
+          <!-- Informações detalhadas -->
+          <div class="fuel-details">
+            <div class="detail-row">
+              <span class="label">Autonomia:</span>
+              <span class="value">{{ autonomia.toFixed(0) }} km</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Consumo médio:</span>
+              <span class="value">{{ consumoMedio.toFixed(2) }} km/l</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Capacidade do tanque:</span>
+              <span class="value">{{ capacidadeTanque }} L</span>
+            </div>
+            <div class="detail-row" *ngIf="ultimoAbastecimento">
+              <span class="label">Último abastecimento:</span>
+              <span class="value">{{ ultimoAbastecimento.dataAbastecimento | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+
+          <!-- Botão para registrar abastecimento -->
+          <button class="btn-abastecer" (click)="abrirModalAbastecimento()">
+            <span>⛽</span> Registrar Abastecimento
+          </button>
+        </div>
+
+        <!-- Últimos Abastecimentos -->
+        <div class="recent-abastecimentos card" *ngIf="abastecimentos.length > 0">
+          <h4>📋 Últimos Abastecimentos</h4>
+          <div class="abastecimentos-list">
+            <div *ngFor="let ab of abastecimentos.slice(0, 5)" class="abastecimento-item">
+              <div class="abastecimento-data">
+                {{ ab.dataAbastecimento | date:'dd/MM/yyyy' }}
+              </div>
+              <div class="abastecimento-info">
+                <span class="litros">{{ ab.quantidadeLitros }}L</span>
+                <span class="valor">{{ formatarMoeda(ab.quantidadeLitros * ab.precoPorLitro) }}</span>
+                <span class="km">{{ ab.kilometragemVeiculo }} km</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerta de combustível baixo -->
+        <div class="alerta-card" *ngIf="nivelCombustivel < 15">
+          <span class="alerta-icon">⚠️</span>
+          <div class="alerta-text">
+            <strong>Combustível crítico!</strong>
+            <p>Autonomia de apenas {{ autonomia.toFixed(0) }} km. Abasteça em breve.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TAB 2: ESTATÍSTICAS ===== -->
+      <div *ngIf="activeTab === 2 && !isLoading">
+        <!-- Cards de estatísticas -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-icon">⛽</span>
+            <span class="stat-label">Total Abastecimentos</span>
+            <span class="stat-value">{{ fuelStats.totalAbastecimentos }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">💰</span>
+            <span class="stat-label">Total Gasto</span>
+            <span class="stat-value">{{ formatarMoeda(fuelStats.totalGasto) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">🛢️</span>
+            <span class="stat-label">Total Litros</span>
+            <span class="stat-value">{{ fuelStats.totalLitros.toFixed(1) }} L</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">📊</span>
+            <span class="stat-label">Preço Médio</span>
+            <span class="stat-value">{{ formatarMoeda(fuelStats.mediaPreco) }}/L</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">📈</span>
+            <span class="stat-label">Consumo Médio</span>
+            <span class="stat-value">{{ fuelStats.consumoMedio.toFixed(2) }} km/l</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">💵</span>
+            <span class="stat-label">Custo por km</span>
+            <span class="stat-value">{{ formatarMoeda(fuelStats.custoPorKm) }}</span>
+          </div>
+        </div>
+
+        <!-- Gráfico de consumo mensal (simulado) -->
+        <div class="chart-card card">
+          <h4>📊 Consumo Mensal (Litros)</h4>
+          <div class="chart-bars">
+            <div class="chart-bar-item" *ngFor="let mes of meses; let i = index">
+              <div class="chart-bar"
+                   [style.height]="(consumoMensal[i] / 100) * 120 + 'px'"
+                   [style.background]="'linear-gradient(180deg, #28a745, #20c997)'">
+              </div>
+              <span class="chart-label">{{ mes }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de abastecimentos -->
+        <div class="history-table-container card">
+          <h4>📋 Histórico Completo</h4>
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Litros</th>
+                <th>Valor</th>
+                <th>Preço/L</th>
+                <th>Km</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ab of abastecimentos">
+                <td>{{ ab.dataAbastecimento | date:'dd/MM/yyyy' }}</td>
+                <td>{{ ab.quantidadeLitros }} L</td>
+                <td>{{ formatarMoeda(ab.quantidadeLitros * ab.precoPorLitro) }}</td>
+                <td>{{ formatarMoeda(ab.precoPorLitro) }}</td>
+                <td>{{ ab.kilometragemVeiculo }} km</td>
+              </tr>
+              <tr *ngIf="abastecimentos.length === 0">
+                <td colspan="5" class="no-data">Nenhum abastecimento registrado</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -85,7 +261,7 @@
   <!-- Mapa -->
   <div #mapContainer class="map-container"></div>
 
-  <!-- Modal de Histórico -->
+  <!-- Modal de Histórico de Localizações -->
   <div class="modal" [class.show]="showHistory" (click)="closeHistory()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
@@ -102,26 +278,6 @@
             <option value="24h">Últimas 24 horas</option>
             <option value="today">Hoje</option>
           </select>
-        </div>
-
-        <!-- Estatísticas -->
-        <div class="stats-grid" *ngIf="locationHistory.length > 0">
-          <div class="stat-card">
-            <span class="stat-label">Distância total</span>
-            <span class="stat-value">{{ totalDistance }} km</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">Vel. média</span>
-            <span class="stat-value">{{ averageSpeed }} km/h</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">Vel. máxima</span>
-            <span class="stat-value">{{ maxSpeed }} km/h</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">Tempo ativo</span>
-            <span class="stat-value">{{ activeTime }}</span>
-          </div>
         </div>
 
         <!-- Tabela de histórico -->
@@ -156,11 +312,102 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <!-- NOVO: Aviso sobre trajeto -->
-        <div class="history-note" *ngIf="locationHistory.length > 0">
-          <p>💡 O trajeto permanece visível no mapa mesmo após fechar esta janela.</p>
-        </div>
+  <!-- Modal de Abastecimento -->
+  <div class="modal" [class.show]="showAbastecimentoModal" (click)="fecharModalAbastecimento()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header" style="background: linear-gradient(135deg, #28a745, #20c997);">
+        <h3>⛽ Registrar Abastecimento</h3>
+        <button class="close-btn" (click)="fecharModalAbastecimento()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form #abastecimentoForm="ngForm" (ngSubmit)="registrarAbastecimento()">
+          <div class="form-group">
+            <label>Data e Hora:</label>
+            <input type="datetime-local"
+                   [(ngModel)]="novoAbastecimento.data"
+                   name="data"
+                   required
+                   class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Odômetro (km):</label>
+            <input type="number"
+                   [(ngModel)]="novoAbastecimento.odometro"
+                   name="odometro"
+                   required
+                   class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Combustível:</label>
+            <select [(ngModel)]="novoAbastecimento.tipoCombustivel"
+                    name="tipoCombustivel"
+                    required
+                    class="form-control">
+              <option value="GASOLINA">Gasolina</option>
+              <option value="ETANOL">Etanol</option>
+              <option value="DIESEL">Diesel</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Litros:</label>
+              <input type="number"
+                     [(ngModel)]="novoAbastecimento.litros"
+                     name="litros"
+                     required
+                     step="0.001"
+                     class="form-control"
+                     (input)="calcularValorTotal()">
+            </div>
+
+            <div class="form-group">
+              <label>Preço por Litro (R$):</label>
+              <input type="number"
+                     [(ngModel)]="novoAbastecimento.precoPorLitro"
+                     name="precoPorLitro"
+                     required
+                     step="0.001"
+                     class="form-control"
+                     (input)="calcularValorTotal()">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Valor Total (R$):</label>
+            <input type="number"
+                   [(ngModel)]="novoAbastecimento.valorTotal"
+                   name="valorTotal"
+                   required
+                   step="0.01"
+                   class="form-control"
+                   readonly>
+          </div>
+
+          <div class="form-group">
+            <label>Posto (opcional):</label>
+            <input type="text"
+                   [(ngModel)]="novoAbastecimento.posto"
+                   name="posto"
+                   class="form-control">
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancelar" (click)="fecharModalAbastecimento()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-salvar" [disabled]="!abastecimentoForm.form.valid">
+              Registrar Abastecimento
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

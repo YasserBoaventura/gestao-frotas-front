@@ -48,6 +48,6 @@ export const routes: Routes = [
 {path: "CustoList", component:  CustoComponent,canActivate: [guardGuard] },
 {path: "Tracking", component: TrackingComponent}
 
-
+ 
 
 ];

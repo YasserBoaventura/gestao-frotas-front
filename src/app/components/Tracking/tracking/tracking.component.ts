@@ -1,65 +1,121 @@
+// src/app/tracking/tracking.component.ts
 import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LocationDTO, LocationHistoryItem, VehicleLocation } from '../location.model';
 import { TrackingServiceService } from '../tracking-service.service';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, forkJoin, combineLatest } from 'rxjs';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { VeiculosService } from '../../Veiculos/veiculos.service';
 import { Veiculo } from '../../Veiculos/veiculos.model';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { Abastecimento } from '../../abastecimentos/abastecimento';
+import { AbastecimentoListComponent } from '../../abastecimentos/abastecimentoslist/abastecimentoslist.component';
+import { AbstecimeserviceService } from '../../abastecimentos/abstecimeservice.service';
+
 declare const google: any;
 
 @Component({
   selector: 'app-tracking',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    HttpClientModule,
+    MatSnackBarModule,
+    MatTabsModule,
+    MatIconModule,
+    MatButtonModule,
+    AbastecimentoListComponent
+  ],
   templateUrl: './tracking.component.html',
   styleUrl: './tracking.component.css'
 })
 export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
 
+
+
   @ViewChild('mapContainer') mapContainer!: ElementRef;
 
+  // Services
   veiculoService = inject(VeiculosService);
+  snackBar = inject(MatSnackBar);
+  combustivelService = inject(AbstecimeserviceService);
 
-  // Dados do veículo
+  // ============ DADOS DO VEÍCULO ============
   veiculoId: number = 0;
   selectedPlate: string = '';
   vehicles: Veiculo[] = [];
-  vehicleOptions: { id: number; plate: string }[] = [];
+  vehicleOptions: { id: number; plate: string; capacidadeTanque: number }[] = [];
 
-  // Mapa
+  // ============ DADOS DE COMBUSTÍVEL ============
+  abastecimentos: Abastecimento[] = [];
+  abastecimentosDoVeiculoAtual: Abastecimento[] = [];
+  ultimoAbastecimento: Abastecimento | null = null;
+
+  // Consumo calculado
+  consumoMedio: number = 10; // km/l (valor padrão)
+  nivelCombustivel: number = 75; // % do tanque (valor inicial)
+  autonomia: number = 0;
+  capacidadeTanque: number = 50; // litros (padrão, será substituído pelo valor do veículo)
+
+  // Estatísticas de combustível
+  fuelStats = {
+    totalGasto: 0,
+    totalLitros: 0,
+    mediaPreco: 0,
+    consumoMedio: 0,
+    custoPorKm: 0,
+    totalAbastecimentos: 0
+  };
+
+  // Dados para gráfico
+  meses: string[] = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+  consumoMensal: number[] = [45, 52, 48, 63, 58, 47];
+
+  // ============ MAPA ============
   map: any;
   marker: any;
   historyMarkers: any[] = [];
   historyPolyline: any;
 
-  // Controlar visibilidade do trajeto
-  showTrajectory: boolean = false;
-
-  // Localizações
+  // ============ LOCALIZAÇÕES ============
   currentLocation: VehicleLocation | null = null;
   locationHistory: VehicleLocation[] = [];
   filteredHistory: LocationHistoryItem[] = [];
 
-  // Estados
+  // ============ ESTADOS ============
   mapInitialized = false;
   isLoading = false;
   showHistory = false;
+  showTrajectory = false;
+  activeTab: number = 0; // 0: Mapa, 1: Combustível, 2: Estatísticas
   selectedPeriod: string = '1h';
 
-  // Estatísticas
-  totalDistance: number = 0;
-  averageSpeed: number = 0;
-  maxSpeed: number = 0;
-  activeTime: string = '0 min';
+  // ============ MODAL ABASTECIMENTO ============
+  showAbastecimentoModal: boolean = false;
+  novoAbastecimento = {
+    veiculoId: 0,
+    data: '',
+    litros: 0,
+    precoPorLitro: 0,
+    valorTotal: 0,
+    odometro: 0,
+    posto: '',
+    tipoCombustivel: 'GASOLINA'
+  };
 
+  // ============ SUBSCRIPTIONS ============
   private subscriptions: Subscription[] = [];
+  private consumoSimulationInterval: any;
 
   constructor(private trackingService: TrackingServiceService) {}
 
   ngOnInit() {
-    this.getAllVehicles();
+    this.carregarDadosIniciais();
   }
 
   ngAfterViewInit() {
@@ -71,13 +127,323 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy() {
     this.trackingService.disconnect();
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.consumoSimulationInterval) {
+      clearInterval(this.consumoSimulationInterval);
+    }
   }
 
-  private initMap() {
-    if (!this.mapContainer?.nativeElement) {
-      console.error('❌ Map container não encontrado');
+  // ============ INICIALIZAÇÃO ============
+
+  private carregarDadosIniciais() {
+    this.isLoading = true;
+
+    forkJoin({
+      veiculos: this.veiculoService.getVehicles(),
+      abastecimentos: this.combustivelService.getAbastecimentos()
+    }).subscribe({
+      next: ({ veiculos, abastecimentos }) => {
+        this.vehicles = veiculos;
+        this.abastecimentos = abastecimentos;
+
+        console.log('📦 TODOS ABASTECIMENTOS:', abastecimentos);
+
+        // Processar veículos para o dropdown com capacidade do tanque
+        this.vehicleOptions = veiculos.map((v: Veiculo) => ({
+          id: v.id,
+          plate: v.matricula,
+          capacidadeTanque: (v as any).capacidadeTanque || 50 // Pega do veículo ou usa 50 como padrão
+        }));
+
+        console.log('✅ Dados carregados:', {
+          veiculos: this.vehicleOptions.length,
+          abastecimentos: this.abastecimentos.length
+        });
+
+        if (this.vehicleOptions.length > 0) {
+          this.veiculoId = this.vehicleOptions[0].id;
+          this.selectedPlate = this.vehicleOptions[0].plate;
+          this.capacidadeTanque = this.vehicleOptions[0].capacidadeTanque;
+          this.novoAbastecimento.veiculoId = this.veiculoId;
+          this.carregarDadosVeiculo();
+        }
+
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('❌ Erro ao carregar dados:', error);
+        this.mostrarErro('Erro ao carregar dados do servidor');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private carregarDadosVeiculo() {
+    console.log(`📊 Carregando dados do veículo ID: ${this.veiculoId}`);
+
+    // Filtrar abastecimentos do veículo atual -
+    this.abastecimentosDoVeiculoAtual = this.abastecimentos.filter(a => {
+      // Tenta diferentes formas de obter o ID do veículo
+      const idVeiculo = (a as any).veiculo?.id || (a as any).veiculoId || (a as any).veiculo_Id;
+      console.log('Comparando abastecimento:', a.id, 'veiculoId:', idVeiculo, 'com', this.veiculoId);
+      return idVeiculo === this.veiculoId;
+    });
+
+    console.log(`⛽ Abastecimentos encontrados para veículo ${this.selectedPlate}:`, this.abastecimentosDoVeiculoAtual);
+
+    if (this.abastecimentosDoVeiculoAtual.length > 0) {
+      // Ordenar por data (mais recente primeiro)
+      this.abastecimentosDoVeiculoAtual.sort((a, b) => {
+        const dataA = new Date(a.dataAbastecimento || 0).getTime();
+        const dataB = new Date(b.dataAbastecimento || 0).getTime();
+        return dataB - dataA;
+      });
+
+      this.ultimoAbastecimento = this.abastecimentosDoVeiculoAtual[0];
+
+      console.log('✅ Último abastecimento:', this.ultimoAbastecimento);
+
+      this.calcularConsumoMedio();
+      this.calcularEstatisticasCombustivel();
+      this.atualizarNivelCombustivel();
+    } else {
+      console.log('⚠️ Nenhum abastecimento encontrado para este veículo');
+      this.abastecimentosDoVeiculoAtual = [];
+      this.ultimoAbastecimento = null;
+      this.consumoMedio = 10; // valor padrão
+      this.nivelCombustivel = 75; // valor padrão
+      this.fuelStats = {
+        totalGasto: 0,
+        totalLitros: 0,
+        mediaPreco: 0,
+        consumoMedio: 0,
+        custoPorKm: 0,
+        totalAbastecimentos: 0
+      };
+    }
+
+    // Carregar localização atual
+    this.loadInitialLocation();
+    this.subscribeToUpdates();
+
+    // Iniciar simulação de consumo
+    this.iniciarSimulacaoConsumo();
+  }
+
+  // ============ CÁLCULOS DE COMBUSTÍVEL ============
+
+  private calcularConsumoMedio() {
+    if (this.abastecimentosDoVeiculoAtual.length < 2) {
+      console.log('⚠️ Poucos abastecimentos para calcular consumo médio');
       return;
     }
+
+    let totalLitros = 0;
+    let totalKm = 0;
+    let contador = 0;
+
+    // Calcular consumo entre abastecimentos consecutivos
+    for (let i = 0; i < this.abastecimentosDoVeiculoAtual.length - 1; i++) {
+      const atual = this.abastecimentosDoVeiculoAtual[i];
+      const anterior = this.abastecimentosDoVeiculoAtual[i + 1];
+
+      if (atual.kilometragemVeiculo && anterior.kilometragemVeiculo) {
+        const kmPercorridos = atual.kilometragemVeiculo - anterior.kilometragemVeiculo;
+
+        // Ignorar valores negativos ou muito grandes (erro de digitação)
+        if (kmPercorridos > 0 && kmPercorridos < 2000) {
+          totalLitros += anterior.quantidadeLitros;
+          totalKm += kmPercorridos;
+          contador++;
+
+          console.log(`Trecho ${contador}: ${kmPercorridos}km com ${anterior.quantidadeLitros}L = ${(kmPercorridos / anterior.quantidadeLitros).toFixed(2)} km/l`);
+        }
+      }
+    }
+
+    if (totalLitros > 0 && totalKm > 0 && contador > 0) {
+      this.consumoMedio = totalKm / totalLitros;
+      console.log(`✅ Consumo médio calculado: ${this.consumoMedio.toFixed(2)} km/l (baseado em ${contador} trechos)`);
+    } else {
+      console.log('⚠️ Não foi possível calcular consumo médio, usando valor padrão');
+    }
+  }
+
+  private calcularEstatisticasCombustivel() {
+    if (this.abastecimentosDoVeiculoAtual.length === 0) {
+      console.log('⚠️ Sem abastecimentos para calcular estatísticas');
+      this.fuelStats = {
+        totalGasto: 0,
+        totalLitros: 0,
+        mediaPreco: 0,
+        consumoMedio: this.consumoMedio,
+        custoPorKm: 0,
+        totalAbastecimentos: 0
+      };
+      return;
+    }
+
+    let totalLitros = 0;
+    let totalGasto = 0;
+
+    this.abastecimentosDoVeiculoAtual.forEach(a => {
+      const litros = Number(a.quantidadeLitros) || 0;
+      const preco = Number(a.precoPorLitro) || 0;
+
+      totalLitros += litros;
+      totalGasto += litros * preco;
+
+      console.log(`Abastecimento: ${litros}L x R$ ${preco} = R$ ${litros * preco}`);
+    });
+
+    console.log('📈 Totais calculados:', { totalLitros, totalGasto });
+
+    this.fuelStats = {
+      totalGasto: totalGasto,
+      totalLitros: totalLitros,
+      mediaPreco: totalLitros > 0 ? totalGasto / totalLitros : 0,
+      consumoMedio: this.consumoMedio,
+      custoPorKm: (this.consumoMedio > 0 && totalLitros > 0) ? (totalGasto / totalLitros) / this.consumoMedio : 0,
+      totalAbastecimentos: this.abastecimentosDoVeiculoAtual.length
+    };
+
+    console.log('✅ Estatísticas calculadas:', this.fuelStats);
+  }
+
+  private atualizarNivelCombustivel() {
+    if (!this.ultimoAbastecimento || !this.currentLocation) {
+      // Se não tiver dados, simular nível baseado no consumo
+      this.autonomia = (this.nivelCombustivel / 100) * this.capacidadeTanque * this.consumoMedio;
+      return;
+    }
+
+
+    const litrosRestantes = this.ultimoAbastecimento.quantidadeLitros;
+    this.nivelCombustivel = Math.max(0, Math.min(100, (litrosRestantes / this.capacidadeTanque) * 100));
+    this.autonomia = Math.max(0, litrosRestantes * this.consumoMedio);
+
+    console.log(`⛽ Nível calculado: ${this.nivelCombustivel.toFixed(1)}% | Autonomia: ${this.autonomia.toFixed(0)}km`);
+  }
+
+  private iniciarSimulacaoConsumo() {
+    // Simular consumo baseado no movimento do veículo
+    this.consumoSimulationInterval = setInterval(() => {
+      if (this.currentLocation?.status === 'moving' && this.nivelCombustivel > 0) {
+        // Consumir 0.1% do tanque a cada 30 segundos
+        const consumo = 0.1;
+        this.nivelCombustivel = Math.max(0, this.nivelCombustivel - consumo);
+
+        // Recalcular autonomia
+        const litrosRestantes = (this.nivelCombustivel / 100) * this.capacidadeTanque;
+        this.autonomia = litrosRestantes * this.consumoMedio;
+
+        console.log(`⛽ Consumindo... Nível: ${this.nivelCombustivel.toFixed(1)}%`);
+      }
+    }, 30000);
+  }
+
+  getNivelColor(): string {
+    if (this.nivelCombustivel < 15) return '#dc3545';
+    if (this.nivelCombustivel < 30) return '#ffc107';
+    return '#28a745';
+  }
+
+  getBarColor(): string {
+    if (this.nivelCombustivel < 15) return 'linear-gradient(90deg, #dc3545, #ff6b6b)';
+    if (this.nivelCombustivel < 30) return 'linear-gradient(90deg, #ffc107, #ffdb6b)';
+    return 'linear-gradient(90deg, #28a745, #34ce57)';
+  }
+
+  // ============ MODAL ABASTECIMENTO ============
+
+  abrirModalAbastecimento() {
+    const dataAtual = new Date();
+    const ano = dataAtual.getFullYear();
+    const mes = (dataAtual.getMonth() + 1).toString().padStart(2, '0');
+    const dia = dataAtual.getDate().toString().padStart(2, '0');
+    const horas = dataAtual.getHours().toString().padStart(2, '0');
+    const minutos = dataAtual.getMinutes().toString().padStart(2, '0');
+
+    this.novoAbastecimento = {
+      veiculoId: this.veiculoId,
+      data: `${ano}-${mes}-${dia}T${horas}:${minutos}`,
+      litros: 0,
+      precoPorLitro: 0,
+      valorTotal: 0,
+      odometro: (this.currentLocation as any)?.odometro || 0,
+      posto: '',
+      tipoCombustivel: 'GASOLINA'
+    };
+
+    this.showAbastecimentoModal = true;
+  }
+
+  fecharModalAbastecimento() {
+    this.showAbastecimentoModal = false;
+  }
+
+  calcularValorTotal() {
+    this.novoAbastecimento.valorTotal =
+      this.novoAbastecimento.litros * this.novoAbastecimento.precoPorLitro;
+  }
+
+ registrarAbastecimento() {
+  // Validar dados obrigatórios
+  if (!this.novoAbastecimento.veiculoId || !this.novoAbastecimento.litros ||
+      !this.novoAbastecimento.precoPorLitro || !this.novoAbastecimento.odometro) {
+    this.mostrarErro('Preencha todos os campos obrigatórios');
+    return;
+  }
+
+  // Converter data para ISO
+  const dataLocal = new Date(this.novoAbastecimento.data);
+  const dataISO = dataLocal.toISOString();
+
+  
+  const statusAbst = 'REALIZADA';
+
+
+  const abastecimentoParaEnviar: any = {
+    veiculoId: this.novoAbastecimento.veiculoId,
+    dataAbastecimento: dataISO,
+    quantidadeLitros: Number(this.novoAbastecimento.litros),
+    precoPorLitro: Number(this.novoAbastecimento.precoPorLitro),
+    tipoCombustivel: this.novoAbastecimento.tipoCombustivel,
+    kilometragemVeiculo: Number(this.novoAbastecimento.odometro),
+    statusAbastecimento: statusAbst, //realizado por padrao 
+    posto: this.novoAbastecimento.posto || null,
+    viagemId: null
+  };
+
+  console.log('📤 Enviando abastecimento:', JSON.stringify(abastecimentoParaEnviar, null, 2));
+
+  const sub = this.combustivelService.createAbastecimento(abastecimentoParaEnviar).subscribe({
+    next: (response) => {
+      console.log('✅ Abastecimento registrado:', response);
+      this.mostrarSucesso('Abastecimento registrado com sucesso!');
+      this.fecharModalAbastecimento();
+
+      // Recarregar dados
+      setTimeout(() => {
+        this.combustivelService.getAbastecimentos().subscribe({
+          next: (abastecimentos) => {
+            this.abastecimentos = abastecimentos;
+            this.carregarDadosVeiculo();
+          }
+        });
+      }, 500);
+    },
+    error: (error) => {
+      console.error('❌ ERRO COMPLETO:', error);
+      this.mostrarErro('Erro ao registrar abastecimento: ' + (error.error?.erro || 'Erro desconhecido'));
+    }
+  });
+
+  this.subscriptions.push(sub);
+}
+  // ============ MAPA ============
+
+  private initMap() {
+    if (!this.mapContainer?.nativeElement) return;
 
     try {
       if (typeof google === 'undefined' || !google.maps) {
@@ -85,82 +451,39 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      console.log('🗺️ Inicializando mapa...');
-
-      const mapOptions = {
+      this.map = new google.maps.Map(this.mapContainer.nativeElement, {
         center: { lat: -23.5505, lng: -46.6333 },
         zoom: 15,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-      };
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+        zoomControl: true
+      });
 
-      this.map = new google.maps.Map(this.mapContainer.nativeElement, mapOptions);
       this.mapInitialized = true;
-      console.log('✅ Mapa inicializado');
+      console.log('🗺️ Mapa inicializado');
 
       if (this.currentLocation) {
         this.updateMapLocation(this.currentLocation);
-      }
-
-      if (this.locationHistory.length > 0 && this.showTrajectory) {
-        this.showHistoryOnMap();
       }
     } catch (error) {
       console.error('❌ Erro ao inicializar mapa:', error);
     }
   }
 
-  private getAllVehicles() {
-    const sub = this.veiculoService.getVehicles().subscribe({
-      next: (vehicles) => {
-        this.vehicles = vehicles;
-        this.vehicleOptions = vehicles.map((v: Veiculo) => ({
-          id: v.id,
-          plate: v.matricula
-        }));
-
-        console.log('✅ Veículos carregados:', this.vehicleOptions);
-
-        if (this.vehicleOptions.length > 0) {
-          // Seleciona o primeiro veículo da lista
-          this.veiculoId = this.vehicleOptions[0].id;
-          this.selectedPlate = this.vehicleOptions[0].plate;
-          this.loadInitialLocation();
-          this.subscribeToUpdates();
-        }
-      },
-      error: (erro) => {
-        console.error('❌ Erro ao carregar veículos:', erro);
-        // Fallback para dados mock
-        this.vehicleOptions = [
-          { id: 1, plate: 'ABC-1234' },
-          { id: 2, plate: 'DEF-5678' },
-          { id: 3, plate: 'GHI-9012' }
-        ];
-        this.veiculoId = 1;
-        this.selectedPlate = 'ABC-1234';
-        this.loadInitialLocation();
-        this.subscribeToUpdates();
-      }
-    });
-    this.subscriptions.push(sub);
-  }
-
   private loadInitialLocation() {
-    if (!this.veiculoId) {
-      console.warn('⚠️ veiculoId não definido');
-      return;
-    }
+    if (!this.veiculoId) return;
 
     this.isLoading = true;
-    console.log('📥 Carregando última localização para veículo ID:', this.veiculoId, 'Placa:', this.selectedPlate);
 
     const sub = this.trackingService.getLastLocation(this.veiculoId).subscribe({
       next: (location) => {
-        console.log('✅ Última localização recebida:', location);
         this.currentLocation = location;
         if (this.mapInitialized) {
           this.updateMapLocation(location);
         }
+        this.atualizarNivelCombustivel();
         this.isLoading = false;
       },
       error: (error) => {
@@ -172,22 +495,15 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.subscriptions.push(sub);
   }
 
-  // ============ WEBSOCKET ============
   private subscribeToUpdates() {
     if (!this.veiculoId) return;
 
-    console.log('🔄 Inscrevendo para atualizações do veículo ID:', this.veiculoId);
-
     this.trackingService.subscribeToLocationUpdates(this.veiculoId, (location) => {
-      console.log('📡 Atualização em tempo real recebida para veículo:', location.veiculo?.id);
-
-      // Só atualiza se for do veículo atual
-      if (location.veiculo?.id === this.veiculoId) {
-        this.currentLocation = location;
-        if (this.mapInitialized) {
-          this.updateMapLocation(location);
-        }
+      this.currentLocation = location;
+      if (this.mapInitialized) {
+        this.updateMapLocation(location);
       }
+      this.atualizarNivelCombustivel();
     });
   }
 
@@ -241,7 +557,20 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
         </p>
         <p style="margin: 5px 0;">
           <strong>Status:</strong>
-          <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span>
+          <span style="color: ${statusColor};">${statusText}</span>
+        </p>
+        <p style="margin: 5px 0;">
+          <strong>Combustível:</strong>
+          <span style="color: ${this.getNivelColor()};">${this.nivelCombustivel.toFixed(1)}%</span>
+        </p>
+        <p style="margin: 5px 0;">
+          <strong>Autonomia:</strong> ${this.autonomia.toFixed(0)} km
+        </p>
+        <p style="margin: 5px 0;">
+          <strong>Consumo médio:</strong> ${this.consumoMedio.toFixed(1)} km/l
+        </p>
+        <p style="margin: 5px 0;">
+          <strong>Total gasto:</strong> ${this.formatarMoeda(this.fuelStats.totalGasto)}
         </p>
         <p style="margin: 5px 0;">
           <strong>Horário:</strong> ${new Date(location.timestamp).toLocaleString()}
@@ -250,51 +579,43 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     `;
   }
 
-  // ============ TROCAR VEÍCULO SELECIONADO ============
+  // ============ TROCAR VEÍCULO ============
+
   changeVehicle(event: any) {
     const selectedId = Number(event);
     const selected = this.vehicleOptions.find(v => v.id === selectedId);
 
     if (!selected) return;
 
-    console.log('🔄 Trocando para veículo ID:', selectedId, 'Placa:', selected.plate);
-
-    // Atualizar dados do veículo selecionado
     this.veiculoId = selectedId;
     this.selectedPlate = selected.plate;
+    this.capacidadeTanque = selected.capacidadeTanque;
+    this.novoAbastecimento.veiculoId = this.veiculoId;
 
-    // Limpar dados anteriores
     this.currentLocation = null;
     this.locationHistory = [];
     this.filteredHistory = [];
     this.showHistory = false;
     this.showTrajectory = false;
 
-    // Limpar mapa
     if (this.marker) {
       this.marker.setMap(null);
       this.marker = null;
     }
     this.clearHistoryMarkers(true);
 
-    // Carregar dados do novo veículo
-    this.loadInitialLocation();
-    this.subscribeToUpdates();
+    this.carregarDadosVeiculo();
   }
 
-  // ============ CARREGAR HISTÓRICO ============
+  // ============ HISTÓRICO DE LOCALIZAÇÕES ============
+
   loadHistory() {
-    if (!this.veiculoId) {
-      console.warn('⚠️ veiculoId não definido');
-      return;
-    }
+    if (!this.veiculoId) return;
 
     this.isLoading = true;
     this.showHistory = true;
 
-    console.log('📥 Carregando histórico para veículo ID:', this.veiculoId, 'Placa:', this.selectedPlate, 'período:', this.selectedPeriod);
-
-    let historyObservable: Observable<VehicleLocation[]>;
+    let historyObservable;
 
     switch(this.selectedPeriod) {
       case '1h':
@@ -314,12 +635,10 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const sub = historyObservable.subscribe({
       next: (history) => {
-        console.log(`✅ Histórico carregado: ${history.length} registros para veículo ${this.selectedPlate}`);
         this.locationHistory = history;
         this.processHistoryData();
         this.showTrajectory = true;
         this.showHistoryOnMap();
-        this.calculateStatistics();
         this.isLoading = false;
       },
       error: (error) => {
@@ -438,70 +757,10 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private calculateStatistics() {
-    if (this.locationHistory.length < 2) return;
-
-    let totalDist = 0;
-    let totalSpeed = 0;
-    let maxSpd = 0;
-    let movingTime = 0;
-
-    for (let i = 1; i < this.locationHistory.length; i++) {
-      const loc1 = this.locationHistory[i-1];
-      const loc2 = this.locationHistory[i];
-
-      const dist = this.calculateDistance(
-        loc1.latitude, loc1.longitude,
-        loc2.latitude, loc2.longitude
-      );
-      totalDist += dist;
-
-      totalSpeed += loc2.speed || 0;
-      if (loc2.speed && loc2.speed > maxSpd) maxSpd = loc2.speed;
-
-      if (loc2.status === 'moving') {
-        const timeDiff = (new Date(loc2.timestamp).getTime() - new Date(loc1.timestamp).getTime()) / 60000;
-        movingTime += timeDiff;
-      }
-    }
-
-    this.totalDistance = Number(totalDist.toFixed(2));
-    this.averageSpeed = Number((totalSpeed / this.locationHistory.length).toFixed(1));
-    this.maxSpeed = Number(maxSpd.toFixed(1));
-    this.activeTime = this.formatTime(movingTime);
-  }
-
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371;
-    const dLat = this.deg2rad(lat2 - lat1);
-    const dLon = this.deg2rad(lon2 - lon1);
-    const a =
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
-  private deg2rad(deg: number): number {
-    return deg * (Math.PI/180);
-  }
-
-  private formatTime(minutes: number): string {
-    if (minutes < 60) return `${Math.round(minutes)} min`;
-    const hours = Math.floor(minutes / 60);
-    const mins = Math.round(minutes % 60);
-    return `${hours}h ${mins}min`;
-  }
-
   // ============ SIMULAÇÃO ============
-  simulateLocationUpdate() {
-    if (!this.veiculoId) {
-      console.warn('⚠️ veiculoId não definido');
-      return;
-    }
 
-    console.log('🎮 Simulando movimento para veículo:', this.selectedPlate);
+  simulateLocationUpdate() {
+    if (!this.veiculoId) return;
 
     const mockLocation: LocationDTO = {
       vehicleId: this.veiculoId,
@@ -515,43 +774,23 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
       status: Math.random() > 0.2 ? 'moving' : 'stopped'
     };
 
-    console.log('📤 Enviando localização para veículo ID:', this.veiculoId);
-
     const sub = this.trackingService.updateLocation(mockLocation).subscribe({
       next: (response) => {
-        console.log('✅ Localização enviada para o backend:', response);
+        console.log('✅ Localização enviada:', response);
       },
       error: (error) => {
-        console.error('❌ Erro ao enviar para backend:', error);
-        // Fallback local
-        const localUpdate: VehicleLocation = {
-          id: Date.now(),
-          veiculo: {
-            id: this.veiculoId,
-            matricula: this.selectedPlate
-          },
-          latitude: mockLocation.latitude,
-          longitude: mockLocation.longitude,
-          speed: mockLocation.speed || 0,
-          status: mockLocation.status || 'unknown',
-          timestamp: new Date()
-        };
-        this.currentLocation = localUpdate;
-        if (this.mapInitialized) {
-          this.updateMapLocation(localUpdate);
-        }
+        console.error('❌ Erro ao enviar:', error);
       }
     });
     this.subscriptions.push(sub);
   }
 
   private startWithMockData() {
-    console.log('📦 Usando dados mock para veículo:', this.selectedPlate);
     const mockLocation: VehicleLocation = {
       id: 1,
       veiculo: {
         id: this.veiculoId,
-        matricula: this.selectedPlate
+        matricula: this.selectedPlate || 'ABC-1234'
       },
       latitude: -23.5505,
       longitude: -46.6333,
@@ -567,7 +806,6 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadMockHistory() {
-    console.log('📦 Carregando histórico mock para veículo:', this.selectedPlate);
     const mockHistory: VehicleLocation[] = [];
     const startLat = -23.5505;
     const startLng = -46.6333;
@@ -591,6 +829,37 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.processHistoryData();
     this.showTrajectory = true;
     this.showHistoryOnMap();
-    this.calculateStatistics();
+  }
+
+  // ============ UTILITÁRIOS ============
+
+  private mostrarErro(mensagem: string) {
+    this.snackBar.open(mensagem, 'Fechar', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  private mostrarSucesso(mensagem: string) {
+    this.snackBar.open(mensagem, 'Fechar', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+  }
+
+  formatarMoeda(valor: number): string {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor || 0);
+  }
+
+  // Método para debug - chamar do console
+  debugAbastecimentos() {
+    console.log('🔍 DEBUG - Todos abastecimentos:', this.abastecimentos);
+    console.log('🔍 DEBUG - Abastecimentos do veículo atual:', this.abastecimentosDoVeiculoAtual);
+    console.log('🔍 DEBUG - fuelStats:', this.fuelStats);
+    console.log('🔍 DEBUG - Veículo ID:', this.veiculoId);
   }
 }
+
