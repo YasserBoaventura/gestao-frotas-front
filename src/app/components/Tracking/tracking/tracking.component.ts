@@ -398,7 +398,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
   const dataLocal = new Date(this.novoAbastecimento.data);
   const dataISO = dataLocal.toISOString();
 
-  
+
   const statusAbst = 'REALIZADA';
 
 
@@ -409,7 +409,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     precoPorLitro: Number(this.novoAbastecimento.precoPorLitro),
     tipoCombustivel: this.novoAbastecimento.tipoCombustivel,
     kilometragemVeiculo: Number(this.novoAbastecimento.odometro),
-    statusAbastecimento: statusAbst, //realizado por padrao 
+    statusAbastecimento: statusAbst, //realizado por padrao
     posto: this.novoAbastecimento.posto || null,
     viagemId: null
   };
