@@ -9,9 +9,10 @@ describe('CustoComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CustoComponent]
-    })
+    }) 
+
     .compileComponents();
-    
+
     fixture = TestBed.createComponent(CustoComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

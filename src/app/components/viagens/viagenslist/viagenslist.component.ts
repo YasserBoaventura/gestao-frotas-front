@@ -28,6 +28,7 @@ import { MotoristaService } from '../../motorista/motorista.service';
 import { VeiculosService } from '../../Veiculos/veiculos.service';
 import { RotasServiceService } from '../../Rotas/rotas-service.service';
 import { Router } from '@angular/router';
+import { TipoCusto } from '../../Custo/models';
 
 @Component({
   selector: 'app-viagenslist',
@@ -158,6 +159,7 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
       dataHoraChegada: ['', Validators.required],
       status: ['PLANEADA', Validators.required],
       kilometragemInicial: ['', [Validators.required, Validators.min(0)]],
+      tipoCarga: ['GERAL', Validators.required], 
       kilometragemFinal: ['', [Validators.min(0)]],
       observacoes: [''],
       motoristaId: ['', Validators.required],
@@ -262,6 +264,7 @@ export class ViagenslistComponent implements OnInit, AfterViewInit {
         ...viagem,
         dataHoraPartida: dataPartidaFormatada,
         dataHoraChegada: dataChegadaFormatada,
+        tipoCarga : TipoCusto,
         motoristaId: viagem.motorista?.id || '',
         veiculoId: viagem.veiculo?.id || '',
         rotaId: viagem.rota?.id || ''
@@ -880,5 +883,5 @@ cancelarViagem(viagem: Viagem): void {
   //router
   navegateTO(path: string){
     this.router.navigate([path]);
-  } 
+  }
 }
