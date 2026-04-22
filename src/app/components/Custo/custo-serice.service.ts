@@ -25,7 +25,7 @@ export class CustoSericeService {
 
   excluirCusto(id: number): Observable<string> {
     return this.http.delete<string>(`${this.apiUrl}/delete/${id}`, { responseType: 'text' as 'json' });
-  }
+  } 
 
   listarCustos(): Observable<CustoListDTO[]> {
     return this.http.get<CustoListDTO[]>(`${this.apiUrl}/findAll`);
@@ -107,7 +107,7 @@ export class CustoSericeService {
   getNumeroCustosPorStatus(status: StatusCusto): Observable<number> {
     return this.http.get<number>(`${this.apiUrl}/numeroPorStatus/${status}`);
   }
- 
+
   getNumeroCustosPorTipo(tipo: TipoCusto): Observable<number> {
     return this.http.get<number>(`${this.apiUrl}/numeroPorTipo/${tipo}`);
   }

@@ -161,6 +161,9 @@ export class UsuarioListComponent implements OnInit {
     this.usuarioSelecionado = null;
   }
 
+
+
+
   // 3. Salvar usuário
   salvarUsuario(): void {
     if (!this.validarUsuario()) {
@@ -181,9 +184,9 @@ export class UsuarioListComponent implements OnInit {
           this.fecharEdicao();
         },
         error: (error) => this.tratarErro('atualizar', error)
-      });
+      }); 
     } else {
-      // Criar novo
+
       this.usuarioService.criarUsuario(this.usuarioSelecionado!).subscribe({
         next: (novoUsuario) => {
 

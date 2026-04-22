@@ -19,7 +19,7 @@ export class TrackingServiceService {
   private connectWebSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.connected) {
-        resolve();
+        resolve(); 
         return;
       }
 

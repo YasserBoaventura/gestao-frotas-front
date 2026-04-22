@@ -616,7 +616,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showHistory = true;
 
     let historyObservable;
-
+ 
     switch(this.selectedPeriod) {
       case '1h':
         const oneHourAgo = new Date();

@@ -23,7 +23,7 @@ export class Usuarios {
   toTableData(): any {
     return {
       id: this.id,
-      username: this.username,
+      username: this.username, 
       email: this.email,
       role: this.role,
       telefone: this.telefone,
