@@ -86,12 +86,11 @@ export class ManutencoesServiceService {
   /**
    * Atualiza uma manutenção existente
    */
-  update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
-    return this.http.put<string>(`${this.apiUrl}/update/${id}`, manutencaoDTO,{
-      responseType : 'text' as 'json'
-    })
-  }
-
+update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
+  return this.http.put<string>(`${this.apiUrl}/update/${id}`, manutencaoDTO, {
+    responseType: 'text' as 'json'
+  });
+}
   /**
    * Remove uma manutenção
    */

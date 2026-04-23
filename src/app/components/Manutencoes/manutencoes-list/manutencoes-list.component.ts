@@ -64,7 +64,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  loginService = inject(LoginService); 
+  loginService = inject(LoginService);
 
   // Tabela
   displayedColumns: string[] = [
@@ -252,7 +252,7 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     this.motivoCancelamento = '';
     this.manutencaoForm.reset();
   }
-
+ 
   salvarManutencao(): void {
     if (this.manutencaoForm.invalid) {
       this.marcarCamposTocados();
@@ -279,9 +279,9 @@ export class ManutencoesListComponent implements OnInit, AfterViewInit {
     if (this.editando && this.manutencaoSelecionada?.id) {
       // Atualizar manutenção existente
       this.manutencaoService.update(this.manutencaoSelecionada.id, manutencaoDTO).subscribe({
-        next: () => {
-          this.carregarDados();
-          this.mostrarSucesso('Manutenção atualizada com sucesso!');
+        next: next =>  {
+          this.mostrarSucesso(next);
+           this.carregarDados();
           this.fecharModal();
           this.carregandoModal = false;
         },
