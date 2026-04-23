@@ -630,33 +630,43 @@ router = inject(Router);
 
     return `Viagem #${viagemId} (não encontrado)`;
   }
-  getTipoCombustivelLabel(tipo: string): string {
-    const tipos: { [key: string]: string } = {
-      'GASOLINA': 'Gasolina',
-      'DIESEL': 'Diesel',
-      'ETANOL': 'Etanol',
-      'GNV': 'GNV',
-      'ELETRICO': 'Elétrico'
-    };
-    return tipos[tipo] || tipo;
-  }
+ getTipoCombustivelColor(tipo: string): {bg: string, text: string} {
+  const cores : any = {
+    'GASOLINA': { bg: '#e7f1ff', text: '#3d8bfd' },
+    'DIESEL': { bg: '#e8f5e9', text: '#2e7d32' },
+    'ETANOL': { bg: '#fff3e0', text: '#ed6c02' },
+    'GNV': { bg: '#f3e5f5', text: '#7b1fa2' },
+    'ELETRICO': { bg: '#e0f2f1', text: '#00796b' }
+  };
+  return cores[tipo] || { bg: '#f5f5f5', text: '#616161' };
+}
 
-  getStatusLabel(status: string): string {
-    const statuses: { [key: string]: string } = {
-      'REALIZADA': 'Realizada',
-      'PLANEADA': 'Planejada'
-    };
-    return statuses[status] || status;
-  }
+getStatusColor(status: string): {bg: string, text: string} {
+  const cores : any = {
+    'REALIZADA': { bg: '#e8f5e9', text: '#2e7d32' },
+    'PLANEADA': { bg: '#fff3e0', text: '#ed6c02' }
+  };
+  return cores[status] || { bg: '#f5f5f5', text: '#616161' };
+}
 
-  getStatusColor(status: string): string {
-    const cores: { [key: string]: string } = {
-      'REALIZADA': '#28a745',
-      'PLANEADA': '#ffc107'
-    };
-    return cores[status] || '#6c757d';
-  }
+getTipoCombustivelIcon(tipo: string): string {
+  const icons : any = {
+    'GASOLINA': '⛽',
+    'DIESEL': '🛢️',
+    'ETANOL': '🌽',
+    'GNV': '🔥',
+    'ELETRICO': '⚡'
+  };
+  return icons[tipo] || '⛽';
+}
 
+getStatusIcon(status: string): string {
+  const icons : any = {
+    'REALIZADA': '✅',
+    'PLANEADA': '📅'
+  };
+  return icons[status] || '•';
+}
   // Formatação
   formatarMoeda(valor: number): string {
     return new Intl.NumberFormat('pt-BR', {

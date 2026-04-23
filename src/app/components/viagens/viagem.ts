@@ -9,6 +9,7 @@ export  class Viagem {
   dataHoraChegada!: string
   status!: string; // "PLANEADA", "EM_ANDAMENTO", "CONCLUIDA", "CANCELADA"
   date?: string;
+  tipoCarga!: string;
   kilometragemInicial?: number;
   kilometragemFinal?: number;
   observacoes?: string;

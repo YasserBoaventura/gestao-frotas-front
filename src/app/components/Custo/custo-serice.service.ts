@@ -48,7 +48,7 @@ export class CustoSericeService {
   gerarRelatorio(filtro: RelatorioFilterDTO): Observable<RelatorioCustosDetalhadoDTO> {
     return this.http.post<RelatorioCustosDetalhadoDTO>(`${this.apiUrl}/relatorio`, filtro);
   }
-
+ 
   relatorioPorPeriodo(inicio: Date, fim: Date): Observable<Custo[]> {
     const params = new HttpParams()
       .set('inicio', inicio.toISOString().split('T')[0])
