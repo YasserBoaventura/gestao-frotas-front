@@ -35,8 +35,31 @@ constructor(){}
       }},
      error: (error: any) => {
       // A resposta de erro é uma string, então error.error é a string completa.
-      let errorMessage = error.error;
-      // Remove o prefixo "Erro ao salvar: " se existir
+  let errorMessage = error.error;
+
+  try {
+    const parsed = JSON.parse(error.error);
+    errorMessage = parsed.error;
+  } catch (e) {
+    // se não for JSON, usa direto
+  }
+
+
+console.log(error);
+  if (errorMessage === 'PRIMEIRO_LOGIN!') {
+    this.router.navigate(['/trocar-senha']);
+    return;
+  }
+
+
+  Swal.fire({
+    title: 'Erro!',
+    text: errorMessage,
+    icon: 'error',
+    confirmButtonText: 'OK'
+  });
+
+
       if (errorMessage.startsWith('Erro ao salvar: ')) {
         errorMessage = errorMessage.substring('Erro ao salvar: '.length);
       }
@@ -53,7 +76,7 @@ constructor(){}
 
 
 
-  })}
+  }) }
 
   forgotPassword(event: Event) {
     event.preventDefault();

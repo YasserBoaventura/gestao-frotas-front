@@ -18,12 +18,12 @@ export class Usuarios {
   ultimoAcesso!: string;
   tentativasLogin!: number;
   contaBloqueada!: boolean; // Mudei para boolean
-
+    primeiroLogin!: boolean;
   // Método para criar um objeto seguro para exibição (sem dados sensíveis)
   toTableData(): any {
     return {
       id: this.id,
-      username: this.username, 
+      username: this.username,
       email: this.email,
       role: this.role,
       telefone: this.telefone,

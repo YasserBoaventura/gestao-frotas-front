@@ -45,7 +45,7 @@ export class UsuarioserviceService {
   resetarSenha(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/reset-senha`, {});
   }
-  criarUsuario(usuario: Usuarios):Observable<string>{
-    return this.http.post<string>(`${this.apiUrl}/save`, usuario); 
+  criarUsuario(usuario: Usuarios):Observable<string>{ 
+    return this.http.post<string>(`${this.apiUrl}/save`, usuario);
   }
 }
