@@ -37,7 +37,7 @@ export class UsuarioserviceService {
   }
 
   // Bloquear/Desbloquear
-
+ 
   toggleBloqueio(id: number, bloqueado: boolean): Observable<any> {
     return this.http.put(`${this.apiUrl}/bloqueio/${id}`, { bloqueado });
   }
@@ -45,7 +45,7 @@ export class UsuarioserviceService {
   resetarSenha(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/reset-senha`, {});
   }
-  criarUsuario(usuario: Usuarios):Observable<string>{ 
-    return this.http.post<string>(`${this.apiUrl}/save`, usuario);
+  criarUsuario(usuario: Usuarios):Observable<string>{
+    return this.http.post<string>(`${this.apiUrl}/save`, usuario,{responseType :'text' as 'json'});
   }
 }

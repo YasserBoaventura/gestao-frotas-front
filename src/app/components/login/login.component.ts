@@ -89,5 +89,5 @@ register(event: Event) {
   event.preventDefault(); // Impede o comportamento padrão do link
   this.router.navigate(['/register']);
 }
-
+ 
 }

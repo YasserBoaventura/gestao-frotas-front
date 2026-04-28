@@ -59,7 +59,7 @@ export class UsuarioListComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  constructor(
+   constructor(
     private usuarioService: UsuarioserviceService
   ) {}
 
@@ -182,9 +182,10 @@ export class UsuarioListComponent implements OnInit {
           this.atualizarUsuarioNaLista(usuarioAtualizado);
           this.mostrarSucesso('Usuário atualizado com sucesso!');
           this.fecharEdicao();
-        },
+           this.carregarUsuarios();
+         },
         error: (error) => this.tratarErro('atualizar', error)
-      }); 
+      });
     } else {
 
       this.usuarioService.criarUsuario(this.usuarioSelecionado!).subscribe({

@@ -1,1 +1,178 @@
-<p>trocar-senha works!</p>
+<div class="container-fluid px-3 py-3 bg-light min-vh-100">
+<!-- Cabeçalho -->
+<div class="card bg-primary bg-opacity-75 text-white mb-3 border-0 shadow-sm">
+  <div class="card-body py-2 d-flex align-items-center gap-2">
+    <i class="bi bi-key fs-4 text-white-50"></i>
+    <div>
+      <h1 class="h5 mb-0 text-white">Alterar Senha</h1>
+      <p class="text-white-50 mb-0 small">Altere sua senha de acesso ao sistema</p>
+    </div>
+  </div>
+</div>    
+
+<!-- Mensagens -->
+<div *ngIf="mensagemSucesso" class="alert alert-success alert-dismissible fade show py-2 mb-3" role="alert">
+  <i class="bi bi-check-circle me-2"></i>
+  {{ mensagemSucesso }}
+  <button type="button" class="btn-close btn-sm" (click)="mensagemSucesso = null"></button>
+</div>
+
+<div *ngIf="mensagemErro" class="alert alert-danger alert-dismissible fade show py-2 mb-3" role="alert">
+  <i class="bi bi-exclamation-triangle me-2"></i>
+  {{ mensagemErro }}
+  <button type="button" class="btn-close btn-sm" (click)="mensagemErro = null"></button>
+</div>
+
+<!-- Formulário -->
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white border-0 pt-4 pb-0">
+        <div class="text-center mb-3">
+          <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block">
+            <i class="bi bi-shield-lock fs-1 text-primary"></i>
+          </div>
+          <h5 class="mt-3 mb-1 fw-semibold">Alteração de Senha</h5>
+          <p class="small text-muted">Digite sua senha atual e a nova senha</p>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        <form (ngSubmit)="alterarSenha()" #senhaForm="ngForm">
+          <!-- Username -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-secondary">
+              <i class="bi bi-person me-1"></i>Usuário
+            </label>
+            <input type="text" class="form-control form-control-sm"
+                    [(ngModel)]="trocarSenha.username"
+                    name="username"
+                    #username="ngModel"
+                    required
+                    placeholder="Digite seu username">
+            <div class="invalid-feedback small" *ngIf="username.invalid && username.touched">
+              Usuário é obrigatório
+            </div>
+          </div>
+
+          <!-- Senha Atual -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-secondary">
+              <i class="bi bi-lock me-1"></i>Senha Atual
+            </label>
+            <div class="input-group input-group-sm">
+              <input [type]="mostrarSenhaAtual ? 'text' : 'password'"
+                      class="form-control"
+                      [(ngModel)]="trocarSenha.senhaAtual"
+                      name="senhaAtual"
+                      #senhaAtual="ngModel"
+                      required
+                      placeholder="Digite sua senha atual">
+              <button class="btn btn-outline-secondary" type="button" (click)="mostrarSenhaAtual = !mostrarSenhaAtual">
+                <i class="bi" [ngClass]="mostrarSenhaAtual ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
+            <div class="invalid-feedback small" *ngIf="senhaAtual.invalid && senhaAtual.touched">
+              Senha atual é obrigatória
+            </div>
+          </div>
+
+          <!-- Nova Senha -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-secondary">
+              <i class="bi bi-key me-1"></i>Nova Senha
+            </label>
+            <div class="input-group input-group-sm">
+              <input [type]="mostrarNovaSenha ? 'text' : 'password'"
+                      class="form-control"
+                      [(ngModel)]="trocarSenha.novaSenha"
+                      name="novaSenha"
+                      #novaSenha="ngModel"
+                      required
+                      minlength="6"
+                      pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$"
+                      placeholder="Nova senha (mínimo 6 caracteres)">
+              <button class="btn btn-outline-secondary" type="button" (click)="mostrarNovaSenha = !mostrarNovaSenha">
+                <i class="bi" [ngClass]="mostrarNovaSenha ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
+            <div class="small text-muted mt-1">
+              <i class="bi bi-info-circle"></i>
+              A senha deve conter: mínimo 6 caracteres, 1 letra maiúscula, 1 letra minúscula e 1 número
+            </div>
+            <div class="invalid-feedback small" *ngIf="novaSenha.invalid && novaSenha.touched">
+              <span *ngIf="novaSenha.errors?.['required']">Nova senha é obrigatória</span>
+              <span *ngIf="novaSenha.errors?.['minlength']">Mínimo de 6 caracteres</span>
+              <span *ngIf="novaSenha.errors?.['pattern']">Use letras maiúsculas, minúsculas e números</span>
+            </div>
+          </div>
+
+          <!-- Confirmar Senha -->
+          <div class="mb-4">
+            <label class="form-label small fw-semibold text-secondary">
+              <i class="bi bi-check-circle me-1"></i>Confirmar Nova Senha
+            </label>
+            <div class="input-group input-group-sm">
+              <input [type]="mostrarConfirmarSenha ? 'text' : 'password'"
+                      class="form-control"
+                      [(ngModel)]="trocarSenha.confirmarSenha"
+                      name="confirmarSenha"
+                      #confirmarSenha="ngModel"
+                      required
+                      placeholder="Confirme sua nova senha">
+              <button class="btn btn-outline-secondary" type="button" (click)="mostrarConfirmarSenha = !mostrarConfirmarSenha">
+                <i class="bi" [ngClass]="mostrarConfirmarSenha ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
+            <div class="invalid-feedback small" *ngIf="confirmarSenha.invalid && confirmarSenha.touched">
+              Confirmação de senha é obrigatória
+            </div>
+            <div class="text-danger small mt-1" *ngIf="senhasDiferentes && confirmarSenha.touched">
+              <i class="bi bi-x-circle"></i> As senhas não conferem
+            </div>
+          </div>
+
+          <!-- Força da Senha -->
+          <div class="mb-4" *ngIf="trocarSenha.novaSenha">
+            <label class="small fw-semibold text-secondary mb-1">Força da Senha</label>
+            <div class="progress" style="height: 5px;">
+              <div class="progress-bar"
+                    [ngClass]="forcaSenhaClass"
+                    [style.width]="forcaSenhaPorcentagem"
+                    role="progressbar"></div>
+            </div>
+            <small class="text-muted">{{ forcaSenhaTexto }}</small>
+          </div>
+
+          <!-- Botões -->
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-secondary flex-grow-1" (click)="limparFormulario()">
+              <i class="bi bi-arrow-repeat"></i> Limpar
+            </button>
+            <button type="submit" class="btn btn-sm btn-primary flex-grow-1"
+                    [disabled]="senhaForm.invalid || senhasDiferentes || carregando">
+              <span *ngIf="carregando" class="spinner-border spinner-border-sm me-1"></span>
+              <i class="bi bi-save" *ngIf="!carregando"></i>
+              {{ carregando ? 'Alterando...' : 'Alterar Senha' }}
+            </button>
+          </div>
+        </form>
+
+        <!-- Dicas de Segurança -->
+        <hr class="my-4">
+        <div class="small text-muted">
+          <i class="bi bi-shield-check me-1"></i>
+          <strong>Dicas de segurança:</strong>
+          <ul class="mt-2 ps-3 mb-0 small">
+            <li>Use pelo menos 6 caracteres</li>
+            <li>Combine letras maiúsculas e minúsculas</li>
+            <li>Inclua números e caracteres especiais</li>
+            <li>Não use senhas óbvias como "123456" ou "senha"</li>
+            <li>Não compartilhe sua senha com ninguém</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
