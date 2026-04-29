@@ -182,7 +182,7 @@ export class UsuarioListComponent implements OnInit {
           this.atualizarUsuarioNaLista(usuarioAtualizado);
           this.mostrarSucesso('Usuário atualizado com sucesso!');
           this.fecharEdicao();
-           this.carregarUsuarios();
+
          },
         error: (error) => this.tratarErro('atualizar', error)
       });
@@ -194,6 +194,7 @@ export class UsuarioListComponent implements OnInit {
           this.dataSource.data = this.usuarios;
           this.calcularEstatisticas();
           this.mostrarSucesso('Usuário criado com sucesso!');
+          this.carregarUsuarios();
           this.fecharEdicao();
         },
         error: (error) => this.tratarErro('criar', error)
