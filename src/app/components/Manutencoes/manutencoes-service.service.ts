@@ -94,7 +94,7 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
   /**
    * Remove uma manutenção
    */
-  delete(id: number): Observable<string> {
+  delete(id: any): Observable<string> {
     return this.http.delete<string>(`${this.apiUrl}/delete/${id}`, {
 
       responseType: 'text' as 'json'});
@@ -134,15 +134,15 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
   }
 
   // Novas funcionalidades
-  iniciarManutencao(id: number): Observable<Manutencao> {
+  iniciarManutencao(id: any): Observable<Manutencao> {
     return this.http.put<Manutencao>(`${this.apiUrl}/iniciarManutencao/${id}`, {});
   }
 
-  concluirManutencao(id: number, dados: any ): Observable<Manutencao> {
+  concluirManutencao(id: any, dados: any ): Observable<Manutencao> {
     return this.http.put<Manutencao>(`${this.apiUrl}/concluirManutencao/${id}`, dados);
   }
 
-  cancelarManutencao(id: number, motivo: string): Observable<Manutencao> {
+  cancelarManutencao(id: any, motivo: string): Observable<Manutencao> {
     return this.http.put<Manutencao>(`${this.apiUrl}/cancelarManutencao/${id}`, { motivo });
    }
   /**
@@ -440,7 +440,8 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
     }
   }
 
-  // ========== VALIDAÇÃO ==========
+ 
+ // ========== VALIDAÇÃO ==========
 
   validarManutencaoDTO(dto: ManutencaoDTO): { valido: boolean; erros: string[] } {
     const erros: string[] = [];
@@ -474,5 +475,30 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
       erros
     };
   }
+ // Buscar relatório por veículo
+
+  // Buscar relatório por período 
+  // Buscar relatório por período - CORRIGIDO
+getRelatorioPorPeriodo(dataInicio: Date, dataFim: Date): Observable<RelatorioManutencaoDTO []> {
+  const params = {
+    inicio: this.formatarDataISO(dataInicio),
+    fim: this.formatarDataISO(dataFim)
+  };
+
+  return this.http.get<RelatorioManutencaoDTO []>(
+    `${this.apiUrl}/relatorio-por-periodo`,
+    { params }
+  );
+}
+
+  // Método auxiliar para formatar data no padrão yyyy-MM-dd
+  private formatarDataISO(data: Date): string {
+    const year = data.getFullYear();
+    const month = (data.getMonth() + 1).toString().padStart(2, '0');
+    const day = data.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
 }
+
+

@@ -1,394 +1,189 @@
-<div class="manutencoes-container">
-  <!-- Overlay e Modais -->
-  <div class="modal-overlay" *ngIf="mostrarModal || mostrarModalAcao" (click)="fecharModal()">
-    <!-- Modal de Cadastro/Edição -->
-    <div *ngIf="mostrarModal" class="modal-form" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <div class="modal-title">
-          <mat-icon class="modal-icon">{{editando ? 'edit' : 'add'}}</mat-icon>
-          <h2>{{editando ? 'Editar Manutenção' : 'Nova Manutenção'}}</h2>
-        </div>
-        <button class="btn-close" (click)="fecharModal()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-
-      <div class="modal-content">
-        <form [formGroup]="manutencaoForm" class="form-grid">
-          <!-- Veículo -->
-          <div class="form-group">
-            <label class="form-label">Veículo *</label>
-            <mat-select formControlName="veiculo_id" class="form-control-select">
-              <mat-option value="">Selecione um veículo</mat-option>
-              <mat-option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
-                {{veiculo.matricula}} - {{veiculo.marca.nome}} {{veiculo.modelo}} ({{veiculo.kilometragemAtual | number}} km)
-              </mat-option>
-            </mat-select>
-            <div class="form-error" *ngIf="manutencaoForm.get('veiculo_id')?.invalid && manutencaoForm.get('veiculo_id')?.touched">
-              Veículo é obrigatório
-            </div>
-          </div>
-
-          <!-- Tipo -->
-          <div class="form-group">
-            <label class="form-label">Tipo de Manutenção *</label>
-            <mat-select formControlName="tipoManutencao" class="form-control-select">
-              <mat-option value="">Selecione um tipo</mat-option>
-              <mat-option *ngFor="let tipo of tiposManutencao" [value]="tipo">
-                {{getTipoManutencaoLabel(tipo)}}
-              </mat-option>
-            </mat-select>
-            <div class="form-error" *ngIf="manutencaoForm.get('tipoManutencao')?.invalid && manutencaoForm.get('tipoManutencao')?.touched">
-              Tipo é obrigatório
-            </div>
-          </div>
-
-          <!-- Data -->
-          <div class="form-group">
-            <label class="form-label">Data da Manutenção *</label>
-            <input matInput [matDatepicker]="picker" formControlName="dataManutencao" class="form-control">
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-            <div class="form-error" *ngIf="manutencaoForm.get('dataManutencao')?.invalid && manutencaoForm.get('dataManutencao')?.touched">
-              Data é obrigatória
-            </div>
-          </div>
-
-          <!-- Quilometragem -->
-          <div class="form-group">
-            <label class="form-label">Quilometragem (km) *</label>
-            <input matInput type="number" formControlName="kilometragemVeiculo" class="form-control">
-            <div class="form-error" *ngIf="manutencaoForm.get('kilometragemVeiculo')?.invalid && manutencaoForm.get('kilometragemVeiculo')?.touched">
-              Quilometragem é obrigatória
-            </div>
-          </div>
-
-          <!-- Custo -->
-          <div class="form-group">
-            <label class="form-label">Custo (R$) *</label>
-            <input matInput type="number" step="0.01" formControlName="custo" class="form-control">
-            <div class="form-error" *ngIf="manutencaoForm.get('custo')?.invalid && manutencaoForm.get('custo')?.touched">
-              Custo é obrigatório
-            </div>
-          </div>
-
-          <!-- Status (só na edição) -->
-          <div class="form-group" *ngIf="editando">
-            <label class="form-label">Status</label>
-            <mat-select formControlName="status" class="form-control-select">
-              <mat-option value="PENDENTE">Pendente</mat-option>
-              <mat-option value="EM_ANDAMENTO">Em Andamento</mat-option>
-              <mat-option  value="URGENTE"> Urgente</mat-option>
-              <mat-option value="CONCLUIDA">Concluída</mat-option>
-              <mat-option value="CANCELADA">Cancelada</mat-option>
-            </mat-select>
-          </div>
-
-          <!-- Próxima KM -->
-          <div class="form-group">
-            <label class="form-label">Próxima Manutenção (km)</label>
-            <input matInput type="number" formControlName="proximaManutencaoKm" class="form-control">
-          </div>
-
-          <!-- Próxima Data -->
-          <div class="form-group">
-            <label class="form-label">Próxima Manutenção (data)</label>
-            <input matInput [matDatepicker]="pickerProxima" formControlName="proximaManutencaoData" class="form-control">
-            <mat-datepicker-toggle matSuffix [for]="pickerProxima"></mat-datepicker-toggle>
-            <mat-datepicker #pickerProxima></mat-datepicker>
-          </div>
-
-          <!-- Botão calcular automático -->
-          <div class="form-group">
-            <button type="button" class="btn-calc" (click)="calcularProximaManutencao()">
-              <mat-icon>calculate</mat-icon>
-              Calcular Automático
-            </button>
-          </div>
-
-          <!-- Descrição -->
-          <div class="form-group full-width">
-            <label class="form-label">Descrição *</label>
-            <textarea matInput formControlName="descricao" rows="3" class="form-control" placeholder="Descreva os serviços realizados..."></textarea>
-            <div class="form-error" *ngIf="manutencaoForm.get('descricao')?.invalid && manutencaoForm.get('descricao')?.touched">
-              Descrição é obrigatória (mínimo 5 caracteres)
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-cancel" (click)="fecharModal()">
-          <mat-icon>cancel</mat-icon>
-          Cancelar
-        </button>
-        <button class="btn-save" (click)="salvarManutencao()" [disabled]="manutencaoForm.invalid || carregandoModal">
-          <mat-icon *ngIf="!carregandoModal">save</mat-icon>
-          <span *ngIf="carregandoModal" class="spinner-border spinner-border-sm"></span>
-          {{editando ? 'Atualizar' : 'Salvar'}}
-        </button>
-      </div>
-    </div>
-
-    <!-- Modal de Ações -->
-    <div *ngIf="mostrarModalAcao && tipoAcao && manutencaoSelecionada" class="modal-acao" (click)="$event.stopPropagation()">
-      <div class="modal-header" [style.background]="getCorAcao()">
-        <div class="modal-title">
-          <mat-icon class="modal-icon">{{getIconeAcao()}}</mat-icon>
-          <h2>{{getTituloAcao()}}</h2>
-        </div>
-        <button class="btn-close" (click)="fecharModal()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-
-      <div class="modal-content">
-        <div class="acao-content">
-          <div class="acao-icon" [style.color]="getCorAcao()">
-            <mat-icon>{{getIconeAcao()}}</mat-icon>
-          </div>
-
-          <h3>{{getTituloAcao()}}</h3>
-
-          <div class="acao-info">
-            <p><strong>Veículo:</strong> {{manutencaoSelecionada.veiculo?.matricula || 'N/A'}}</p>
-            <p><strong>Tipo:</strong> {{getTipoManutencaoLabel(manutencaoSelecionada.tipoManutencao)}}</p>
-            <p><strong>Data:</strong> {{formatarData(manutencaoSelecionada.dataManutencao)}}</p>
-          </div>
-
-          <!-- Campos específicos por ação -->
-          <div *ngIf="tipoAcao === 'concluir'" class="acao-field">
-            <label class="form-label">Observações (opcional)</label>
-            <textarea [(ngModel)]="observacoes" rows="3" class="form-control"
-                      placeholder="Adicione observações sobre a conclusão..."></textarea>
-          </div>
-
-          <div *ngIf="tipoAcao === 'cancelar'" class="acao-field">
-            <label class="form-label">Motivo do Cancelamento *</label>
-            <textarea [(ngModel)]="motivoCancelamento" rows="3" class="form-control"
-                      placeholder="Informe o motivo do cancelamento..." required></textarea>
-            <div class="form-error" *ngIf="!motivoCancelamento">
-              Motivo é obrigatório
-            </div>
-          </div>
-
-          <div class="acao-warning" *ngIf="tipoAcao === 'iniciar'">
-            <mat-icon>info</mat-icon>
-            <span>A manutenção será marcada como "Em Andamento".</span>
-          </div>
-
-          <div class="acao-warning" *ngIf="tipoAcao === 'cancelar'">
-            <mat-icon>warning</mat-icon>
-            <span>Esta ação não pode ser desfeita.</span>
-          </div>
+<div class="container-fluid px-3 py-3 bg-light min-vh-100">
+  <!-- Header -->
+  <div class="card bg-info text-white mb-3 border-0 shadow-sm">
+    <div class="card-body py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-tools fs-4 text-white-50"></i>
+        <div>
+          <h5 class="mb-0 text-white">Gerenciamento de Manutenções</h5>
+          <p class="text-white-50 mb-0 small">Gerencie as manutenções da frota</p>
         </div>
       </div>
-
-      <div class="modal-footer">
-        <button class="btn-cancel" (click)="fecharModal()">
-          <mat-icon>cancel</mat-icon>
-          Cancelar
+      <div class="d-flex gap-1">
+        <button class="btn btn-sm btn-outline-light" (click)="carregarDados()" [disabled]="carregando">
+          <i class="bi bi-arrow-clockwise"></i> Recarregar
         </button>
-        <button class="btn-confirm"
-                (click)="confirmarAcao()"
-                [disabled]="carregando || (tipoAcao === 'cancelar' && !motivoCancelamento)"
-                [style.background]="getCorAcao()">
-          <mat-icon *ngIf="!carregando">{{getIconeAcao()}}</mat-icon>
-          <span *ngIf="carregando" class="spinner-border spinner-border-sm"></span>
-          {{tipoAcao === 'iniciar' ? 'Iniciar' : tipoAcao === 'concluir' ? 'Concluir' : 'Cancelar'}}
+        <button *ngIf="abaAtiva === 'lista'" class="btn btn-sm btn-light text-info" (click)="abrirModalCadastro()">
+          <i class="bi bi-plus-circle"></i> Nova Manutenção
+        </button>
+        <button class="btn btn-sm btn-outline-light" (click)="navegateTO('dashboard')">
+          <i class="bi bi-arrow-left"></i> Voltar
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Header -->
-  <div class="header">
-    <div class="header-title">
-      <mat-icon class="title-icon">build</mat-icon>
-      <h2>Gerenciamento de Manutenções</h2>
-    </div>
-    <div class="header-actions">
-      <button class="btn-reload" (click)="carregarDados()" [disabled]="carregando" title="Recarregar lista">
-        <mat-icon>refresh</mat-icon>
-      </button>
-      <button class="btn-add" (click)="abrirModalCadastro()">
-        <mat-icon>add</mat-icon>
-        Nova Manutenção
-      </button>
-     @if(loginService.hasRole('ADMIN')){
-       <button class="btn-add" (click)="navegateTO('relatorioManutencao')"> ver relatorios
-      </button>
-    }
-         <button class="btn-add" (click)="navegateTO('dashboard')">
-         voltar
-      </button>
+  <!-- Abas -->
+  <div class="card shadow-sm mb-3 border-0">
+    <div class="card-body py-2">
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="abaAtiva === 'lista'" (click)="abaAtiva = 'lista'" style="cursor: pointer;">
+            <i class="bi bi-list-ul me-1"></i> Lista de Manutenções
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="abaAtiva === 'relatorio'" (click)="carregarRelatorioPorVeiculo(); abaAtiva = 'relatorio'" style="cursor: pointer;">
+            <i class="bi bi-graph-up me-1"></i> Relatório de Custos
+          </a>
+        </li>
+      </ul>
     </div>
   </div>
 
   <!-- Estado de Carregamento -->
-  <div *ngIf="carregando" class="loading-state">
-    <div class="spinner-border text-primary" role="status">
+  <div *ngIf="carregando" class="text-center py-5">
+    <div class="spinner-border text-info" role="status">
       <span class="visually-hidden">Carregando...</span>
     </div>
-    <h3>Carregando manutenções...</h3>
-    <p>Aguarde enquanto carregamos a lista de manutenções</p>
+    <h6 class="mt-3 text-muted">Carregando dados...</h6>
   </div>
 
-  <!-- Conteúdo Principal (quando não está carregando) -->
-  <div *ngIf="!carregando">
+  <!-- ==================== LISTA DE MANUTENÇÕES ==================== -->
+  <div *ngIf="!carregando && abaAtiva === 'lista'">
     <!-- Alertas -->
-    <div *ngIf="alertas.length > 0" class="alert-section">
-      <div class="card">
-        <div class="card-body">
-          <h4 class="card-title">
-            <mat-icon class="me-2">notifications</mat-icon>
-            Alertas de Manutenção
-          </h4>
-          <div class="alertas-list">
-            <div *ngFor="let alerta of alertas" class="alerta-item">
-              <mat-icon class="alerta-icon">warning</mat-icon>
-              <span class="alerta-text">{{alerta}}</span>
-            </div>
-          </div>
+    <div *ngIf="alertas.length > 0" class="card shadow-sm mb-3 border-0">
+      <div class="card-header bg-white py-2">
+        <h6 class="mb-0 text-info"><i class="bi bi-bell me-2"></i>Alertas de Manutenção</h6>
+      </div>
+      <div class="card-body py-2">
+        <div *ngFor="let alerta of alertas" class="alert alert-warning py-1 mb-1 small">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{alerta}}
         </div>
       </div>
     </div>
 
     <!-- Filtros -->
-    <div class="filter-section">
-      <div class="card">
-        <div class="card-body">
-          <h4 class="card-title">
-            <mat-icon class="me-2">filter_list</mat-icon>
-            Filtros
-          </h4>
-          <div class="filter-grid">
-            <!-- Veículo -->
-            <div class="filter-group">
-              <label>Veículo</label>
-              <input matInput [(ngModel)]="filtroVeiculo" placeholder="Matrícula ou modelo" class="form-control" (keyup.enter)="aplicarFiltros()">
-            </div>
-
-            <!-- Tipo -->
-            <div class="filter-group">
-              <label>Tipo</label>
-              <mat-select [(ngModel)]="filtroTipo" class="form-control-select" (selectionChange)="aplicarFiltros()">
-                <mat-option value="">Todos</mat-option>
-                <mat-option *ngFor="let tipo of tiposManutencao" [value]="tipo">
-                  {{getTipoManutencaoLabel(tipo)}}
-                </mat-option>
-              </mat-select>
-            </div>
-
-            <!-- Status -->
-            <div class="filter-group">
-              <label>Status</label>
-              <mat-select [(ngModel)]="filtroStatus" class="form-control-select" (selectionChange)="aplicarFiltros()">
-                <mat-option value="">Todos</mat-option>
-                <mat-option value="PENDENTE">Pendente</mat-option>
-                <mat-option value="EM_ANDAMENTO">Em Andamento</mat-option>
-                <mat-option value="CONCLUIDA">Concluída</mat-option>
-                <mat-option value="CANCELADA">Cancelada</mat-option>
-              </mat-select>
-            </div>
+    <div class="card shadow-sm mb-3 border-0">
+      <div class="card-header bg-white py-2">
+        <h6 class="mb-0 text-info"><i class="bi bi-funnel me-2"></i>Filtros</h6>
+      </div>
+      <div class="card-body py-2">
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label small mb-0">Veículo</label>
+            <input type="text" class="form-control form-control-sm"
+                   [(ngModel)]="filtroVeiculo"
+                   placeholder="Matrícula ou modelo"
+                   (keyup.enter)="aplicarFiltros()">
           </div>
-          <div class="filter-actions">
-            <button class="btn-apply" (click)="aplicarFiltros()" [disabled]="carregando">
-              <mat-icon>search</mat-icon>
-              Aplicar Filtros
-            </button>
-            <button class="btn-clear" (click)="limparFiltros()">
-              <mat-icon>clear</mat-icon>
-              Limpar Filtros
-            </button>
+          <div class="col-md-4">
+            <label class="form-label small mb-0">Tipo</label>
+            <select class="form-select form-select-sm" [(ngModel)]="filtroTipo" (change)="aplicarFiltros()">
+              <option value="">Todos</option>
+              <option *ngFor="let tipo of tiposManutencao" [value]="tipo">
+                {{getTipoManutencaoLabel(tipo)}}
+              </option>
+            </select>
           </div>
+          <div class="col-md-4">
+            <label class="form-label small mb-0">Status</label>
+            <select class="form-select form-select-sm" [(ngModel)]="filtroStatus" (change)="aplicarFiltros()">
+              <option value="">Todos</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="EM_ANDAMENTO">Em Andamento</option>
+              <option value="CONCLUIDA">Concluída</option>
+              <option value="CANCELADA">Cancelada</option>
+            </select>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <button class="btn btn-sm btn-info text-white" (click)="aplicarFiltros()" [disabled]="carregando">
+            <i class="bi bi-search"></i> Aplicar Filtros
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="limparFiltros()">
+            <i class="bi bi-eraser"></i> Limpar Filtros
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Resumo -->
-    <div class="summary-section" *ngIf="manutencoes.length > 0">
-      <div class="card">
-        <div class="card-body">
-          <div class="summary-header">
-            <h4 class="card-title">
-              <mat-icon class="me-2">assessment</mat-icon>
-              Resumo das Manutenções
-            </h4>
+    <div *ngIf="manutencoes.length > 0" class="row g-2 mb-3">
+      <div class="col-md-2 col-6">
+        <div class="card border-start border-info border-4 shadow-sm">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-tools fs-5 text-info"></i>
+              <div>
+                <div class="fw-bold text-info">{{getTotalCount()}}</div>
+                <small class="text-muted">Total</small>
+              </div>
+            </div>
           </div>
-
-          <div class="summary-grid">
-            <!-- Total de Manutenções -->
-            <div class="summary-item">
-              <div class="summary-icon total">
-                <mat-icon>build</mat-icon>
-              </div>
-              <div class="summary-content">
-                <span class="summary-label">Total de Manutenções</span>
-                <span class="summary-value">{{getTotalCount()}}</span>
-                <span class="summary-trend">Registradas</span>
-              </div>
-            </div>
-
-            <!-- Custo Total -->
-            <div class="summary-item">
-              <div class="summary-icon cost">
-                <mat-icon>attach_money</mat-icon>
-              </div>
-              <div class="summary-content">
-                <span class="summary-label">Custo Total</span>
-                <span class="summary-value">{{formatarMoeda(getTotalCusto())}}</span>
-                <span class="summary-trend">Investido</span>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="card border-start border-success border-4 shadow-sm">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-cash-stack fs-5 text-success"></i>
+              <div>
+                <div class="fw-bold text-success">{{formatarMoeda(getTotalCusto())}}</div>
+                <small class="text-muted">Custo Total</small>
               </div>
             </div>
-
-            <!-- Manutenções Vencidas -->
-            <div class="summary-item">
-              <div class="summary-icon overdue">
-                <mat-icon>warning</mat-icon>
-              </div>
-              <div class="summary-content">
-                <span class="summary-label">Manutenções Vencidas</span>
-                <span class="summary-value">{{getVencidasCount()}}</span>
-                <span class="summary-trend">Necessitam atenção</span>
-              </div>
-            </div>
-
-            <!-- Manutenções Próximas -->
-            <div class="summary-item">
-              <div class="summary-icon upcoming">
-                <mat-icon>schedule</mat-icon>
-              </div>
-              <div class="summary-content">
-                <span class="summary-label">Manutenções Próximas</span>
-                <span class="summary-value">{{getProximasCount()}}</span>
-                <span class="summary-trend">A programar</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="card border-start border-danger border-4 shadow-sm">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-exclamation-triangle fs-5 text-danger"></i>
+              <div>
+                <div class="fw-bold text-danger">{{getVencidasCount()}}</div>
+                <small class="text-muted">Vencidas</small>
               </div>
             </div>
-
-            <!-- Custo Médio -->
-            <div class="summary-item">
-              <div class="summary-icon average">
-                <mat-icon>trending_up</mat-icon>
-              </div>
-              <div class="summary-content">
-                <span class="summary-label">Custo Médio</span>
-                <span class="summary-value">{{formatarMoeda(getCustoMedio())}}</span>
-                <span class="summary-trend">Por manutenção</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="card border-start border-warning border-4 shadow-sm">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-clock fs-5 text-warning"></i>
+              <div>
+                <div class="fw-bold text-warning">{{getProximasCount()}}</div>
+                <small class="text-muted">Próximas</small>
               </div>
             </div>
-
-            <!-- Status Geral -->
-            <div class="summary-item">
-              <div class="summary-icon status">
-                <mat-icon>check_circle</mat-icon>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="card border-start border-info border-4 shadow-sm">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-graph-up fs-5 text-info"></i>
+              <div>
+                <div class="fw-bold text-info">{{formatarMoeda(getCustoMedio())}}</div>
+                <small class="text-muted">Custo Médio</small>
               </div>
-              <div class="summary-content">
-                <span class="summary-label">Status Geral</span>
-                <span class="summary-value status-text {{getStatusGeral().toLowerCase()}}">
-                  {{getStatusGeralText()}}
-                </span>
-                <span class="summary-trend">{{getPercentualOK()}}% OK</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="card border-start border-info border-4 shadow-sm">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-check-circle fs-5 text-info"></i>
+              <div>
+                <div class="fw-bold text-info">{{getPercentualOK()}}%</div>
+                <small class="text-muted">Concluídas</small>
               </div>
             </div>
           </div>
@@ -397,142 +192,526 @@
     </div>
 
     <!-- Tabela -->
-    <div class="table-container" *ngIf="manutencoes && manutencoes.length > 0; else emptyState">
-      <div class="table-header-info">
-        <span class="total-registros">
-          Total de manutenções: <strong>{{dataSource.filteredData.length}}</strong>
-          <span class="text-muted ms-2">
-            Custo total: {{formatarMoeda(getTotalCusto())}}
-          </span>
-        </span>
+    <div *ngIf="manutencoes && manutencoes.length > 0; else emptyState" class="card shadow-sm border-0">
+      <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 text-info"><i class="bi bi-list-ul me-2"></i>Lista de Manutenções</h6>
+        <span class="badge bg-info">{{dataSource.filteredData.length}} registros</span>
       </div>
-      <table class="manutencoes-table">
-        <thead>
-          <tr class="table-header">
-            <th>Veículo</th>
-            <th>Tipo</th>
-              <th>Custo</th>
-            <th>data</th>
-            <th>next manu</th>
-            <th>Status</th>
-            <th>DataInicio</th>
-            <th>DataFim</th>
-            <th class="actions-header">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let manutencao of dataSource.filteredData" class="table-row">
-            <!-- Coluna Veículo -->
-            <td class="veiculo-cell">
-              <div class="veiculo-info">
-                <mat-icon class="veiculo-icon">directions_car</mat-icon>
-                <div class="veiculo-detalhes">
-                  <strong>{{manutencao.veiculo?.matricula || 'N/A'}}</strong>
-                  <span>{{manutencao.veiculo?.marca?.nome || manutencao.veiculo?.marca}} {{manutencao.veiculo?.modelo || ''}}</span>
-                </div>
-              </div>
-            </td>
-
-            <!-- Coluna Tipo -->
-            <td class="tipo-cell">
-              <span class="tipo-badge {{manutencao.tipoManutencao?.toLowerCase()}}">
-                {{getTipoManutencaoLabel(manutencao.tipoManutencao)}}
-              </span>
-            </td>
-
-
-            <!-- Coluna Custo -->
-            <td class="custo-cell">
-              {{formatarMoeda(manutencao.custo)}}
-            </td>
-        <td> {{ formatarData(manutencao.dataManutencao)}}</td>
-            <!-- Coluna Próxima Manutenção -->
-            <td class="proxima-cell">
-              <div *ngIf="manutencao.proximaManutencaoData || manutencao.proximaManutencaoKm; else semProxima">
-                <div *ngIf="manutencao.proximaManutencaoData" class="proxima-data">
-                  {{formatarData(manutencao.proximaManutencaoData)}}
-                </div>
-                <div *ngIf="manutencao.proximaManutencaoKm" class="proxima-km">
-                  {{manutencao.proximaManutencaoKm | number:'1.0-0'}} km
-                </div>
-              </div>
-              <ng-template #semProxima>
-                <span class="sem-proxima">Não definida</span>
-              </ng-template>
-            </td>
-
-            <!-- Coluna Status -->
-            <td class="status-cell">
-              <span class="status-badge" [style.background-color]="getStatusColor(manutencao.status!)">
-                {{getStatusLabel(manutencao.status!)}}
-              </span>
-            </td>
-      <td class="data-cell">
-            {{formatarDataConclusao(manutencao.dataInicio)}}
-            </td>
-  <td class="data-cell">
-              {{formatarDataConclusao(manutencao.dataConclusao)}}
-            </td>
-
-            <!-- Coluna Ações -->
-            <td class="actions-cell">
-              <button class="btn-view" (click)="verDetalhes(manutencao)" title="Detalhes">
-                <mat-icon>visibility</mat-icon>
-              </button>
-              <button class="btn-edit" (click)="abrirModalCadastro(manutencao)" title="Editar">
-                <mat-icon>edit</mat-icon>
-              </button>
-
-              <!-- Botões condicionais por status -->
-            <button *ngIf="manutencao.status === 'ATRASADA' || manutencao.status === 'AGENDADA_HOJE'||
-            manutencao.status === 'AGENDADA'"
-              class="btn-success"
-                      (click)="abrirModalAcao('iniciar', manutencao)" title="Iniciar Manutenção">
-                <mat-icon>play_arrow</mat-icon>
-              </button>
-
-              <button *ngIf="manutencao.status === 'EM_ANDAMENTO'" class="btn-primary"
-                      (click)="abrirModalAcao('concluir', manutencao)" title="Concluir Manutenção">
-                <mat-icon>check_circle</mat-icon>
-              </button>
-
-              <button *ngIf="manutencao.status === 'PENDENTE' || manutencao.status === 'EM_ANDAMENTO'"
-                      class="btn-warning" (click)="abrirModalAcao('cancelar', manutencao)" title="Cancelar Manutenção">
-                <mat-icon>cancel</mat-icon>
-              </button>
-        @if(loginService.hasRole('ADMIN')){
-              <button class="btn-delete" (click)="excluirManutencao(manutencao)" title="Excluir">
-                <mat-icon>delete</mat-icon>
-              </button>
-            }
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Paginação -->
-      <div class="pagination-container">
-        <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr class="small">
+                <th>Veículo</th>
+                <th>Tipo</th>
+                <th>Custo</th>
+                <th>Data</th>
+                <th>Próxima Manu</th>
+                <th>Status</th>
+                <th>Data Início</th>
+                <th>Data Fim</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let manutencao of dataSource.filteredData" class="small">
+                <td class="align-middle">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-truck text-info"></i>
+                    <div>
+                      <div class="fw-bold">{{manutencao.veiculo?.matricula || 'N/A'}}</div>
+                      <small class="text-muted">{{manutencao.veiculo?.marca?.nome || manutencao.veiculo?.marca}} {{manutencao.veiculo?.modelo || ''}}</small>
+                    </div>
+                  </div>
+                </td>
+                <td class="align-middle">
+                  <span class="badge bg-secondary">{{getTipoManutencaoLabel(manutencao.tipoManutencao!)}}</span>
+                </td>
+                <td class="align-middle fw-bold">{{formatarMoeda(manutencao.custo)}}</td>
+                <td class="align-middle">{{ formatarData(manutencao.dataManutencao!)}}</td>
+                <td class="align-middle">
+                  <div *ngIf="manutencao.proximaManutencaoData || manutencao.proximaManutencaoKm; else semProxima">
+                    <div *ngIf="manutencao.proximaManutencaoData" class="small">
+                      <i class="bi bi-calendar me-1"></i>{{formatarData(manutencao.proximaManutencaoData)}}
+                    </div>
+                    <div *ngIf="manutencao.proximaManutencaoKm" class="small">
+                      <i class="bi bi-speedometer2 me-1"></i>{{manutencao.proximaManutencaoKm | number:'1.0-0'}} km
+                    </div>
+                  </div>
+                  <ng-template #semProxima>
+                    <span class="text-muted small">Não definida</span>
+                  </ng-template>
+                </td>
+                <!-- COLUNA STATUS COM ESTILO CORRETO -->
+                <td class="align-middle">
+                  <span class="badge" [ngClass]="{
+                    'bg-warning text-dark': manutencao.status === 'PENDENTE',
+                    'bg-info text-white': manutencao.status === 'EM_ANDAMENTO',
+                    'bg-success text-white': manutencao.status === 'CONCLUIDA',
+                    'bg-danger text-white': manutencao.status === 'CANCELADA',
+                    'bg-secondary text-white': manutencao.status === 'ATRASADA',
+                    'bg-primary text-white': manutencao.status === 'AGENDADA'
+                  }">
+                    {{getStatusLabel(manutencao.status!)}}
+                  </span>
+                </td>
+                <td class="align-middle"><small>{{formatarDataConclusao(manutencao.dataInicio)}}</small></td>
+                <td class="align-middle"><small>{{formatarDataConclusao(manutencao.dataConclusao)}}</small></td>
+                
+                <!-- COLUNA AÇÕES COM BOTÕES ESTILIZADOS -->
+                <td class="text-nowrap text-center">
+                  <div class="d-flex gap-1 justify-content-center">
+                    <button class="btn btn-sm btn-outline-info" (click)="verDetalhes(manutencao)" title="Detalhes">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" (click)="abrirModalCadastro(manutencao)" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button *ngIf="manutencao.status === 'PENDENTE'" 
+                            class="btn btn-sm btn-outline-success" 
+                            (click)="abrirModalAcao('iniciar', manutencao)" 
+                            title="Iniciar">
+                      <i class="bi bi-play-fill"></i>
+                    </button>
+                    <button *ngIf="manutencao.status === 'EM_ANDAMENTO'" 
+                            class="btn btn-sm btn-outline-success"
+                            (click)="abrirModalAcao('concluir', manutencao)" 
+                            title="Concluir">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                    <button *ngIf="manutencao.status === 'PENDENTE' || manutencao.status === 'EM_ANDAMENTO'"
+                            class="btn btn-sm btn-outline-danger" 
+                            (click)="abrirModalAcao('cancelar', manutencao)" 
+                            title="Cancelar">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                    <button *ngIf="loginService.hasRole('ADMIN')" 
+                            class="btn btn-sm btn-outline-danger"
+                            (click)="excluirManutencao(manutencao)" 
+                            title="Excluir">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- Empty State -->
+    <!-- Empty State Lista -->
     <ng-template #emptyState>
-      <div class="empty-state">
-        <mat-icon class="empty-icon">build</mat-icon>
-        <h3>Nenhuma manutenção encontrada</h3>
-        <p *ngIf="filtroVeiculo || filtroTipo || filtroStatus">
-          Não foram encontradas manutenções com os filtros aplicados
-        </p>
-        <p *ngIf="!filtroVeiculo && !filtroTipo && !filtroStatus">
-          Comece registrando sua primeira manutenção
-        </p>
-          <button class="btn-add-empty" (click)=" navegateTO('relatorioManutencao')">
-          <mat-icon>add</mat-icon>
-          ver relatorios
-        </button>
-
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-tools display-1 text-muted"></i>
+          <h5 class="mt-3 text-muted">Nenhuma manutenção encontrada</h5>
+          <p class="text-muted small" *ngIf="filtroVeiculo || filtroTipo || filtroStatus">
+            Não foram encontradas manutenções com os filtros aplicados
+          </p>
+          <p class="text-muted small" *ngIf="!filtroVeiculo && !filtroTipo && !filtroStatus">
+            Comece registrando sua primeira manutenção
+          </p>
+          <button class="btn btn-sm btn-info text-white mt-2" (click)="abrirModalCadastro()">
+            <i class="bi bi-plus-circle"></i> Nova Manutenção
+          </button>
+        </div>
       </div>
     </ng-template>
   </div>
+
+  <!-- ==================== RELATÓRIO DE CUSTOS ==================== -->
+  <div *ngIf="!carregando && abaAtiva === 'relatorio'">
+    <!-- Filtros do Relatório -->
+    <div class="card shadow-sm mb-3 border-0">
+      <div class="card-header bg-white py-2">
+        <h6 class="mb-0 text-info"><i class="bi bi-funnel me-2"></i>Filtros do Relatório</h6>
+      </div>
+      <div class="card-body py-2">
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label small mb-0">Tipo de Relatório</label>
+            <select class="form-select form-select-sm" [(ngModel)]="filtroAtivo" (change)="onTipoRelatorioChange()">
+              <option value="veiculo">Por Veículo</option>
+              <option value="periodo">Por Período</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small mb-0">Filtrar por Veículo</label>
+            <select class="form-select form-select-sm" [(ngModel)]="veiculoSelecionado" (change)="aplicarFiltroVeiculo()">
+              <option value="">Todos os Veículos</option>
+              <option *ngFor="let veiculo of veiculosRelatorio" [value]="veiculo">
+                {{ veiculo }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-sm btn-outline-secondary w-100" (click)="limparFiltrosRelatorio()">
+              <i class="bi bi-eraser"></i> Limpar Filtros
+            </button>
+          </div>
+        </div>
+
+        <div class="row g-2 mt-2" *ngIf="filtroAtivo === 'periodo'">
+          <div class="col-md-4">
+            <label class="form-label small mb-0">Data Início</label>
+            <input type="date" class="form-control form-control-sm" [(ngModel)]="dataInicio" [max]="hojeString">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small mb-0">Data Fim</label>
+            <input type="date" class="form-control form-control-sm" [(ngModel)]="dataFim" [max]="hojeString" [min]="dataInicio">
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-sm btn-info text-white w-100" (click)="carregarRelatorioPorPeriodo()" [disabled]="!dataInicio || !dataFim">
+              <i class="bi bi-search"></i> Buscar Período
+            </button>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+          <button class="btn btn-sm btn-success" (click)="exportarParaExcel()" [disabled]="relatoriosFiltrados.length === 0">
+            <i class="bi bi-file-excel"></i> Exportar Excel
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="exportarParaPDF()" [disabled]="relatoriosFiltrados.length === 0">
+            <i class="bi bi-file-pdf"></i> Exportar PDF
+          </button>
+          <button class="btn btn-sm btn-outline-info" (click)="imprimirRelatorio()" [disabled]="relatoriosFiltrados.length === 0">
+            <i class="bi bi-printer"></i> Imprimir
+          </button>
+        </div>
+
+        <div *ngIf="erroRelatorio" class="alert alert-danger alert-dismissible fade show mt-3 py-1 small">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          {{ erroRelatorio }}
+          <button type="button" class="btn-close btn-sm" (click)="erroRelatorio = ''"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumo do Relatório -->
+    <div *ngIf="relatoriosFiltrados.length > 0" class="row g-2 mb-3">
+      <div class="col-md-4">
+        <div class="card border-start border-success border-4 shadow-sm">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-cash-stack fs-5 text-success"></i>
+              <div>
+                <div class="fw-bold text-success">{{ totalGeralGasto | currency:'BRL':'symbol':'1.2-2' }}</div>
+                <small class="text-muted">Total Gasto</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-start border-info border-4 shadow-sm">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-calculator fs-5 text-info"></i>
+              <div>
+                <div class="fw-bold text-info">{{ (totalGeralGasto / totalGeralManutencoes) | currency:'BRL':'symbol':'1.2-2' }}</div>
+                <small class="text-muted">Média por Manutenção</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-start border-primary border-4 shadow-sm">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-car-front fs-5 text-primary"></i>
+              <div>
+                <div class="fw-bold text-primary">{{ getVeiculosUnicos() }}</div>
+                <small class="text-muted">Veículos Analisados</small>
+                <small class="text-muted d-block">({{ relatoriosFiltrados.length }} registros)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela do Relatório -->
+    <div *ngIf="relatoriosFiltrados.length > 0; else emptyRelatorioState" class="card shadow-sm border-0">
+      <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 text-info"><i class="bi bi-table me-2"></i>Detalhamento por Veículo</h6>
+        <span class="badge bg-info">{{ relatoriosFiltrados.length }} veículos</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr class="small">
+                <th (click)="ordenarPor('veiculo')" style="cursor: pointer;">Veículo <i class="bi bi-arrow-down-up"></i></th>
+                <th class="text-center" (click)="ordenarPor('totalManutencoes')" style="cursor: pointer;">Total Manutenções <i class="bi bi-arrow-down-up"></i></th>
+                <th class="text-end" (click)="ordenarPor('totalGasto')" style="cursor: pointer;">Total Gasto <i class="bi bi-arrow-down-up"></i></th>
+                <th class="text-end" (click)="ordenarPor('mediaPorManutencao')" style="cursor: pointer;">Média por Manutenção <i class="bi bi-arrow-down-up"></i></th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let relatorio of relatoriosFiltrados" class="small">
+                <td class="align-middle">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-truck text-info"></i>
+                    <strong>{{ relatorio.veiculo || 'Não informado' }}</strong>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-info">{{ relatorio.totalManutencoes }}</span>
+                </td>
+                <td class="text-end fw-bold text-success">{{ relatorio.custoTotal | currency:'BRL':'symbol':'1.2-2' }}<\/td>
+                <td class="text-end">{{ relatorio.custoMedio | currency:'BRL':'symbol':'1.2-2' }}<\/td>
+                <td class="text-center">
+                  <span class="badge" [ngClass]="{
+                    'bg-success text-white': relatorio.status === 'CONCLUIDA',
+                    'bg-warning text-dark': relatorio.status === 'PENDENTE',
+                    'bg-info text-white': relatorio.status === 'EM_ANDAMENTO',
+                    'bg-danger text-white': relatorio.status === 'CANCELADA'
+                  }">{{ relatorio.status || 'EM ANDAMENTO' }}</span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="table-light">
+              <tr class="fw-bold">
+                <td>TOTAIS GERAIS<\/td>
+                <td class="text-center">{{ totalGeralManutencoes }}<\/td>
+                <td class="text-end text-success">{{ totalGeralGasto | currency:'BRL':'symbol':'1.2-2' }}<\/td>
+                <td class="text-end">{{ (totalGeralGasto / totalGeralManutencoes) | currency:'BRL':'symbol':'1.2-2' }}<\/td>
+                <td><\/td>
+              <td>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State Relatório -->
+    <ng-template #emptyRelatorioState>
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-file-text display-1 text-muted"></i>
+          <h5 class="mt-3 text-muted">Nenhum dado encontrado</h5>
+          <p class="text-muted small">
+            Não foram encontrados registros para os filtros selecionados
+          </p>
+          <button class="btn btn-sm btn-info text-white mt-2" (click)="carregarRelatorioPorVeiculo()">
+            <i class="bi bi-arrow-repeat"></i> Recarregar Relatório
+          </button>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Rodapé -->
+    <div class="card shadow-sm mt-3 border-0">
+      <div class="card-body py-2 text-center">
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Relatório gerado em {{ hoje | date:'dd/MM/yyyy HH:mm' }}
+          <span *ngIf="veiculoSelecionado"> • Filtrado por: {{ veiculoSelecionado }}</span>
+          <span *ngIf="filtroAtivo === 'periodo' && dataInicio && dataFim"> • Período: {{ formatarData(dataInicio) }} a {{ formatarData(dataFim) }}</span>
+        </small>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- ==================== MODAL DE CADASTRO/EDIÇÃO ==================== -->
+<div class="modal fade" [class.show]="mostrarModal" [style.display]="mostrarModal ? 'block' : 'none'" tabindex="-1" *ngIf="mostrarModal">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white py-2">
+        <h6 class="modal-title">
+          <i class="bi me-2" [ngClass]="editando ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
+          {{editando ? 'Editar Manutenção' : 'Nova Manutenção'}}
+        </h6>
+        <button type="button" class="btn-close btn-close-white btn-sm" (click)="fecharModal()"></button>
+      </div>
+      <div class="modal-body py-2">
+        <form [formGroup]="manutencaoForm" (ngSubmit)="salvarManutencao()">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Veículo *</label>
+            <select class="form-select form-select-sm" formControlName="veiculo_id">
+              <option value="">Selecione um veículo</option>
+              <option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                {{veiculo.matricula}} - {{veiculo.marca?.nome || veiculo.marca}} {{veiculo.modelo}} ({{veiculo.kilometragemAtual | number}} km)
+              </option>
+            </select>
+            <div class="text-danger small" *ngIf="manutencaoForm.get('veiculo_id')?.invalid && manutencaoForm.get('veiculo_id')?.touched">
+              Veículo é obrigatório
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Tipo de Manutenção *</label>
+            <select class="form-select form-select-sm" formControlName="tipoManutencao">
+              <option value="">Selecione um tipo</option>
+              <option *ngFor="let tipo of tiposManutencao" [value]="tipo">
+                {{getTipoManutencaoLabel(tipo)}}
+              </option>
+            </select>
+            <div class="text-danger small" *ngIf="manutencaoForm.get('tipoManutencao')?.invalid && manutencaoForm.get('tipoManutencao')?.touched">
+              Tipo é obrigatório
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Data da Manutenção *</label>
+            <input type="date" class="form-control form-control-sm" formControlName="dataManutencao">
+            <div class="text-danger small" *ngIf="manutencaoForm.get('dataManutencao')?.invalid && manutencaoForm.get('dataManutencao')?.touched">
+              Data é obrigatória
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Quilometragem (km) *</label>
+            <input type="number" class="form-control form-control-sm" formControlName="kilometragemVeiculo">
+            <div class="text-danger small" *ngIf="manutencaoForm.get('kilometragemVeiculo')?.invalid && manutencaoForm.get('kilometragemVeiculo')?.touched">
+              Quilometragem é obrigatória
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Custo (R$) *</label>
+            <input type="number" step="0.01" class="form-control form-control-sm" formControlName="custo">
+            <div class="text-danger small" *ngIf="manutencaoForm.get('custo')?.invalid && manutencaoForm.get('custo')?.touched">
+              Custo é obrigatório
+            </div>
+          </div>
+
+          <div class="mb-2" *ngIf="editando">
+            <label class="form-label small fw-semibold">Status</label>
+            <select class="form-select form-select-sm" formControlName="status">
+              <option value="PENDENTE">Pendente</option>
+              <option value="EM_ANDAMENTO">Em Andamento</option>
+              <option value="URGENTE">Urgente</option>
+              <option value="CONCLUIDA">Concluída</option>
+              <option value="CANCELADA">Cancelada</option>
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Próxima Manutenção (km)</label>
+            <input type="number" class="form-control form-control-sm" formControlName="proximaManutencaoKm">
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Próxima Manutenção (data)</label>
+            <input type="date" class="form-control form-control-sm" formControlName="proximaManutencaoData">
+          </div>
+
+          <div class="mb-2">
+            <button type="button" class="btn btn-sm btn-outline-info w-100" (click)="calcularProximaManutencao()">
+              <i class="bi bi-calculator"></i> Calcular Automático
+            </button>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Descrição *</label>
+            <textarea class="form-control form-control-sm" formControlName="descricao" rows="2" placeholder="Descreva os serviços realizados..."></textarea>
+            <div class="text-danger small" *ngIf="manutencaoForm.get('descricao')?.invalid && manutencaoForm.get('descricao')?.touched">
+              Descrição é obrigatória (mínimo 5 caracteres)
+            </div>
+          </div>
+
+          <hr class="my-2">
+
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-sm btn-secondary" (click)="fecharModal()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-sm btn-info text-white" [disabled]="manutencaoForm.invalid || carregandoModal">
+              <span *ngIf="carregandoModal" class="spinner-border spinner-border-sm me-1"></span>
+              <i class="bi bi-save" *ngIf="!carregandoModal"></i>
+              {{editando ? 'Atualizar' : 'Salvar'}}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL DE AÇÕES ==================== -->
+<div class="modal fade" [class.show]="mostrarModalAcao" [style.display]="mostrarModalAcao ? 'block' : 'none'" tabindex="-1" *ngIf="mostrarModalAcao && tipoAcao && manutencaoSelecionada">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header py-2" [ngClass]="{
+        'bg-success text-white': tipoAcao === 'iniciar' || tipoAcao === 'concluir',
+        'bg-danger text-white': tipoAcao === 'cancelar'
+      }">
+        <h6 class="modal-title">
+          <i class="bi me-2" [ngClass]="{
+            'bi-play-circle': tipoAcao === 'iniciar',
+            'bi-check-circle': tipoAcao === 'concluir',
+            'bi-x-circle': tipoAcao === 'cancelar'
+          }"></i>
+          {{tipoAcao === 'iniciar' ? 'Iniciar Manutenção' : tipoAcao === 'concluir' ? 'Concluir Manutenção' : 'Cancelar Manutenção'}}
+        </h6>
+        <button type="button" class="btn-close btn-close-white btn-sm" (click)="fecharModal()"></button>
+      </div>
+      <div class="modal-body py-3 text-center">
+        <i class="bi display-4 d-block mb-2" [ngClass]="{
+          'bi-play-circle text-success': tipoAcao === 'iniciar',
+          'bi-check-circle text-success': tipoAcao === 'concluir',
+          'bi-x-circle text-danger': tipoAcao === 'cancelar'
+        }"></i>
+        <h6>{{tipoAcao === 'iniciar' ? 'Iniciar Manutenção' : tipoAcao === 'concluir' ? 'Concluir Manutenção' : 'Cancelar Manutenção'}}</h6>
+        
+        <div class="bg-light rounded p-2 mb-3 small text-start">
+          <p class="mb-1"><strong>Veículo:</strong> {{manutencaoSelecionada.veiculo?.matricula || 'N/A'}}</p>
+          <p class="mb-1"><strong>Tipo:</strong> {{getTipoManutencaoLabel(manutencaoSelecionada.tipoManutencao!)}}</p>
+          <p class="mb-0"><strong>Data:</strong> {{formatarData(manutencaoSelecionada.dataManutencao!)}}</p>
+        </div>
+
+        <div *ngIf="tipoAcao === 'concluir'" class="mb-3 text-start">
+          <label class="form-label small fw-semibold">Observações (opcional)</label>
+          <textarea class="form-control form-control-sm" [(ngModel)]="observacoes" rows="2"
+                    placeholder="Adicione observações sobre a conclusão..."></textarea>
+        </div>
+
+        <div *ngIf="tipoAcao === 'cancelar'" class="mb-2 text-start">
+          <label class="form-label small fw-semibold">Motivo do Cancelamento *</label>
+          <textarea class="form-control form-control-sm" [(ngModel)]="motivoCancelamento" rows="2"
+                    placeholder="Informe o motivo do cancelamento..."></textarea>
+          <div class="text-danger small mt-1" *ngIf="tipoAcao === 'cancelar' && !motivoCancelamento?.trim() && tentouConfirmar">
+            Motivo do cancelamento é obrigatório
+          </div>
+        </div>
+
+        <div class="alert alert-warning py-1 small" *ngIf="tipoAcao === 'cancelar'">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          Esta ação não pode ser desfeita.
+        </div>
+        
+        <div class="alert alert-info py-1 small" *ngIf="tipoAcao === 'iniciar'">
+          <i class="bi bi-info-circle me-1"></i>
+          A manutenção será marcada como "Em Andamento".
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="fecharModal()">
+          Cancelar
+        </button>
+        <button class="btn btn-sm" (click)="confirmarAcao()"
+                [disabled]="carregando || (tipoAcao === 'cancelar' && !motivoCancelamento?.trim())"
+                [ngClass]="{
+                  'btn-success': tipoAcao === 'iniciar' || tipoAcao === 'concluir',
+                  'btn-danger': tipoAcao === 'cancelar'
+                }">
+          <span *ngIf="carregando" class="spinner-border spinner-border-sm me-1"></span>
+          <i class="bi" [ngClass]="{
+            'bi-play-fill': tipoAcao === 'iniciar',
+            'bi-check-lg': tipoAcao === 'concluir',
+            'bi-x-lg': tipoAcao === 'cancelar'
+          }"></i>
+          {{tipoAcao === 'iniciar' ? 'Iniciar' : tipoAcao === 'concluir' ? 'Concluir' : 'Cancelar'}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop dos Modais -->
+<div class="modal-backdrop fade show" *ngIf="mostrarModal || mostrarModalAcao" style="z-index: 1040;"></div>
