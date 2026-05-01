@@ -60,13 +60,13 @@ import { RelatorioManutencaoService } from '../../relatorioManutecao/relatorio-s
   styleUrls: ['./manutencoes-list.component.css']
 })
 export class ManutencoesListComponent implements OnInit {
-router = inject(Router);
+ router = inject(Router);
   loginService = inject(LoginService);
 
   // Abas
   abaAtiva: 'lista' | 'relatorio' = 'lista';
 
-  // Dados principais
+  // Dados principais 
   manutencoes: Manutencao[] = [];
   veiculos: Veiculo[] = [];
   dataSource = new MatTableDataSource<Manutencao>([]);
@@ -87,13 +87,16 @@ router = inject(Router);
 
   // Modal
   mostrarModal: boolean = false;
-  mostrarModalAcao: boolean = false;
   editando: boolean = false;
   manutencaoSelecionada: Manutencao | null = null;
-  tipoAcao: 'iniciar' | 'concluir' | 'cancelar' | null = null;
+
+  // Modais de ação
+  modalIniciar: boolean = false;
+  modalConcluir: boolean = false;
+  modalCancelar: boolean = false;
+  tentouCancelar: boolean = false;
   observacoes: string = '';
   motivoCancelamento: string = '';
-  tentouConfirmar: boolean = false;
 
   // Formulário
   manutencaoForm!: FormGroup;
@@ -111,7 +114,6 @@ router = inject(Router);
   totalGeralGasto: number = 0;
   totalGeralManutencoes: number = 0;
 
-  // Paginação
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   constructor(
@@ -125,7 +127,6 @@ router = inject(Router);
     this.carregarVeiculos();
   }
 
-  // Inicializar formulário
   initForm(): void {
     this.manutencaoForm = this.fb.group({
       veiculo_id: ['', Validators.required],
@@ -140,7 +141,6 @@ router = inject(Router);
     });
   }
 
-  // Carregar veículos
   carregarVeiculos(): void {
     this.manutencaoService.getVeiculos().subscribe({
       next: (data) => {
@@ -152,7 +152,6 @@ router = inject(Router);
     });
   }
 
-  // Carregar manutenções
   carregarDados(): void {
     this.carregando = true;
     this.manutencaoService.getAll().subscribe({
@@ -172,7 +171,6 @@ router = inject(Router);
     });
   }
 
-  // Calcular alertas
   calcularAlertas(): void {
     this.alertas = [];
     const hoje = new Date();
@@ -187,7 +185,6 @@ router = inject(Router);
     });
   }
 
-  // Salvar manutenção
   salvarManutencao(): void {
     if (this.manutencaoForm.invalid) {
       Object.keys(this.manutencaoForm.controls).forEach(key => {
@@ -205,10 +202,12 @@ router = inject(Router);
           this.carregarDados();
           this.fecharModal();
           this.carregandoModal = false;
+          Swal.fire('Sucesso', 'Manutenção atualizada com sucesso!', 'success');
         },
         error: (error) => {
           console.error('Erro ao atualizar manutenção:', error);
           this.carregandoModal = false;
+          Swal.fire('Erro', 'Erro ao atualizar manutenção', 'error');
         }
       });
     } else {
@@ -217,16 +216,18 @@ router = inject(Router);
           this.carregarDados();
           this.fecharModal();
           this.carregandoModal = false;
+          Swal.fire('Sucesso', 'Manutenção criada com sucesso!', 'success');
         },
         error: (error) => {
           console.error('Erro ao criar manutenção:', error);
           this.carregandoModal = false;
+          Swal.fire('Erro', 'Erro ao criar manutenção', 'error');
         }
       });
     }
   }
 
-  // Calcular próxima manutenção
+
   calcularProximaManutencao(): void {
     const kmAtual = this.manutencaoForm.get('kilometragemVeiculo')?.value;
     if (kmAtual) {
@@ -235,10 +236,9 @@ router = inject(Router);
     }
   }
 
-  // Abrir modal de cadastro
   abrirModalCadastro(manutencao?: Manutencao): void {
     this.editando = !!manutencao;
-    
+
     if (manutencao) {
       this.manutencaoSelecionada = manutencao;
       this.manutencaoForm.patchValue({
@@ -253,114 +253,173 @@ router = inject(Router);
         descricao: manutencao.descricao
       });
     } else {
-      this.manutencaoForm.reset({
-        status: 'PENDENTE'
-      });
+      this.manutencaoForm.reset({ status: 'PENDENTE' });
       this.manutencaoSelecionada = null;
     }
-    
     this.mostrarModal = true;
   }
 
-  // Fechar modal
   fecharModal(): void {
     this.mostrarModal = false;
-    this.mostrarModalAcao = false;
     this.manutencaoSelecionada = null;
-    this.tipoAcao = null;
-    this.observacoes = '';
-    this.motivoCancelamento = '';
-    this.tentouConfirmar = false;
     this.manutencaoForm.reset();
   }
 
-  // Abrir modal de ação
-  abrirModalAcao(tipo: 'iniciar' | 'concluir' | 'cancelar', manutencao: Manutencao): void {
-    this.tipoAcao = tipo;
+  // ========== MÉTODOS DOS MODAIS DE AÇÃO ==========
+
+  abrirModalIniciar(manutencao: Manutencao): void {
+    this.manutencaoSelecionada = manutencao;
+    this.modalIniciar = true;
+  }
+
+  abrirModalConcluir(manutencao: Manutencao): void {
     this.manutencaoSelecionada = manutencao;
     this.observacoes = '';
-    this.motivoCancelamento = '';
-    this.tentouConfirmar = false;
-    this.mostrarModalAcao = true;
+    this.modalConcluir = true;
   }
 
-  // Confirmar ação
-  confirmarAcao(): void {
-    if (this.tipoAcao === 'cancelar' && !this.motivoCancelamento?.trim()) {
-      this.tentouConfirmar = true;
+  abrirModalCancelar(manutencao: Manutencao): void {
+    this.manutencaoSelecionada = manutencao;
+    this.motivoCancelamento = '';
+    this.tentouCancelar = false;
+    this.modalCancelar = true;
+  }
+
+  fecharModalIniciar(): void {
+    this.modalIniciar = false;
+    this.manutencaoSelecionada = null;
+  }
+
+  fecharModalConcluir(): void {
+    this.modalConcluir = false;
+    this.manutencaoSelecionada = null;
+    this.observacoes = '';
+  }
+
+  fecharModalCancelar(): void {
+    this.modalCancelar = false;
+    this.manutencaoSelecionada = null;
+    this.motivoCancelamento = '';
+    this.tentouCancelar = false;
+  }
+
+  confirmarIniciar(): void {
+    this.carregando = true;
+    this.manutencaoService.iniciarManutencao(this.manutencaoSelecionada!.id).subscribe({
+      next: () => {
+        this.carregarDados();
+        this.carregarRelatorioPorVeiculo();
+        this.fecharModalIniciar();
+        this.carregando = false;
+        Swal.fire('Sucesso', 'Manutenção iniciada com sucesso!', 'success');
+      },
+      error: (error) => {
+        console.error('Erro ao iniciar manutenção:', error);
+        this.carregando = false;
+        Swal.fire('Erro', 'Erro ao iniciar manutenção', 'error');
+      }
+    });
+  }
+
+  confirmarConcluir(): void {
+    this.carregando = true;
+    this.manutencaoService.concluirManutencao(this.manutencaoSelecionada!.id, this.observacoes).subscribe({
+      next: () => {
+        this.carregarDados();
+        this.carregarRelatorioPorVeiculo();
+        this.fecharModalConcluir();
+        this.carregando = false;
+        Swal.fire('Sucesso', 'Manutenção concluída com sucesso!', 'success');
+      },
+      error: (error) => {
+        console.error('Erro ao concluir manutenção:', error);
+        this.carregando = false;
+        Swal.fire('Erro', 'Erro ao concluir manutenção', 'error');
+      }
+    });
+  }
+
+  confirmarCancelar(): void {
+    if (!this.motivoCancelamento?.trim()) {
+      this.tentouCancelar = true;
+      Swal.fire('Atenção', 'Motivo do cancelamento é obrigatório', 'warning');
       return;
     }
-
     this.carregando = true;
-
-    switch (this.tipoAcao) {
-      case 'iniciar':
-        this.manutencaoService.iniciarManutencao(this.manutencaoSelecionada!.id).subscribe({
-          next: () => {
-            this.carregarDados();
-            this.carregarRelatorioPorVeiculo();
-            this.fecharModal();
-            this.carregando = false;
-          },
-          error: (error) => {
-            console.error('Erro ao iniciar manutenção:', error);
-            this.carregando = false;
-          }
-        });
-        break;
-      case 'concluir':
-        this.manutencaoService.concluirManutencao(this.manutencaoSelecionada!.id, this.observacoes).subscribe({
-          next: () => {
-            this.carregarDados();
-            this.carregarRelatorioPorVeiculo();
-            this.fecharModal();
-            this.carregando = false;
-          },
-          error: (error) => {
-            console.error('Erro ao concluir manutenção:', error);
-            this.carregando = false;
-          }
-        });
-        break;
-      case 'cancelar':
-        this.manutencaoService.cancelarManutencao(this.manutencaoSelecionada!.id, this.motivoCancelamento).subscribe({
-          next: () => {
-            this.carregarDados();
-            this.carregarRelatorioPorVeiculo();
-            this.fecharModal();
-            this.carregando = false;
-          },
-          error: (error) => {
-            console.error('Erro ao cancelar manutenção:', error);
-            this.carregando = false;
-          }
-        });
-        break;
-    }
+    this.manutencaoService.cancelarManutencao(this.manutencaoSelecionada!.id, this.motivoCancelamento).subscribe({
+      next: () => {
+        this.carregarDados();
+        this.carregarRelatorioPorVeiculo();
+        this.fecharModalCancelar();
+        this.carregando = false;
+        Swal.fire('Sucesso', 'Manutenção cancelada com sucesso!', 'success');
+      },
+      error: (error) => {
+        console.error('Erro ao cancelar manutenção:', error);
+        this.carregando = false;
+        Swal.fire('Erro', 'Erro ao cancelar manutenção', 'error');
+      }
+    });
   }
 
-  // Ver detalhes
+  // Ver detalhes com SweetAlert
   verDetalhes(manutencao: Manutencao): void {
-    alert(`Detalhes da manutenção:\n\n` +
-          `Veículo: ${manutencao.veiculo?.matricula || 'N/A'}\n` +
-          `Tipo: ${this.getTipoManutencaoLabel(manutencao.tipoManutencao!)}\n` +
-          `Custo: ${this.formatarMoeda(manutencao.custo)}\n` +
-          `Status: ${this.getStatusLabel(manutencao.status!)}`);
+    Swal.fire({
+      title: 'Detalhes da Manutenção',
+      html: `
+        <div style="text-align: left">
+          <p><strong>Veículo:</strong> ${manutencao.veiculo?.matricula || 'N/A'}</p>
+          <p><strong>Tipo:</strong> ${this.getTipoManutencaoLabel(manutencao.tipoManutencao!)}</p>
+          <p><strong>Custo:</strong> ${this.formatarMoeda(manutencao.custo)}</p>
+          <p><strong>Data:</strong> ${this.formatarData(manutencao.dataManutencao!)}</p>
+          <p><strong>Status:</strong> ${this.getStatusLabel(manutencao.status!)}</p>
+          <p><strong>Descrição:</strong> ${manutencao.descricao || 'N/A'}</p>
+        </div>
+      `,
+      icon: 'info',
+      confirmButtonText: 'Fechar',
+      confirmButtonColor: '#0dcaf0'
+    });
   }
+  getStatusClass(status: string): string {
+  switch(status) {
+    case 'PENDENTE': return 'bg-warning text-dark';
+    case 'EM_ANDAMENTO': return 'bg-info text-white';
+    case 'CONCLUIDA': return 'bg-success text-white';
+    case 'CANCELADA': return 'bg-danger text-white';
+    case 'ATRASADA': return 'bg-danger text-white';
+    case 'AGENDADA': return 'bg-primary text-white';
+    case 'AGENDADA_HOJE': return 'bg-primary text-white';
+    default: return 'bg-secondary text-white';
+  }
+}
 
-  // Excluir manutenção
+  // Excluir com SweetAlert
   excluirManutencao(manutencao: Manutencao): void {
-    if (confirm(`Deseja excluir a manutenção do veículo ${manutencao.veiculo?.matricula}?`)) {
-      this.manutencaoService.delete(manutencao.id!).subscribe({
-        next: () => {
-          this.carregarDados();
-          this.carregarRelatorioPorVeiculo();
-        },
-        error: (error) => {
-          console.error('Erro ao excluir manutenção:', error);
-        }
-      });
-    }
+    Swal.fire({
+      title: 'Tem certeza?',
+      text: `Deseja excluir a manutenção do veículo ${manutencao.veiculo?.matricula}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sim, excluir!',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.manutencaoService.delete(manutencao.id!).subscribe({
+          next: () => {
+            this.carregarDados();
+            this.carregarRelatorioPorVeiculo();
+            Swal.fire('Excluído!', 'Manutenção excluída com sucesso.', 'success');
+          },
+          error: (error) => {
+            console.error('Erro ao excluir manutenção:', error);
+            Swal.fire('Erro!', 'Erro ao excluir manutenção.', 'error');
+          }
+        });
+      }
+    });
   }
 
   // Aplicar filtros
@@ -399,12 +458,9 @@ router = inject(Router);
     this.erroRelatorio = '';
     this.filtroAtivo = 'veiculo';
 
-    // Agrupar manutenções por veículo
     const relatorioMap = new Map();
-    
     this.manutencoes.forEach(manutencao => {
       const veiculoNome = manutencao.veiculo?.matricula || 'Sem veículo';
-      
       if (!relatorioMap.has(veiculoNome)) {
         relatorioMap.set(veiculoNome, {
           veiculo: veiculoNome,
@@ -414,13 +470,12 @@ router = inject(Router);
           status: manutencao.status
         });
       }
-      
       const item = relatorioMap.get(veiculoNome);
       item.totalManutencoes++;
       item.custoTotal += manutencao.custo || 0;
       item.custoMedio = item.custoTotal / item.totalManutencoes;
     });
-    
+
     this.relatorios = Array.from(relatorioMap.values());
     this.relatoriosFiltrados = [...this.relatorios];
     this.extrairVeiculosRelatorio();
@@ -450,12 +505,10 @@ router = inject(Router);
       const dataManu = new Date(m.dataManutencao!);
       return dataManu >= inicioDate && dataManu <= fimDate;
     });
-    
+
     const relatorioMap = new Map();
-    
     manutencoesFiltradas.forEach(manutencao => {
       const veiculoNome = manutencao.veiculo?.matricula || 'Sem veículo';
-      
       if (!relatorioMap.has(veiculoNome)) {
         relatorioMap.set(veiculoNome, {
           veiculo: veiculoNome,
@@ -465,13 +518,12 @@ router = inject(Router);
           status: manutencao.status
         });
       }
-      
       const item = relatorioMap.get(veiculoNome);
       item.totalManutencoes++;
       item.custoTotal += manutencao.custo || 0;
       item.custoMedio = item.custoTotal / item.totalManutencoes;
     });
-    
+
     this.relatorios = Array.from(relatorioMap.values());
     this.relatoriosFiltrados = [...this.relatorios];
     this.extrairVeiculosRelatorio();
@@ -530,16 +582,11 @@ router = inject(Router);
   ordenarPor(coluna: string): void {
     this.relatoriosFiltrados.sort((a, b) => {
       switch(coluna) {
-        case 'veiculo':
-          return (a.veiculo || '').localeCompare(b.veiculo || '');
-        case 'totalManutencoes':
-          return (b.totalManutencoes || 0) - (a.totalManutencoes || 0);
-        case 'totalGasto':
-          return (b.custoTotal || 0) - (a.custoTotal || 0);
-        case 'mediaPorManutencao':
-          return (b.custoMedio || 0) - (a.custoMedio || 0);
-        default:
-          return 0;
+        case 'veiculo': return (a.veiculo || '').localeCompare(b.veiculo || '');
+        case 'totalManutencoes': return (b.totalManutencoes || 0) - (a.totalManutencoes || 0);
+        case 'totalGasto': return (b.custoTotal || 0) - (a.custoTotal || 0);
+        case 'mediaPorManutencao': return (b.custoMedio || 0) - (a.custoMedio || 0);
+        default: return 0;
       }
     });
   }
@@ -561,14 +608,9 @@ router = inject(Router);
   // ========== MÉTODOS AUXILIARES ==========
 
   get hojeString(): string {
-    return this.formatarDataParaInput(this.hoje);
-  }
-
-  formatarDataParaInput(data: Date | null): string {
-    if (!data) return '';
-    const year = data.getFullYear();
-    const month = (data.getMonth() + 1).toString().padStart(2, '0');
-    const day = data.getDate().toString().padStart(2, '0');
+    const year = this.hoje.getFullYear();
+    const month = (this.hoje.getMonth() + 1).toString().padStart(2, '0');
+    const day = this.hoje.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
@@ -600,17 +642,18 @@ router = inject(Router);
     return labels[tipo] || tipo;
   }
 
-  getStatusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      'PENDENTE': 'Pendente',
-      'EM_ANDAMENTO': 'Em Andamento',
-      'CONCLUIDA': 'Concluída',
-      'CANCELADA': 'Cancelada',
-      'ATRASADA': 'Atrasada',
-      'AGENDADA': 'Agendada'
-    };
-    return labels[status] || status;
-  }
+getStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    'PENDENTE': 'Pendente',
+    'EM_ANDAMENTO': 'Em Andamento',
+    'CONCLUIDA': 'Concluída',
+    'CANCELADA': 'Cancelada',
+    'ATRASADA': 'Atrasada',
+    'AGENDADA': 'Agendada',
+    'AGENDADA_HOJE': 'Agendada Hoje'
+  };
+  return labels[status] || status;
+}
 
   getTotalCount(): number {
     return this.manutencoes.length;
