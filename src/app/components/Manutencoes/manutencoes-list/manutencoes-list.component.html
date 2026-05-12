@@ -698,7 +698,7 @@
           <p class="mb-1"><strong>Veículo:</strong> {{manutencaoSelecionada.veiculo?.matricula || 'N/A'}}</p>
           <p class="mb-1"><strong>Tipo:</strong> {{getTipoManutencaoLabel(manutencaoSelecionada.tipoManutencao!)}}</p>
           <p class="mb-0"><strong>Data:</strong> {{formatarData(manutencaoSelecionada.dataManutencao!)}}</p>
-        </div>
+        </div> 
         <div class="mb-2">
           <label class="form-label small fw-semibold">Motivo do Cancelamento *</label>
           <textarea class="form-control form-control-sm" [(ngModel)]="motivoCancelamento" rows="2" placeholder="Informe o motivo do cancelamento..."></textarea>
@@ -720,4 +720,3 @@
 <!-- Backdrop dos Modais -->
 <div class="modal-backdrop fade show" *ngIf="mostrarModal || modalIniciar || modalConcluir || modalCancelar" style="z-index: 1040;"></div>
 
-       

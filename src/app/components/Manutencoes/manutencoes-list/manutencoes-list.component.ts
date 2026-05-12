@@ -66,7 +66,7 @@ export class ManutencoesListComponent implements OnInit {
   // Abas
   abaAtiva: 'lista' | 'relatorio' = 'lista';
 
-  // Dados principais 
+  // Dados principais
   manutencoes: Manutencao[] = [];
   veiculos: Veiculo[] = [];
   dataSource = new MatTableDataSource<Manutencao>([]);
@@ -161,7 +161,7 @@ export class ManutencoesListComponent implements OnInit {
         if (this.paginator) {
           this.dataSource.paginator = this.paginator;
         }
-        this.calcularAlertas();
+        this.getAlertas();;
         this.carregando = false;
       },
       error: (error) => {
@@ -171,19 +171,18 @@ export class ManutencoesListComponent implements OnInit {
     });
   }
 
-  calcularAlertas(): void {
-    this.alertas = [];
-    const hoje = new Date();
-    this.manutencoes.forEach(m => {
-      if (m.proximaManutencaoData) {
-        const proxima = new Date(m.proximaManutencaoData);
-        const diffDias = Math.ceil((proxima.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDias <= 7 && diffDias >= 0) {
-          this.alertas.push(`Manutenção próxima para ${m.veiculo?.matricula} em ${diffDias} dias`);
-        }
+//busca os alertas para a exibicao no dashboard
+  getAlertas(): string[] {
+
+    this.manutencaoService.getAlertas().subscribe({
+      next: (data) => {
+        this.alertas = data;
       }
-    });
+    }
+  );
+    return this.alertas;
   }
+
 
   salvarManutencao(): void {
     if (this.manutencaoForm.invalid) {
