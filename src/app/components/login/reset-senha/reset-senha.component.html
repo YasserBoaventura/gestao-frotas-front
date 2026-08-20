@@ -1,216 +1,309 @@
-<div class="password-recovery-container">
-  <div class="recovery-card">
-
-    <!-- Step 1: Validar Usuário e Email -->
-    <div *ngIf="currentStep === 1" class="step-container">
-      <div class="recovery-header">
-        <mat-icon class="recovery-icon">lock_reset</mat-icon>
-        <h2>Recuperar Senha</h2>
-        <p>Digite seu username e email para verificar sua identidade</p>
+<div class="container-fluid px-3 py-3 bg-light min-vh-100">
+  <!-- Header -->
+  <div class="card mb-3 border-0 shadow-sm" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #cbd5e1 100%);">
+    <div class="card-body py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-3">
+        <div class="dashboard-icon-wrapper">
+          <i class="bi bi-shield-lock fs-2" style="color: #4a5568;"></i>
+        </div>
+        <div>
+          <h5 class="mb-0" style="color: #2d3748;">Recuperar Senha</h5>
+          <p class="mb-0 small" style="color: #718096;">Recupere o acesso à sua conta</p>
+        </div>
       </div>
-
-      <form *ngIf="validationForm" [formGroup]="validationForm" class="recovery-form" (ngSubmit)="onValidateUser()">
-
-        <div class="form-group">
-          <label for="username">Username *</label>
-          <div class="input-container">
-            <mat-icon class="input-icon">person</mat-icon>
-            <input
-              type="text"
-              id="username"
-              formControlName="username"
-              placeholder="Digite seu username"
-              class="form-input">
-          </div>
-          <div class="error-message" *ngIf="validationForm.get('username')?.invalid && validationForm.get('username')?.touched">
-            Username é obrigatório
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="email">Email *</label>
-          <div class="input-container">
-            <mat-icon class="input-icon">email</mat-icon>
-            <input
-              type="email"
-              id="email"
-              formControlName="email"
-              placeholder="Digite seu email"
-              class="form-input">
-          </div>
-          <div class="error-message" *ngIf="validationForm.get('email')?.invalid && validationForm.get('email')?.touched">
-            Email é obrigatório
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          class="submit-btn"
-          [disabled]="!validationForm?.valid || isLoading">
-          <mat-icon *ngIf="!isLoading">verified_user</mat-icon>
-          <span *ngIf="isLoading" class="loading-text">⏳</span>
-          {{ isLoading ? 'Validando...' : 'Verificar Identidade' }}
+      <div class="d-flex gap-1">
+        <button class="btn btn-sm btn-outline-secondary" (click)="goBackToStep1()" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-arrow-left"></i> Voltar
         </button>
-      </form>
-    </div>
-<!-- Step 2: Campos de Redefinição -->
-<div *ngIf="currentStep === 2" class="step-container">
-  <div class="recovery-header">
-    <mat-icon class="recovery-icon">password</mat-icon>
-    <h2>Redefinir Senha</h2>
-    <p>Complete os dados para redefinir sua senha</p>
-  </div>
-
-  <!-- Exibe a pergunta de segurança -->
-  <div class="pergunta-container" *ngIf="perguntaSeguranca">
-    <div class="pergunta-header">
-      <mat-icon class="pergunta-icon">help</mat-icon>
-      <h3>Pergunta de Segurança</h3>
-    </div>
-    <div class="pergunta-texto">
-      {{ perguntaSeguranca }}
+        <button class="btn btn-sm btn-outline-secondary" (click)="navegarPara('login')" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-box-arrow-in-right"></i> Login
+        </button>
+      </div>
     </div>
   </div>
 
-  <form *ngIf="resetForm" [formGroup]="resetForm" class="recovery-form" (ngSubmit)="onResetPassword()">
+  <!-- Conteúdo Principal -->
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow-sm border-0">
 
-    <!-- Token (agora preenchido automaticamente) -->
-    <div class="form-group">
-      <label for="token">Token de Verificação *</label>
-      <div class="input-container">
-        <mat-icon class="input-icon">vpn_key</mat-icon>
-        <input
-          type="text"
-          id="token"
-          formControlName="token"
-          placeholder="Token gerado automaticamente"
-          class="form-input"
-          readonly>
-      </div>
-      <div class="token-info">
-        <mat-icon>info</mat-icon>
-        <span>Token gerado automaticamente</span>
+        <!-- Step 1: Validar Usuário e Email -->
+        <div *ngIf="currentStep === 1" class="step-container">
+          <div class="card-header bg-white border-0 pt-4 pb-0">
+            <div class="text-center mb-3">
+              <div class="avatar-circle-large">
+                <i class="bi bi-lock-reset fs-1" style="color: #4a5568;"></i>
+              </div>
+              <h5 class="mt-3 mb-1 fw-semibold" style="color: #2d3748;">Recuperar Senha</h5>
+              <p class="small text-muted">Digite seu username e email para verificar sua identidade</p>
+            </div>
+          </div>
+
+          <div class="card-body p-4">
+            <form *ngIf="validationForm" [formGroup]="validationForm" (ngSubmit)="onValidateUser()">
+
+              <!-- Username -->
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">
+                  <i class="bi bi-person me-1"></i>Username *
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+                    <i class="bi bi-person small"></i>
+                  </span>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    formControlName="username"
+                    placeholder="Digite seu username"
+                    [class.is-invalid]="validationForm.get('username')?.invalid && validationForm.get('username')?.touched"
+                    style="border-color: #e2e8f0;">
+                </div>
+                <div class="invalid-feedback small" *ngIf="validationForm.get('username')?.invalid && validationForm.get('username')?.touched">
+                  Username é obrigatório
+                </div>
+              </div>
+
+              <!-- Email -->
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">
+                  <i class="bi bi-envelope me-1"></i>Email *
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+                    <i class="bi bi-envelope small"></i>
+                  </span>
+                  <input
+                    type="email"
+                    class="form-control form-control-sm"
+                    formControlName="email"
+                    placeholder="Digite seu email"
+                    [class.is-invalid]="validationForm.get('email')?.invalid && validationForm.get('email')?.touched"
+                    style="border-color: #e2e8f0;">
+                </div>
+                <div class="invalid-feedback small" *ngIf="validationForm.get('email')?.invalid && validationForm.get('email')?.touched">
+                  Email é obrigatório
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                class="btn btn-sm w-100 mt-2"
+                style="background: #4a5568; color: white; border: none; padding: 8px;"
+                [disabled]="!validationForm?.valid || isLoading">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" style="width: 14px; height: 14px;"></span>
+                <i class="bi bi-check-circle" *ngIf="!isLoading"></i>
+                {{ isLoading ? 'Validando...' : 'Verificar Identidade' }}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Step 2: Redefinir Senha -->
+        <div *ngIf="currentStep === 2" class="step-container">
+          <div class="card-header bg-white border-0 pt-4 pb-0">
+            <div class="text-center mb-3">
+              <div class="avatar-circle-large">
+                <i class="bi bi-key fs-1" style="color: #4a5568;"></i>
+              </div>
+              <h5 class="mt-3 mb-1 fw-semibold" style="color: #2d3748;">Redefinir Senha</h5>
+              <p class="small text-muted">Complete os dados para redefinir sua senha</p>
+            </div>
+          </div>
+
+          <div class="card-body p-4">
+            <!-- Pergunta de Segurança -->
+            <div *ngIf="perguntaSeguranca" class="alert alert-info mb-3" style="background: #ebf8ff; border-color: #bee3f8; color: #2b6cb0; border-radius: 8px; padding: 12px;">
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-question-circle fs-5" style="color: #2b6cb0;"></i>
+                <div>
+                  <strong class="small">Pergunta de Segurança:</strong>
+                  <p class="mb-0 mt-1" style="font-size: 0.9rem;">{{ perguntaSeguranca }}</p>
+                </div>
+              </div>
+            </div>
+
+            <form *ngIf="resetForm" [formGroup]="resetForm" (ngSubmit)="onResetPassword()">
+
+              <!-- Token -->
+              <div class="mb-2">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">
+                  <i class="bi bi-vpn-key me-1"></i>Token de Verificação *
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+                    <i class="bi bi-vpn-key small"></i>
+                  </span>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    formControlName="token"
+                    placeholder="Token gerado automaticamente"
+                    readonly
+                    style="border-color: #e2e8f0; background: #f7fafc;">
+                </div>
+                <div class="small text-muted mt-1" style="font-size: 0.65rem;">
+                  <i class="bi bi-info-circle"></i> Token gerado automaticamente
+                </div>
+              </div>
+
+              <!-- NUIT -->
+              <div class="mb-2">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">
+                  <i class="bi bi-badge me-1"></i>NUIT *
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+                    <i class="bi bi-badge small"></i>
+                  </span>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    formControlName="nuit"
+                    placeholder="Digite seu NUIT"
+                    [class.is-invalid]="resetForm.get('nuit')?.invalid && resetForm.get('nuit')?.touched"
+                    style="border-color: #e2e8f0;">
+                </div>
+                <div class="invalid-feedback small" *ngIf="resetForm.get('nuit')?.invalid && resetForm.get('nuit')?.touched">
+                  NUIT é obrigatório
+                </div>
+              </div>
+
+              <!-- Código de Verificação -->
+              <div class="mb-2">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">
+                  <i class="bi bi-shield-check me-1"></i>Código de Verificação *
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+                    <i class="bi bi-shield-check small"></i>
+                  </span>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    formControlName="codigoVerificacao"
+                    placeholder="Digite o código de verificação"
+                    [class.is-invalid]="resetForm.get('codigoVerificacao')?.invalid && resetForm.get('codigoVerificacao')?.touched"
+                    style="border-color: #e2e8f0;">
+                </div>
+                <div class="invalid-feedback small" *ngIf="resetForm.get('codigoVerificacao')?.invalid && resetForm.get('codigoVerificacao')?.touched">
+                  Código de Verificação é obrigatório
+                </div>
+              </div>
+
+              <!-- Resposta de Segurança -->
+              <div class="mb-2">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">
+                  <i class="bi bi-shield-lock me-1"></i>Resposta de Segurança *
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+                    <i class="bi bi-shield-lock small"></i>
+                  </span>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    formControlName="respostaSeguranca"
+                    placeholder="Digite a resposta para a pergunta acima"
+                    [class.is-invalid]="resetForm.get('respostaSeguranca')?.invalid && resetForm.get('respostaSeguranca')?.touched"
+                    style="border-color: #e2e8f0;">
+                </div>
+                <div class="invalid-feedback small" *ngIf="resetForm.get('respostaSeguranca')?.invalid && resetForm.get('respostaSeguranca')?.touched">
+                  Resposta de segurança é obrigatória
+                </div>
+              </div>
+
+              <!-- Nova Senha -->
+              <div class="mb-2">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">
+                  <i class="bi bi-lock me-1"></i>Nova Senha *
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+                    <i class="bi bi-lock small"></i>
+                  </span>
+                  <input
+                    [type]="showNewPassword ? 'text' : 'password'"
+                    class="form-control form-control-sm"
+                    formControlName="novaSenha"
+                    placeholder="Digite a nova senha"
+                    [class.is-invalid]="resetForm.get('novaSenha')?.invalid && resetForm.get('novaSenha')?.touched"
+                    style="border-color: #e2e8f0;">
+                  <button class="btn btn-outline-secondary btn-sm" type="button" (click)="toggleNewPasswordVisibility()" style="border-color: #cbd5e1; color: #2d3748; padding: 2px 8px;">
+                    <i class="bi" [ngClass]="showNewPassword ? 'bi-eye-slash' : 'bi-eye'" style="font-size: 0.8rem;"></i>
+                  </button>
+                </div>
+                <div class="invalid-feedback small" *ngIf="resetForm.get('novaSenha')?.invalid && resetForm.get('novaSenha')?.touched">
+                  <span *ngIf="resetForm.get('novaSenha')?.errors?.['required']">Nova senha é obrigatória</span>
+                  <span *ngIf="resetForm.get('novaSenha')?.errors?.['minlength']">A senha deve ter pelo menos 6 caracteres</span>
+                </div>
+              </div>
+
+              <!-- Confirmar Senha -->
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">
+                  <i class="bi bi-check-circle me-1"></i>Confirmar Nova Senha *
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+                    <i class="bi bi-check-circle small"></i>
+                  </span>
+                  <input
+                    [type]="showConfirmPassword ? 'text' : 'password'"
+                    class="form-control form-control-sm"
+                    formControlName="confirmarSenha"
+                    placeholder="Confirme a nova senha"
+                    [class.is-invalid]="resetForm.get('confirmarSenha')?.invalid && resetForm.get('confirmarSenha')?.touched"
+                    style="border-color: #e2e8f0;">
+                  <button class="btn btn-outline-secondary btn-sm" type="button" (click)="toggleConfirmPasswordVisibility()" style="border-color: #cbd5e1; color: #2d3748; padding: 2px 8px;">
+                    <i class="bi" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'" style="font-size: 0.8rem;"></i>
+                  </button>
+                </div>
+                <div class="invalid-feedback small" *ngIf="resetForm.get('confirmarSenha')?.invalid && resetForm.get('confirmarSenha')?.touched">
+                  <span *ngIf="resetForm.get('confirmarSenha')?.errors?.['required']">Confirmação de senha é obrigatória</span>
+                  <span *ngIf="resetForm.hasError('passwordsMismatch')">As senhas não coincidem</span>
+                </div>
+              </div>
+
+              <!-- Botões -->
+              <div class="d-flex gap-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-secondary flex-grow-1"
+                  (click)="goBackToStep1()"
+                  style="font-size: 0.75rem; padding: 6px;">
+                  <i class="bi bi-arrow-left"></i> Voltar
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-sm flex-grow-1"
+                  style="background: #4a5568; color: white; border: none; font-size: 0.75rem; padding: 6px;"
+                  [disabled]="!resetForm?.valid || isLoading">
+                  <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" style="width: 14px; height: 14px;"></span>
+                  <i class="bi bi-key" *ngIf="!isLoading"></i>
+                  {{ isLoading ? 'Redefinindo...' : 'Redefinir Senha' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Dicas de Segurança (aparece em ambos os steps) -->
+        <div class="card-footer bg-white border-0 pb-4">
+          <hr class="my-2" style="border-color: #e2e8f0;">
+          <div class="small text-muted" style="font-size: 0.65rem;">
+            <i class="bi bi-shield-check me-1" style="color: #4a5568;"></i>
+            <strong style="color: #4a5568;">Dicas de segurança:</strong>
+            <ul class="mt-1 ps-3 mb-0 small" style="font-size: 0.6rem; color: #718096;">
+              <li>Use pelo menos 6 caracteres na sua senha</li>
+              <li>Combine letras maiúsculas e minúsculas</li>
+              <li>Inclua números e caracteres especiais</li>
+              <li>Nunca compartilhe sua senha com ninguém</li>
+              <li>Mantenha seu código de verificação em segurança</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
-
-    <!-- NUIT -->
-    <div class="form-group">
-      <label for="nuit">NUIT *</label>
-      <div class="input-container">
-        <mat-icon class="input-icon">badge</mat-icon>
-        <input
-          type="text"
-          id="nuit"
-          formControlName="nuit"
-          placeholder="Digite seu NUIT"
-          class="form-input">
-      </div>
-      <div class="error-message" *ngIf="resetForm.get('nuit')?.invalid && resetForm.get('nuit')?.touched">
-        NUIT é obrigatório
-      </div>
-    </div>
-      <!-- codigo verificacao -->
-    <div class="form-group">
-      <label for="nuit">CodigoVerificacao *</label>
-      <div class="input-container">
-        <mat-icon class="input-icon">badge</mat-icon>
-        <input
-          type="text"
-          id="codigoVerificacao"
-          formControlName="codigoVerificacao"
-          placeholder="Digite  o codigo de verificação"
-          class="form-input">
-      </div>
-      <div class="error-message" *ngIf="resetForm.get('codigoVerficao')?.invalid && resetForm.get('nuit')?.touched">
-     o Codigo de Verificação é obrigatório
-      </div>
-    </div>
-
-    <!-- Resposta de Segurança -->
-    <div class="form-group">
-      <label for="respostaSeguranca">Resposta de Segurança *</label>
-      <div class="input-container">
-        <mat-icon class="input-icon">security</mat-icon>
-        <input
-          type="text"
-          id="respostaSeguranca"
-          formControlName="respostaSeguranca"
-          placeholder="Digite a resposta para a pergunta acima"
-          class="form-input">
-      </div>
-      <div class="error-message" *ngIf="resetForm.get('respostaSeguranca')?.invalid && resetForm.get('respostaSeguranca')?.touched">
-        Resposta de segurança é obrigatória
-      </div>
-    </div>
-
-    <!-- Nova Senha -->
-    <div class="form-group">
-      <label for="novaSenha">Nova Senha *</label>
-      <div class="input-container">
-        <mat-icon class="input-icon">lock</mat-icon>
-        <input
-          [type]="showNewPassword ? 'text' : 'password'"
-          id="novaSenha"
-          formControlName="novaSenha"
-          placeholder="Digite a nova senha"
-          class="form-input">
-        <button type="button" class="toggle-password" (click)="toggleNewPasswordVisibility()">
-          <mat-icon>{{ showNewPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-        </button>
-      </div>
-      <div class="error-message" *ngIf="resetForm.get('novaSenha')?.invalid && resetForm.get('novaSenha')?.touched">
-        <span *ngIf="resetForm.get('novaSenha')?.errors?.['required']">
-          Nova senha é obrigatória
-        </span>
-        <span *ngIf="resetForm.get('novaSenha')?.errors?.['minlength']">
-          A senha deve ter pelo menos 6 caracteres
-        </span>
-      </div>
-    </div>
-
-    <!-- Confirmar Senha -->
-    <div class="form-group">
-      <label for="confirmarSenha">Confirmar Nova Senha *</label>
-      <div class="input-container">
-        <mat-icon class="input-icon">lock</mat-icon>
-        <input
-          [type]="showConfirmPassword ? 'text' : 'password'"
-          id="confirmarSenha"
-          formControlName="confirmarSenha"
-          placeholder="Confirme a nova senha"
-          class="form-input">
-        <button type="button" class="toggle-password" (click)="toggleConfirmPasswordVisibility()">
-          <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-        </button>
-      </div>
-      <div class="error-message" *ngIf="resetForm.get('confirmarSenha')?.invalid && resetForm.get('confirmarSenha')?.touched">
-        <span *ngIf="resetForm.get('confirmarSenha')?.errors?.['required']">
-          Confirmação de senha é obrigatória
-        </span>
-        <span *ngIf="resetForm.hasError('passwordsMismatch')">
-          As senhas não coincidem
-        </span>
-      </div>
-    </div>
-
-    <!-- Botões -->
-    <div class="form-buttons">
-      <button
-        type="button"
-        class="back-btn"
-        (click)="goBackToStep1()">
-        <mat-icon>arrow_back</mat-icon>
-        Voltar
-      </button>
-
-      <button
-        type="submit"
-        class="submit-btn"
-        [disabled]="!resetForm?.valid || isLoading">
-        <mat-icon *ngIf="!isLoading">lock_reset</mat-icon>
-        <span *ngIf="isLoading" class="loading-text">⏳</span>
-        {{ isLoading ? 'Redefinindo...' : 'Redefinir Senha' }}
-      </button>
-    </div>
-  </form>
+  </div>
 </div>

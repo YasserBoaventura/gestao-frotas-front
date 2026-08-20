@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { MatIconModule, MatIcon } from '@angular/material/icon';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LoginService } from '../../auth/login.service';
-import { Router } from '@angular/router';
+
 import { CommonModule, NgIf } from '@angular/common';
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-reset-senha',
   standalone: true,
@@ -18,6 +19,7 @@ import { CommonModule, NgIf } from '@angular/common';
 })
 export class ResetSenhaComponent {
 
+ 
   validationForm!: FormGroup;
   resetForm!: FormGroup;
 
@@ -203,4 +205,7 @@ onResetPassword(): void {
       control?.markAsTouched();
     });
   }
+navegarPara(path: string) :void{
+  this.router.navigate([path]); 
+}
 }
