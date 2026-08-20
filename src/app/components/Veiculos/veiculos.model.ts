@@ -13,7 +13,6 @@ export class Veiculo {
   status!: string;
   marca!: Marca;
   motoristas: Motorista[]=[];
-  //abastecimentoss!: any[];
   manutencoes?: any[];
   viagens?: any[];
   constructor(){

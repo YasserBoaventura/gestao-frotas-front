@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TrocarSenhaServiceService } from '../trocar-senha-service.service';
 import { Router } from '@angular/router';
 import { TrocarSenhaDTO } from '../trocar-senha-dto';
@@ -15,6 +15,7 @@ import Swal from 'sweetalert2';
   styleUrl: './trocar-senha.component.css'
 })
 export class TrocarSenhaComponent {
+
 
    trocarSenha: TrocarSenhaDTO = {
     username: '',
@@ -128,5 +129,8 @@ export class TrocarSenhaComponent {
         timer: 3000,
         showConfirmButton: false
       });
+    }
+    navegarPara(path: string): void {
+      this.router.navigate(['/dashboard']);
     }
 }

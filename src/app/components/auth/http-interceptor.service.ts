@@ -5,39 +5,42 @@ import { catchError, throwError } from 'rxjs';
 
 export const meuhttpInterceptor: HttpInterceptorFn = (request, next) => {
 
-  let router = inject(Router);
+  const router = inject(Router);
 
-  let token = localStorage.getItem('token');
+  const token = localStorage.getItem('token');
 
-  console.log('entrou aqui 1');
-  if (token && !router.url.includes('/login') && !router.url.includes('/register') && !router.url.includes('/reset-senha')) {
+  console.log('Interceptor entrou');
+
+  if (
+    token &&
+    !router.url.includes('/login') &&
+    !router.url.includes('/register') &&
+    !router.url.includes('/reset-senha')
+  ) {
     request = request.clone({
-      setHeaders: { Authorization: 'Bearer ' + token },
+      setHeaders: {
+        Authorization: 'Bearer ' + token
+      }
     });
   }
 
   return next(request).pipe(
-    catchError((err: any) => {
-      if (err instanceof HttpErrorResponse) {
-        console.log('entrou aqui 2');
 
-        if (err.status === 401) {
-          alert('401 - tratar aqui');
-          router.navigate(['/login']);
-        } else
-        if (err.status === 403) {
-          alert('403 - tratar aqui');
-          router.navigate(['/login']);
-        } else {
-          console.error('HTTP error:', err);
-        }
+    catchError((err: HttpErrorResponse) => {
 
+      console.log('Erro HTTP:', err.status);
 
-      } else {
-        console.error('An error occurred:', err);
+      if (err.status === 401 || err.status === 403) {
+
+        // Remove o token expirado/inválido
+        localStorage.removeItem('token');
+
+        // Redireciona para o login
+        router.navigate(['/login']);
       }
 
       return throwError(() => err);
     })
+
   );
 };

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
   import {  inject } from '@angular/core';
   import { Route } from '@angular/router';
-  import { Router } from '@angular/router'; //  Angular Router correto
+  import { Router } from '@angular/router'; 
   import Swal from 'sweetalert2'
   import { LoginService } from '../../auth/login.service';
   import { MdbFormsModule } from 'mdb-angular-ui-kit/forms';
@@ -10,7 +10,7 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'app-usuario-detalis',
   standalone: true,
-  imports: [MdbFormsModule, FormsModule, CommonModule, // 👈 necessário para ngModel
+  imports: [MdbFormsModule, FormsModule, CommonModule, 
     MdbFormsModule, ReactiveFormsModule],
   templateUrl: './usuario-detalis.component.html',
   styleUrl: './usuario-detalis.component.css'
@@ -45,11 +45,10 @@ cadastroForm: FormGroup;
 
   onSubmit() {
     if (this.cadastroForm.valid) {
-      // Remover o campo confirmPassword, pois não é necessário no DTO
+      
       const formValue = this.cadastroForm.value;
       delete formValue.confirmPassword;
 
-      // Converter a data de nascimento para o formato esperado pelo backend (LocalDateTime)
       if (formValue.dataNascimento) {
         formValue.dataNascimento = new Date(formValue.dataNascimento).toISOString();
       }
@@ -57,7 +56,7 @@ cadastroForm: FormGroup;
       this.loginService.autoCadastro(formValue).subscribe({
         next: (response) => {
             Swal.fire({
-                    title: response, //  vem direto do backend
+                    title: response, 
                     icon: 'success',
                     confirmButtonText: 'Ok'
                   });

@@ -15,6 +15,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { Abastecimento } from '../../abastecimentos/abastecimento';
 import { AbastecimentoListComponent } from '../../abastecimentos/abastecimentoslist/abastecimentoslist.component';
 import { AbstecimeserviceService } from '../../abastecimentos/abstecimeservice.service';
+import { Router } from '@angular/router';
 
 declare const google: any;
 
@@ -36,7 +37,7 @@ declare const google: any;
 })
 export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
 
-
+   router = inject(Router);  
 
   @ViewChild('mapContainer') mapContainer!: ElementRef;
 
@@ -45,22 +46,22 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
   snackBar = inject(MatSnackBar);
   combustivelService = inject(AbstecimeserviceService);
 
-  // ============ DADOS DO VEÍCULO ============
+
   veiculoId: number = 0;
   selectedPlate: string = '';
   vehicles: Veiculo[] = [];
   vehicleOptions: { id: number; plate: string; capacidadeTanque: number }[] = [];
 
-  // ============ DADOS DE COMBUSTÍVEL ============
+
   abastecimentos: Abastecimento[] = [];
   abastecimentosDoVeiculoAtual: Abastecimento[] = [];
   ultimoAbastecimento: Abastecimento | null = null;
 
   // Consumo calculado
-  consumoMedio: number = 10; // km/l (valor padrão)
-  nivelCombustivel: number = 75; // % do tanque (valor inicial)
+  consumoMedio: number = 10;
+  nivelCombustivel: number = 75; 
   autonomia: number = 0;
-  capacidadeTanque: number = 50; // litros (padrão, será substituído pelo valor do veículo)
+  capacidadeTanque: number = 50; 
 
   // Estatísticas de combustível
   fuelStats = {
@@ -76,18 +77,18 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
   meses: string[] = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
   consumoMensal: number[] = [45, 52, 48, 63, 58, 47];
 
-  // ============ MAPA ============
+  // MAPA 
   map: any;
   marker: any;
   historyMarkers: any[] = [];
   historyPolyline: any;
 
-  // ============ LOCALIZAÇÕES ============
+  // LOCALIZAÇÕES
   currentLocation: VehicleLocation | null = null;
   locationHistory: VehicleLocation[] = [];
   filteredHistory: LocationHistoryItem[] = [];
 
-  // ============ ESTADOS ============
+  // ESTADOS 
   mapInitialized = false;
   isLoading = false;
   showHistory = false;
@@ -95,7 +96,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
   activeTab: number = 0; // 0: Mapa, 1: Combustível, 2: Estatísticas
   selectedPeriod: string = '1h';
 
-  // ============ MODAL ABASTECIMENTO ============
+  // MODAL ABASTECIMENTO 
   showAbastecimentoModal: boolean = false;
   novoAbastecimento = {
     veiculoId: 0,
@@ -132,9 +133,19 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // ============ INICIALIZAÇÃO ============
 
-  private carregarDadosIniciais() {
+  abrirModalHistorico(): void {
+  // Fecha qualquer modal aberto primeiro
+  this.showHistory = false;
+
+  setTimeout(() => {
+    this.showHistory = true;
+    this.loadHistory();
+  }, 100);
+  }
+
+
+  public carregarDadosIniciais() {
     this.isLoading = true;
 
     forkJoin({
@@ -145,20 +156,13 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.vehicles = veiculos;
         this.abastecimentos = abastecimentos;
 
-        console.log('📦 TODOS ABASTECIMENTOS:', abastecimentos);
-
-        // Processar veículos para o dropdown com capacidade do tanque
         this.vehicleOptions = veiculos.map((v: Veiculo) => ({
           id: v.id,
           plate: v.matricula,
           capacidadeTanque: (v as any).capacidadeTanque || 50 // Pega do veículo ou usa 50 como padrão
         }));
 
-        console.log('✅ Dados carregados:', {
-          veiculos: this.vehicleOptions.length,
-          abastecimentos: this.abastecimentos.length
-        });
-
+    
         if (this.vehicleOptions.length > 0) {
           this.veiculoId = this.vehicleOptions[0].id;
           this.selectedPlate = this.vehicleOptions[0].plate;
@@ -170,7 +174,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('❌ Erro ao carregar dados:', error);
+      
         this.mostrarErro('Erro ao carregar dados do servidor');
         this.isLoading = false;
       }
@@ -178,17 +182,15 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private carregarDadosVeiculo() {
-    console.log(`📊 Carregando dados do veículo ID: ${this.veiculoId}`);
 
     // Filtrar abastecimentos do veículo atual -
     this.abastecimentosDoVeiculoAtual = this.abastecimentos.filter(a => {
       // Tenta diferentes formas de obter o ID do veículo
       const idVeiculo = (a as any).veiculo?.id || (a as any).veiculoId || (a as any).veiculo_Id;
-      console.log('Comparando abastecimento:', a.id, 'veiculoId:', idVeiculo, 'com', this.veiculoId);
       return idVeiculo === this.veiculoId;
     });
 
-    console.log(`⛽ Abastecimentos encontrados para veículo ${this.selectedPlate}:`, this.abastecimentosDoVeiculoAtual);
+
 
     if (this.abastecimentosDoVeiculoAtual.length > 0) {
       // Ordenar por data (mais recente primeiro)
@@ -200,13 +202,12 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
 
       this.ultimoAbastecimento = this.abastecimentosDoVeiculoAtual[0];
 
-      console.log('✅ Último abastecimento:', this.ultimoAbastecimento);
 
       this.calcularConsumoMedio();
       this.calcularEstatisticasCombustivel();
       this.atualizarNivelCombustivel();
     } else {
-      console.log('⚠️ Nenhum abastecimento encontrado para este veículo');
+      
       this.abastecimentosDoVeiculoAtual = [];
       this.ultimoAbastecimento = null;
       this.consumoMedio = 10; // valor padrão
@@ -233,7 +234,6 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private calcularConsumoMedio() {
     if (this.abastecimentosDoVeiculoAtual.length < 2) {
-      console.log('⚠️ Poucos abastecimentos para calcular consumo médio');
       return;
     }
 
@@ -255,22 +255,21 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
           totalKm += kmPercorridos;
           contador++;
 
-          console.log(`Trecho ${contador}: ${kmPercorridos}km com ${anterior.quantidadeLitros}L = ${(kmPercorridos / anterior.quantidadeLitros).toFixed(2)} km/l`);
         }
       }
     }
 
     if (totalLitros > 0 && totalKm > 0 && contador > 0) {
       this.consumoMedio = totalKm / totalLitros;
-      console.log(`✅ Consumo médio calculado: ${this.consumoMedio.toFixed(2)} km/l (baseado em ${contador} trechos)`);
+   
     } else {
-      console.log('⚠️ Não foi possível calcular consumo médio, usando valor padrão');
+
     }
   }
 
   private calcularEstatisticasCombustivel() {
     if (this.abastecimentosDoVeiculoAtual.length === 0) {
-      console.log('⚠️ Sem abastecimentos para calcular estatísticas');
+  
       this.fuelStats = {
         totalGasto: 0,
         totalLitros: 0,
@@ -292,10 +291,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
       totalLitros += litros;
       totalGasto += litros * preco;
 
-      console.log(`Abastecimento: ${litros}L x R$ ${preco} = R$ ${litros * preco}`);
     });
-
-    console.log('📈 Totais calculados:', { totalLitros, totalGasto });
 
     this.fuelStats = {
       totalGasto: totalGasto,
@@ -306,9 +302,12 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
       totalAbastecimentos: this.abastecimentosDoVeiculoAtual.length
     };
 
-    console.log('✅ Estatísticas calculadas:', this.fuelStats);
+
   }
 
+    public navegateTO(route: string) {
+      this.router.navigate([route]);
+    }
   private atualizarNivelCombustivel() {
     if (!this.ultimoAbastecimento || !this.currentLocation) {
       // Se não tiver dados, simular nível baseado no consumo
@@ -321,7 +320,6 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.nivelCombustivel = Math.max(0, Math.min(100, (litrosRestantes / this.capacidadeTanque) * 100));
     this.autonomia = Math.max(0, litrosRestantes * this.consumoMedio);
 
-    console.log(`⛽ Nível calculado: ${this.nivelCombustivel.toFixed(1)}% | Autonomia: ${this.autonomia.toFixed(0)}km`);
   }
 
   private iniciarSimulacaoConsumo() {
@@ -336,7 +334,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
         const litrosRestantes = (this.nivelCombustivel / 100) * this.capacidadeTanque;
         this.autonomia = litrosRestantes * this.consumoMedio;
 
-        console.log(`⛽ Consumindo... Nível: ${this.nivelCombustivel.toFixed(1)}%`);
+        
       }
     }, 30000);
   }
@@ -352,8 +350,6 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.nivelCombustivel < 30) return 'linear-gradient(90deg, #ffc107, #ffdb6b)';
     return 'linear-gradient(90deg, #28a745, #34ce57)';
   }
-
-  // ============ MODAL ABASTECIMENTO ============
 
   abrirModalAbastecimento() {
     const dataAtual = new Date();
@@ -414,11 +410,9 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     viagemId: null
   };
 
-  console.log('📤 Enviando abastecimento:', JSON.stringify(abastecimentoParaEnviar, null, 2));
-
   const sub = this.combustivelService.createAbastecimento(abastecimentoParaEnviar).subscribe({
     next: (response) => {
-      console.log('✅ Abastecimento registrado:', response);
+
       this.mostrarSucesso('Abastecimento registrado com sucesso!');
       this.fecharModalAbastecimento();
 
@@ -433,44 +427,113 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
       }, 500);
     },
     error: (error) => {
-      console.error('❌ ERRO COMPLETO:', error);
       this.mostrarErro('Erro ao registrar abastecimento: ' + (error.error?.erro || 'Erro desconhecido'));
     }
   });
 
   this.subscriptions.push(sub);
 }
-  // ============ MAPA ============
 
-  private initMap() {
-    if (!this.mapContainer?.nativeElement) return;
 
-    try {
-      if (typeof google === 'undefined' || !google.maps) {
-        console.error('❌ Google Maps não carregado');
-        return;
-      }
+private initMap() {
+  if (!this.mapContainer?.nativeElement) return;
 
-      this.map = new google.maps.Map(this.mapContainer.nativeElement, {
-        center: { lat: -23.5505, lng: -46.6333 },
-        zoom: 15,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        mapTypeControl: true,
-        streetViewControl: true,
-        fullscreenControl: true,
-        zoomControl: true
+  try {
+    if (typeof google === 'undefined' || !google.maps) {
+
+      return;
+    }
+
+
+    this.map = new google.maps.Map(this.mapContainer.nativeElement, {
+      center: { lat: -18.6657, lng: 35.5296 },
+      zoom: 6, // Zoom para ver Moçambique inteiro
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      mapTypeControl: true,
+      streetViewControl: true,
+      fullscreenControl: true,
+      zoomControl: true
+    });
+
+    this.mapInitialized = true;
+
+
+    
+    const cidades = [
+      { nome: 'Maputo ⭐', lat: -25.9692, lng: 32.5732 },
+      { nome: 'Beira', lat: -19.8436, lng: 34.8389 },
+      { nome: 'Nampula', lat: -15.1165, lng: 39.2666 },
+      { nome: 'Quelimane', lat: -17.8784, lng: 36.8883 },
+      { nome: 'Tete', lat: -16.1564, lng: 33.5868 },
+      { nome: 'Inhambane', lat: -23.8650, lng: 35.3833 },
+      { nome: 'Pemba', lat: -12.9738, lng: 40.5177 }
+    ];
+
+    cidades.forEach(cidade => {
+      const marker = new google.maps.Marker({
+        position: { lat: cidade.lat, lng: cidade.lng },
+        map: this.map,
+        title: cidade.nome,
+        icon: {
+          url: cidade.nome.includes('⭐') ?
+            'https://maps.google.com/mapfiles/ms/icons/red-dot.png' :
+            'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+          scaledSize: new google.maps.Size(cidade.nome.includes('⭐') ? 40 : 30, cidade.nome.includes('⭐') ? 40 : 30)
+        }
       });
 
-      this.mapInitialized = true;
-      console.log('🗺️ Mapa inicializado');
+      const infoWindow = new google.maps.InfoWindow({
+        content: `<div style="padding: 8px 12px; font-weight: bold; color: #2C5F6E; font-size: 14px;">📍 ${cidade.nome}</div>`
+      });
 
-      if (this.currentLocation) {
-        this.updateMapLocation(this.currentLocation);
-      }
-    } catch (error) {
-      console.error('❌ Erro ao inicializar mapa:', error);
+      marker.addListener('click', () => {
+        infoWindow.open(this.map, marker);
+      });
+    });
+
+    if (this.currentLocation) {
+      this.updateMapLocation(this.currentLocation);
     }
+
+  } catch (error) {
+ 
   }
+}
+
+
+centralizarEmMocambique(): void {
+  if (this.map) {
+    this.map.setCenter({ lat: -18.6657, lng: 35.5296 });
+    this.map.setZoom(6);
+  }
+}
+
+
+centralizarEmCidade(cidade: string): void {
+  const cidades: { [key: string]: { lat: number; lng: number } } = {
+    'maputo': { lat: -25.9692, lng: 32.5732 },
+    'beira': { lat: -19.8436, lng: 34.8389 },
+    'nampula': { lat: -15.1165, lng: 39.2666 },
+    'quelimane': { lat: -17.8784, lng: 36.8883 },
+    'tete': { lat: -16.1564, lng: 33.5868 },
+    'inhambane': { lat: -23.8650, lng: 35.3833 },
+    'pemba': { lat: -12.9738, lng: 40.5177 }
+  };
+
+  const coords = cidades[cidade.toLowerCase()];
+  if (coords && this.map) {
+    this.map.setCenter(coords);
+    this.map.setZoom(10);
+  }
+}
+
+
+formatarMoeda(valor: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'MZN'
+  }).format(valor || 0);
+}
 
   private loadInitialLocation() {
     if (!this.veiculoId) return;
@@ -487,7 +550,6 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('❌ Erro ao carregar localização:', error);
         this.startWithMockData();
         this.isLoading = false;
       }
@@ -573,41 +635,54 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
           <strong>Total gasto:</strong> ${this.formatarMoeda(this.fuelStats.totalGasto)}
         </p>
         <p style="margin: 5px 0;">
-          <strong>Horário:</strong> ${new Date(location.timestamp).toLocaleString()}
+          <strong>Horário:</strong> ${location.timestamp}
         </p>
       </div>
     `;
   }
 
-  // ============ TROCAR VEÍCULO ============
 
-  changeVehicle(event: any) {
-    const selectedId = Number(event);
-    const selected = this.vehicleOptions.find(v => v.id === selectedId);
+changeVehicle(event: any) {
+  const selectedId = Number(event);
+  const selected = this.vehicleOptions.find(v => v.id === selectedId);
 
-    if (!selected) return;
+  if (!selected) return;
 
-    this.veiculoId = selectedId;
-    this.selectedPlate = selected.plate;
-    this.capacidadeTanque = selected.capacidadeTanque;
-    this.novoAbastecimento.veiculoId = this.veiculoId;
+  this.veiculoId = selectedId;
+  this.selectedPlate = selected.plate;
+  this.capacidadeTanque = selected.capacidadeTanque;
+  this.novoAbastecimento.veiculoId = this.veiculoId;
 
-    this.currentLocation = null;
-    this.locationHistory = [];
-    this.filteredHistory = [];
-    this.showHistory = false;
-    this.showTrajectory = false;
+  // Fechar modais abertos
+  this.showHistory = false;
+  this.showAbastecimentoModal = false;
 
-    if (this.marker) {
-      this.marker.setMap(null);
-      this.marker = null;
-    }
-    this.clearHistoryMarkers(true);
+  // Limpar dados antigos
+  this.currentLocation = null;
+  this.locationHistory = [];
+  this.filteredHistory = [];
+  this.showTrajectory = false;
 
-    this.carregarDadosVeiculo();
+  // Remover marcador antigo do mapa
+  if (this.marker) {
+    this.marker.setMap(null);
+    this.marker = null;
   }
 
-  // ============ HISTÓRICO DE LOCALIZAÇÕES ============
+  // Limpar trajetos do mapa
+  this.clearHistoryMarkers(true);
+
+  // Recarregar dados do veículo
+  this.carregarDadosVeiculo();
+
+  // Se o mapa já estiver inicializado, manter centralizado em Moçambique
+  if (this.map) {
+    setTimeout(() => {
+      this.centralizarEmMocambique();
+    }, 500);
+  }
+}
+  // HISTÓRICO DE LOCALIZAÇÕES 
 
   loadHistory() {
     if (!this.veiculoId) return;
@@ -616,7 +691,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showHistory = true;
 
     let historyObservable;
- 
+
     switch(this.selectedPeriod) {
       case '1h':
         const oneHourAgo = new Date();
@@ -642,7 +717,6 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('❌ Erro ao carregar histórico:', error);
         this.loadMockHistory();
         this.isLoading = false;
       }
@@ -658,7 +732,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
 
       return {
         id: index + 1,
-        time: new Date(loc.timestamp).toLocaleTimeString(),
+        timestamp: (loc.timestamp).toString(),
         latitude: loc.latitude.toFixed(6),
         longitude: loc.longitude.toFixed(6),
         speed: loc.speed?.toFixed(1) || '0',
@@ -757,8 +831,6 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // ============ SIMULAÇÃO ============
-
   simulateLocationUpdate() {
     if (!this.veiculoId) return;
 
@@ -776,10 +848,10 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const sub = this.trackingService.updateLocation(mockLocation).subscribe({
       next: (response) => {
-        console.log('✅ Localização enviada:', response);
+
       },
       error: (error) => {
-        console.error('❌ Erro ao enviar:', error);
+      
       }
     });
     this.subscriptions.push(sub);
@@ -796,7 +868,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
       longitude: -46.6333,
       speed: 0,
       status: 'stopped',
-      timestamp: new Date()
+      timestamp: new Date().toLocaleTimeString()
     };
 
     this.currentLocation = mockLocation;
@@ -821,7 +893,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
         longitude: startLng + (i * 0.001),
         speed: Math.random() * 60,
         status: Math.random() > 0.3 ? 'moving' : 'stopped',
-        timestamp: new Date(Date.now() - (19 - i) * 300000)
+        timestamp: new Date(Date.now() - (19 - i) * 300000).toLocaleDateString()
       });
     }
 
@@ -847,19 +919,89 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  formatarMoeda(valor: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor || 0);
+
+ 
+  private parseBackendDate(value: any): Date | null {
+    if (!value) return null;
+
+    if (value instanceof Date) {
+      return isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value === 'number') {
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    if (typeof value === 'string') {
+      // "2026-03-13 12:06:00.492183" -> "2026-03-13T12:06:00"
+      const isoLike = value.trim().replace(' ', 'T').split('.')[0];
+      const d = new Date(isoLike);
+      if (!isNaN(d.getTime())) return d;
+
+      // fallback: tenta interpretar a string exatamente como veio
+      const d2 = new Date(value);
+      return isNaN(d2.getTime()) ? null : d2;
+    }
+
+    return null;
   }
 
-  // Método para debug - chamar do console
-  debugAbastecimentos() {
-    console.log('🔍 DEBUG - Todos abastecimentos:', this.abastecimentos);
-    console.log('🔍 DEBUG - Abastecimentos do veículo atual:', this.abastecimentosDoVeiculoAtual);
-    console.log('🔍 DEBUG - fuelStats:', this.fuelStats);
-    console.log('🔍 DEBUG - Veículo ID:', this.veiculoId);
+  formatarTimestamp(timestamp: any): string {
+    const date = this.parseBackendDate(timestamp);
+    if (!date) return 'Data inválida';
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
   }
+
+
+formatarData(dateValue: any): string {
+  const date = this.parseBackendDate(dateValue);
+  if (!date) return '-';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
 }
 
+formatarDataHora(dateValue: any): string {
+  const date = this.parseBackendDate(dateValue);
+  if (!date) return '-';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+}
+
+
+formatarParaBackend(dateValue: any): string {
+  const date = this.parseBackendDate(dateValue);
+  if (!date) return '';
+
+  // Formato para o backend: yyyy-MM-ddTHH:mm:ss
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+  
+
+}

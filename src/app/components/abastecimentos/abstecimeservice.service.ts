@@ -16,7 +16,7 @@ export class AbstecimeserviceService {
 
   constructor(private http: HttpClient) { }
 
-  // CRUD de Abastecimentos
+  
   getAbastecimentos(): Observable<any[]> {
     return this.http.get<any[]>(this.apiUrl+'/findAll');
   }

@@ -15,5 +15,5 @@ export  class Viagem {
   motorista?: Motorista;
   veiculo?: Veiculo;
   rota?: Rotas;
-//  abastecimentos?: Abastecimento[];
+
 }

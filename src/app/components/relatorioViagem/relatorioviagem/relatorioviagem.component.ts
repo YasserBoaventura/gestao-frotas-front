@@ -15,7 +15,6 @@ import { ViagensServiceService } from '../../viagens/viagens-service.service';
 import { MotoristaService } from '../../motorista/motorista.service';
 import { VeiculosService } from '../../Veiculos/veiculos.service';
 
-// Importação do Chart.js
 import Chart from 'chart.js/auto';
 
 import { relatorioservice } from '../relatorioservice';
@@ -161,8 +160,6 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
     const inicio = this.formatarDataParaAPI(this.filtros.dataInicio);
     const fim = this.formatarDataParaAPI(this.filtros.dataFim);
 
-    console.log('Buscando dados do backend:', { inicio, fim });
-
     // Criar observables para as chamadas
     const observables: {
       motorista: Observable<RelatorioMotoristaDTO[]>;
@@ -210,8 +207,7 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Erro ao carregar relatórios:', error);
-        Swal.fire('Erro', 'Não foi possível carregar os relatórios. Verifique a conexão com o servidor.', 'error');
+        Swal.fire('Erro', 'Não foi possível carregar os relatórios. Verifique a conexão com o servidor.', error);
         this.carregando = false;
 
 
@@ -229,8 +225,6 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
 
     // Filtrar por motorista específico
     if (this.filtros.motoristaId) {
-      // Nota: O DTO não tem ID, então precisamos filtrar por nome ou outro campo
-      // Esta é uma abordagem simplificada - ajuste conforme necessário
       const motoristaSelecionado = this.motoristas.find(m => m.id === this.filtros.motoristaId);
       if (motoristaSelecionado) {
         this.relatorioMotorista = this.relatorioMotorista.filter(
@@ -285,7 +279,6 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
       ];
     }
 
-    // 2. Gráfico de consumo por motorista
     this.consumoPorMotorista = this.relatorioMotorista
       .filter(item => item.totalCombustivel > 0 && item.totalQuilometragem > 0)
       .map(item => ({
@@ -295,7 +288,7 @@ export class RelatorioviagemComponent implements OnInit, OnDestroy {
       .sort((a, b) => b.consumo - a.consumo)
       .slice(0, 10); // Limitar a 10 motoristas
 
-    // 3. Dados para gráfico de km por mês (simulado - ajustar conforme disponibilidade do backend)
+  
     this.gerarDadosMensais();
   }
 

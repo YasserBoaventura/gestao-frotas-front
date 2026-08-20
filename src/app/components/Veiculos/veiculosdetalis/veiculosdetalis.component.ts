@@ -81,7 +81,6 @@ export class VeiculosdetalisComponent implements OnInit, OnDestroy {
       marcaId: veiculo.marca?.id
     });
 
-    console.log(' Dados do veículo carregados para edição:', veiculo);
   }
 
   buscarMarca() {
@@ -141,10 +140,9 @@ export class VeiculosdetalisComponent implements OnInit, OnDestroy {
         }
       };
 
-      console.log('✅ DADOS ENVIADOS:', veiculoData);
-
+      
       if (this.isEdit && this.veiculoParaEditar?.id) {
-        // CORREÇÃO: Usar updateVehicle em vez de update
+       
         this.veiculoService.update(veiculoData  ,this.veiculoParaEditar.id ).subscribe({
 
 
@@ -168,7 +166,7 @@ export class VeiculosdetalisComponent implements OnInit, OnDestroy {
           }
         });
       } else {
-        // Criar novo veículo
+  
         this.veiculoService.createVehicle(veiculoData).subscribe({
           next: (response: any) => {
             Swal.close();
@@ -243,7 +241,7 @@ export class VeiculosdetalisComponent implements OnInit, OnDestroy {
   }
 
   cancelar(): void {
-    this.fecharModalPrincipal(); // Mudado para fecharModalPrincipal
+    this.fecharModalPrincipal(); 
     this.limparFormulario();
   }
 

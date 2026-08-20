@@ -1,201 +1,273 @@
-<div class="motoristas-container">
+<div class="container-fluid px-3 py-3 bg-light min-vh-100">
   <!-- Header -->
-  <div class="header">
-    <div class="header-title">
-      <mat-icon class="title-icon">people</mat-icon> 
-      <h2>Gerenciamento de Motoristas</h2>
-    </div>
-    <div class="header-actions">
-      <button class="btn-reload" (click)="recarregarLista()" title="Recarregar lista">
-        <mat-icon>refresh</mat-icon>
-      </button>
-      <button class="btn-add" (click)="openModal()">
-        <mat-icon>person_add</mat-icon>
-        Novo Motorista
-      </button>
+  <div class="card mb-3 border-0 shadow-sm" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #cbd5e1 100%);">
+    <div class="card-body py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-people fs-2" style="color: #4a5568;"></i>
+        <div>
+          <h5 class="mb-0" style="color: #2d3748;">Gerenciamento de Motoristas</h5>
+          <p class="mb-0 small" style="color: #718096;">Gerencie a equipa de motoristas da empresa</p>
+        </div>
+      </div>
+      <div class="d-flex gap-1">
+        <button class="btn btn-sm btn-outline-secondary" (click)="recarregarLista()" [disabled]="carregando" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-arrow-clockwise"></i> Recarregar
+        </button>
+        <button class="btn btn-sm" style="background: #4a5568; color: white; border: none;" (click)="openModal()">
+          <i class="bi bi-person-add"></i> Novo Motorista
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="navegarPara('dashboard')" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-arrow-left"></i> Voltar
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Estado de Carregamento -->
-  <div *ngIf="carregando" class="loading-state">
-    <div class="spinner-border text-primary" role="status">
+  <div *ngIf="carregando" class="text-center py-5">
+    <div class="spinner-border" role="status" style="color: #4a5568;">
       <span class="visually-hidden">Carregando...</span>
     </div>
-    <h3>Carregando motoristas...</h3>
-    <p>Aguarde enquanto carregamos a lista de motoristas</p>
+    <h6 class="mt-3 text-muted fs-6">Carregando motoristas...</h6>
   </div>
 
-  <!-- Conteúdo Principal (quando não está carregando) -->
+  <!-- Conteúdo Principal -->
   <div *ngIf="!carregando">
-    <!-- Seção de Pesquisa -->
-    <div class="search-section">
-      <div class="card">
-        <div class="card-body">
-          <h4 class="card-title">
-            <mat-icon class="me-2">search</mat-icon>
-            Pesquisar Motoristas
-          </h4>
-          <p class="card-text">Pesquise motoristas pelo nome</p>
-
-          <div class="row">
-            <div class="col-md-8">
-              <div class="input-group">
-                <span class="input-group-text">
-                  <mat-icon>search</mat-icon>
-                </span>
-                <input
-                  type="text"
-                  class="form-control"
-                  placeholder="Digite o nome do motorista..."
-                  [(ngModel)]="termoPesquisa"
-                  (input)="onPesquisaChange()"
-                  [disabled]="pesquisando">
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  (click)="limparPesquisa()"
-                  [disabled]="!termoPesquisa">
-                  <mat-icon>clear</mat-icon>
-                </button>
+    <!-- Resumo / Estatísticas -->
+    <div class="row g-2 mb-3" *ngIf="lista && lista.length > 0">
+      <div class="col-md-3 col-6">
+        <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #4a5568;">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-3">
+              <i class="bi bi-people fs-2" style="color: #4a5568; opacity: 0.6;"></i>
+              <div>
+                <div class="fw-bold fs-4" style="color: #2d3748;">{{ lista.length }}</div>
+                <small class="text-muted">Total</small>
               </div>
-              <small class="form-text text-muted">
-                Digite pelo menos 2 caracteres para pesquisar
-              </small>
             </div>
           </div>
-
-          <!-- Loading da Pesquisa -->
-          <div *ngIf="pesquisando" class="mt-3">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Pesquisando...</span>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #48bb78;">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-3">
+              <i class="bi bi-check-circle fs-2" style="color: #48bb78; opacity: 0.6;"></i>
+              <div>
+                <div class="fw-bold fs-4" style="color: #2d3748;">{{ getMotoristasAtivos() }}</div>
+                <small class="text-muted">Ativos</small>
+              </div>
             </div>
-            <span class="ms-2">Pesquisando motoristas...</span>
           </div>
-
-          <!-- Informações da Pesquisa -->
-          <div *ngIf="pesquisaRealizada && !pesquisando" class="mt-3">
-            <div class="alert alert-info" role="alert">
-              <mat-icon class="me-2">info</mat-icon>
-              <span *ngIf="listaFiltrada.length > 0">
-                Encontrados <strong>{{ listaFiltrada.length }}</strong> motorista(s) para "{{ termoPesquisa }}"
-              </span>
-              <span *ngIf="listaFiltrada.length === 0">
-                Nenhum motorista encontrado para "{{ termoPesquisa }}"
-              </span>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #4299e1;">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-3">
+              <i class="bi bi-shield-check fs-2" style="color: #4299e1; opacity: 0.6;"></i>
+              <div>
+                <div class="fw-bold fs-4" style="color: #2d3748;">{{ getCategoriasUnicas() }}</div>
+                <small class="text-muted">Categorias</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #ed8936;">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-3">
+              <i class="bi bi-clock fs-2" style="color: #ed8936; opacity: 0.6;"></i>
+              <div>
+                <div class="fw-bold fs-4" style="color: #2d3748;">{{ getMotoristasInativos() }}</div>
+                <small class="text-muted">Inativos</small>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Tabela com *ngFor -->
-    <div class="table-container" *ngIf="listaFiltrada && listaFiltrada.length > 0; else emptyState">
-      <div class="table-header-info">
-        <span class="total-registros">
-          Total de motoristas: <strong>{{ listaFiltrada.length }}</strong>
-          <span *ngIf="pesquisaRealizada" class="text-muted">
-            (de {{ lista.length }} no total)
-          </span>
-        </span>
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-3 border-0">
+      <div class="card-header bg-white py-2">
+        <h6 class="mb-0 fs-6" style="color: #2d3748;"><i class="bi bi-funnel me-2" style="color: #4a5568;"></i>Filtros de Busca</h6>
       </div>
-      <table class="motoristas-table">
-        <thead>
-          <tr class="table-header">
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Nº Carta Condução</th>
-            <th>Email</th>
-            <th>Telefone</th>
-            <th>Data Nascimento</th>
-            <th>Categoria</th>
-            <th>Status</th>
-            <th class="actions-header">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let motorista of listaFiltrada; " class="table-row">
-            <!-- Coluna ID -->
-            <td class="id-cell">{{ motorista.id || 'N/A' }}</td>
-
-            <!-- Coluna Nome -->
-            <td class="nome-cell">{{ motorista.nome || 'N/A' }}</td>
-
-            <!-- Coluna Número da Carta -->
-            <td class="numero-carta-cell">
-              <span class="carta-badge">{{ motorista.numeroCarta || 'N/A' }}</span>
-            </td>
-
-            <!-- Coluna Email -->
-            <td class="email-cell">{{ motorista.email || 'N/A' }}</td>
-
-            <!-- Coluna Telefone -->
-            <td class="telefone-cell">{{ motorista.telefone || 'N/A' }}</td>
-
-            <!-- Coluna Data Nascimento -->
-            <td class="data-cell">
-              {{ formatarData(motorista.dataNascimento) }}
-            </td>
-
-            <!-- Coluna Categoria -->
-            <td class="categoria-cell">
-              <span >
-        {{ motorista.categoriaHabilitacao }}
+      <div class="card-body py-2">
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Buscar</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+                <i class="bi bi-search small"></i>
               </span>
-            </td>
-            <td class="status-cell">{{ motorista.statusMotorista || 'N/A' }}</td>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                placeholder="Nome, email ou NUIT..."
+                [(ngModel)]="termoPesquisa"
+                (input)="onPesquisaChange()"
+                [disabled]="pesquisando"
+                style="border-color: #e2e8f0;">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Categoria</label>
+            <select class="form-select form-select-sm"
+                    [(ngModel)]="filtroCategoria"
+                    (change)="aplicarFiltros()"
+                    style="border-color: #e2e8f0; background: #fafbfc;">
+              <option value="">Todas</option>
+              <option *ngFor="let cat of categoriasDisponiveis" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Status</label>
+            <select class="form-select form-select-sm"
+                    [(ngModel)]="filtroStatus"
+                    (change)="aplicarFiltros()"
+                    style="border-color: #e2e8f0; background: #fafbfc;">
+              <option value="">Todos</option>
+              <option value="ATIVO">Ativos</option>
+              <option value="INATIVO">Inativos</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-sm btn-outline-secondary w-100" (click)="limparPesquisa()" style="border-color: #cbd5e1; color: #2d3748;">
+              <i class="bi bi-eraser"></i> Limpar
+            </button>
+          </div>
+        </div>
 
-            <!-- Coluna Ações -->
-            <td class="actions-cell">
-              <button class="btn-edit"
-                      (click)="editar(motorista)"
-                      title="Editar motorista">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button class="btn-delete"
-                      (click)="deleteMotorista(motorista)"
-                      title="Eliminar motorista">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <!-- Informações da Pesquisa -->
+        <div *ngIf="pesquisaRealizada && !pesquisando" class="mt-2">
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            <span *ngIf="listaFiltrada.length > 0">
+              Encontrados <strong>{{ listaFiltrada.length }}</strong> motorista(s) para "{{ termoPesquisa }}"
+            </span>
+            <span *ngIf="listaFiltrada.length === 0 && termoPesquisa">
+              Nenhum motorista encontrado para "{{ termoPesquisa }}"
+            </span>
+          </small>
+        </div>
+        <div class="mt-1">
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Mostrando {{ listaFiltrada.length }} de {{ lista.length }} motoristas
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card shadow-sm border-0" *ngIf="listaFiltrada && listaFiltrada.length > 0; else emptyState">
+      <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fs-6" style="color: #2d3748;"><i class="bi bi-table me-2" style="color: #4a5568;"></i>Lista de Motoristas</h6>
+        <div class="d-flex gap-2 align-items-center">
+          <span class="badge" style="background: #4a5568;">{{ listaFiltrada.length }} registros</span>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0">
+            <thead class="table-light">
+              <tr class="fs-6">
+                <th class="py-1 px-2" style="width: 45px;">ID</th>
+                <th class="py-1 px-2">Nome</th>
+                <th class="py-1 px-2">Nº Carta</th>
+                <th class="py-1 px-2">Email</th>
+                <th class="py-1 px-2">Telefone</th>
+                <th class="py-1 px-2">Data Nasc.</th>
+                <th class="py-1 px-2">Categoria</th>
+                <th class="py-1 px-2">Status</th>
+                <th class="py-1 px-2 text-center" style="width: 90px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let motorista of listaFiltrada" class="fs-6">
+                <td class="py-1 px-2 fw-semibold" style="color: #4a5568;">{{ motorista.id || 'N/A' }}</td>
+                <td class="py-1 px-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-circle" [style.background]="motorista.statusMotorista === 'ATIVO' ? '#4a5568' : '#a0aec0'">
+                      <span class="avatar-text">{{ motorista.nome?.charAt(0)?.toUpperCase() || 'M' }}</span>
+                    </div>
+                    <span class="fw-semibold" style="color: #2d3748; font-size: 0.85rem;">{{ motorista.nome || 'N/A' }}</span>
+                  </div>
+                </td>
+                <td class="py-1 px-2">
+                  <span class="badge" style="background: #e2e8f0; color: #2d3748; font-weight: 500; font-size: 0.65rem; padding: 2px 8px;">
+                    <i class="bi bi-card-text me-1" style="font-size: 0.6rem;"></i>
+                    {{ motorista.numeroCarta || 'N/A' }}
+                  </span>
+                </td>
+                <td class="py-1 px-2" style="color: #4a5568; font-size: 0.8rem;">{{ motorista.email || 'N/A' }}</td>
+                <td class="py-1 px-2" style="color: #4a5568; font-size: 0.8rem;">{{ motorista.telefone || 'N/A' }}</td>
+                <td class="py-1 px-2" style="color: #4a5568; font-size: 0.8rem;">{{ formatarData(motorista.dataNascimento) }}</td>
+                <td class="py-1 px-2">
+
+          <span class="badge" style="background: #e2e8f0; color: #2d3748; font-weight: 500; font-size: 0.65rem; padding: 2px 8px;">
+        <i class="bi bi-card-text me-1" style="font-size: 0.6rem;"></i>
+        {{ motorista.categoriaHabilitacao }}
+      </span>
+
+                </td>
+                <td class="py-1 px-2">
+                  <span class="badge" [ngClass]="motorista.statusMotorista === 'ATIVO' ? 'bg-success bg-opacity-75' : 'bg-secondary bg-opacity-75'" style="font-size: 0.65rem; padding: 2px 8px;">
+                    {{ motorista.statusMotorista || 'ATIVO' }}
+                  </span>
+                </td>
+                <td class="py-1 px-2 text-nowrap text-center">
+                  <div class="d-flex justify-content-center gap-1">
+                    <button class="btn btn-sm btn-outline-secondary" (click)="editar(motorista)" title="Editar" style="border-color: #cbd5e1; color: #2d3748; width: 24px; height: 24px; padding: 0;">
+                      <i class="bi bi-pencil small" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteMotorista(motorista)" title="Eliminar" style="width: 24px; height: 24px; padding: 0;">
+                      <i class="bi bi-trash small" style="font-size: 0.7rem;"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Empty State -->
     <ng-template #emptyState>
-      <div class="empty-state">
-        <mat-icon class="empty-icon">people_outline</mat-icon>
-        <h3 *ngIf="pesquisaRealizada">Nenhum motorista encontrado</h3>
-        <h3 *ngIf="!pesquisaRealizada">Nenhum motorista cadastrado</h3>
-        <p *ngIf="pesquisaRealizada">
-          Não foram encontrados motoristas para "{{ termoPesquisa }}"
-        </p>
-        <p *ngIf="!pesquisaRealizada">
-          Comece adicionando seu primeiro motorista à equipa
-        </p>
-        <button class="btn-add-empty" (click)="openModal()">
-          <mat-icon>person_add</mat-icon>
-          {{ pesquisaRealizada ? 'Cadastrar Novo Motorista' : 'Adicionar Primeiro Motorista' }}
-        </button>
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-people display-4 text-muted d-block"></i>
+          <h5 class="mt-3 text-muted fs-5" *ngIf="pesquisaRealizada || filtroCategoria || filtroStatus">Nenhum motorista encontrado</h5>
+          <h5 class="mt-3 text-muted fs-5" *ngIf="!pesquisaRealizada && !filtroCategoria && !filtroStatus">Nenhum motorista cadastrado</h5>
+          <p class="text-muted" *ngIf="pesquisaRealizada || filtroCategoria || filtroStatus">
+            Tente ajustar os filtros de busca.
+          </p>
+          <p class="text-muted" *ngIf="!pesquisaRealizada && !filtroCategoria && !filtroStatus">
+            Comece adicionando seu primeiro motorista à equipa
+          </p>
+          <button class="btn btn-sm mt-2" style="background: #4a5568; color: white; border: none;" (click)="openModal()">
+            <i class="bi bi-person-add"></i>
+            {{ (pesquisaRealizada || filtroCategoria || filtroStatus) ? 'Cadastrar Novo Motorista' : 'Adicionar Primeiro Motorista' }}
+          </button>
+        </div>
       </div>
     </ng-template>
   </div>
 </div>
 
-<!-- Modal -->
+<!-- ==================== MODAL DE MOTORISTA ==================== -->
 <ng-template #modalMotoristasDetalhes>
-  <div class="modal-header">
-    <h5 class="modal-title">{{ isEdit ? 'Editar Motorista' : 'Cadastrar Motorista' }}</h5>
-    <button
-      type="button"
-      class="btn-close"
-      aria-label="Close"
-      (click)="closeModal()">
-    </button>
+  <div class="modal-header" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); border-bottom: 2px solid #cbd5e1;">
+    <h5 class="modal-title fs-6" style="color: #2d3748;">
+      <i class="bi bi-person me-2" style="color: #4a5568;"></i>
+      {{ isEdit ? 'Editar Motorista' : 'Cadastrar Motorista' }}
+    </h5>
+    <button type="button" class="btn-close btn-sm" (click)="closeModal()"></button>
   </div>
   <div class="modal-body">
-    <!-- Componente de detalhes do motorista -->
     <app-motoristadetalis
       [motoristaParaEditar]="selectedMotorista"
       (motoristaSalvo)="closeModal()"

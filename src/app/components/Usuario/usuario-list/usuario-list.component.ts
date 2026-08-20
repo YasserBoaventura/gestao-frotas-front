@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -7,6 +7,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { UsuarioserviceService } from '../usuarioservice.service';
 import { Usuarios } from '../../auth/usuario';
 import Swal from 'sweetalert2';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-usuario-list',
@@ -25,6 +26,8 @@ export class UsuarioListComponent implements OnInit {
   // Dados
   usuarios: Usuarios[] = [];
 
+
+  router = inject(Router);
   // Tabela Material
   dataSource = new MatTableDataSource<Usuarios>([]);
   colunasExibidas: string[] = [
@@ -72,9 +75,7 @@ export class UsuarioListComponent implements OnInit {
     this.dataSource.sort = this.sort;
   }
 
-  // ========== MÉTODOS PRINCIPAIS ==========
 
-  // 1. Carregar usuários
   carregarUsuarios(): void {
 
     this.erro = null;
@@ -88,7 +89,7 @@ export class UsuarioListComponent implements OnInit {
 
       },
       error: (error) => {
-        console.error('Erro ao carregar usuários:', error);
+   
         this.erro = 'Não foi possível carregar a lista de usuários.';
 
         this.mostrarErro(this.erro);
@@ -96,7 +97,7 @@ export class UsuarioListComponent implements OnInit {
     });
   }
 
-  // 2. Aplicar filtros
+ 
   aplicarFiltros(): void {
     let filtrados = [...this.usuarios];
 
@@ -111,12 +112,11 @@ export class UsuarioListComponent implements OnInit {
       );
     }
 
-    // Filtrar por cargo
     if (this.filtroRole !== 'TODOS') {
       filtrados = filtrados.filter(usuario => usuario.role === this.filtroRole);
     }
 
-    // Filtrar por status ativo
+
     if (this.filtroAtivo !== 'TODOS') {
       const ativo = this.filtroAtivo === 'ATIVO';
       filtrados = filtrados.filter(usuario => usuario.ativo === ativo);
@@ -126,7 +126,7 @@ export class UsuarioListComponent implements OnInit {
     this.dataSource.data = filtrados;
   }
 
-  // 3. Limpar filtros
+
   limparFiltros(): void {
     this.filtroBusca = '';
     this.filtroRole = 'TODOS';
@@ -134,9 +134,6 @@ export class UsuarioListComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  // ========== AÇÕES DOS BOTÕES ==========
-
-  // 1. Abrir edição (Novo ou Editar)
   abrirEdicao(usuario?: any): void {
     if (usuario) {
       this.usuarioSelecionado = { ...usuario };
@@ -155,7 +152,7 @@ export class UsuarioListComponent implements OnInit {
     this.editando = true;
   }
 
-  // 2. Fechar edição
+
   fecharEdicao(): void {
     this.editando = false;
     this.usuarioSelecionado = null;
@@ -164,7 +161,7 @@ export class UsuarioListComponent implements OnInit {
 
 
 
-  // 3. Salvar usuário
+
   salvarUsuario(): void {
     if (!this.validarUsuario()) {
       return;
@@ -202,12 +199,11 @@ export class UsuarioListComponent implements OnInit {
     }
   }
 
-  // 4. Editar usuário
+
   editarUsuario(usuario: Usuarios): void {
     this.abrirEdicao(usuario);
   }
 
-  // 5. Ativar/Desativar usuário
   ativarDesativar(usuario: Usuarios): void {
     const novoEstado = !usuario.ativo;
     const acao = novoEstado ? 'ativar' : 'desativar';
@@ -235,7 +231,7 @@ export class UsuarioListComponent implements OnInit {
     });
   }
 
-  // 6. Bloquear/Desbloquear usuário
+
   bloquearDesbloquear(usuario: Usuarios): void {
     const novoEstado = !usuario.contaBloqueada;
     const acao = novoEstado ? 'bloquear' : 'desbloquear';
@@ -253,7 +249,6 @@ export class UsuarioListComponent implements OnInit {
       if (result.isConfirmed) {
         this.usuarioService.toggleBloqueio(usuario.id, novoEstado).subscribe({
           next: (next) => {
-            console.log(next);//for debu
             usuario.contaBloqueada = novoEstado;
             this.atualizarUsuarioNaLista(usuario);
             this.mostrarSucesso(`Conta ${acao}da com sucesso!`);
@@ -264,7 +259,7 @@ export class UsuarioListComponent implements OnInit {
     });
   }
 
-  // 7. Resetar senha
+
   resetarSenha(usuario: Usuarios): void {
     Swal.fire({
       title: 'Resetar Senha',
@@ -287,7 +282,6 @@ export class UsuarioListComponent implements OnInit {
     });
   }
 
-  // 8. Excluir usuário
   excluirUsuario(usuario: Usuarios): void {
     if (usuario.role === 'ADMIN') {
       this.mostrarAviso('Não é possível excluir administradores');
@@ -318,16 +312,14 @@ export class UsuarioListComponent implements OnInit {
     });
   }
 
-  // ========== MÉTODOS AUXILIARES ==========
-
-  // Calcular estatísticas
+ 
   calcularEstatisticas(): void {
     this.totalUsuarios = this.usuarios.length;
     this.usuariosAtivos = this.usuarios.filter(u => u.ativo).length;
     this.administradores = this.usuarios.filter(u => u.role === 'ADMIN').length;
   }
 
-  // Atualizar usuário na lista
+  
   private atualizarUsuarioNaLista(usuarioAtualizado: Usuarios): void {
     const index = this.usuarios.findIndex(u => u.id === usuarioAtualizado.id);
     if (index !== -1) {
@@ -337,7 +329,7 @@ export class UsuarioListComponent implements OnInit {
     }
   }
 
-  // Validação do usuário
+
   private validarUsuario(): boolean {
     if (!this.usuarioSelecionado) return false;
 
@@ -391,7 +383,7 @@ export class UsuarioListComponent implements OnInit {
   }
 
   private tratarErro(acao: string, error: any): void {
-    console.error(`Erro ao ${acao} usuário:`, error);
+   
     let mensagem = `Erro ao ${acao} usuário`;
 
     if (error.status === 409) {
@@ -408,5 +400,9 @@ export class UsuarioListComponent implements OnInit {
 
   }
 
-  // Métodos para CSS (removidos se não forem usados no Bootstrap)
+
+ navegarPara(path: string): void {
+  this.router.navigate([path]); 
+
+ }
 }

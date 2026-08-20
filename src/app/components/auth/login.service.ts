@@ -50,6 +50,9 @@ export class LoginService {
       return false;
   }
 
+  getUsername(){
+    return this.getUsuarioLogado().username;
+  }
   getUsuarioLogado() {
     return this.jwtDecode() as Usuarios;
   }
@@ -59,15 +62,13 @@ export class LoginService {
         { responseType: 'text' }
     );
   }
-//Metodo para alter a senha do usuario // Método para validar usuário e email - COM responseType: 'text'
+
   validateUserForPasswordReset(validationData: any): Observable<any> {
     return this.http.post(
       `${this.API}/auth/solicitar-recuperacao`,
       validationData
     )
   }
-
-  // Método para resetar senha - COM responseType: 'text'
   resetPassword(resetData: any): Observable<string> {
     return this.http.post(
       `${this.API}/auth/redefinir-senha-verificacao`,
@@ -75,6 +76,6 @@ export class LoginService {
       { responseType: 'text' }
     );
   }
-} // Método para validar usuário e email
+} 
 
 

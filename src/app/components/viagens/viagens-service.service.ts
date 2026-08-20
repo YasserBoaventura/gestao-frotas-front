@@ -38,11 +38,12 @@ export class ViagensServiceService {
     });
   }
 
-  iniciarViagem(id: number): Observable<string> {
-    return this.http.put<string>(`${this.apiUrl}/inicializarViagem/${id}`, {      responseType: 'text'
-
-    });
-  }
+iniciarViagem(id: number): Observable<{ message: string }> {
+  return this.http.put<{ message: string }>(
+    `${this.apiUrl}/inicializarViagem/${id}`,
+    {}
+  );
+}
 
   concluirViagem(dados: any, id: number ): Observable<Viagem> {
     return this.http.put<Viagem>(`${this.apiUrl}/concluir/${id}`, dados);
@@ -53,8 +54,6 @@ export class ViagensServiceService {
 }
 
 
-
-  // Viagens por motorista
   getViagensPorMotorista(motoristaId: number): Observable<Viagem[]> {
     return this.http.get<Viagem[]>(`${this.apiUrl}/motorista/${motoristaId}`);
   }
@@ -62,12 +61,12 @@ export class ViagensServiceService {
   getPorVeiculo(veiculoId: number): Observable<Viagem[]> {
     return this.http.get<Viagem[]>(`${this.apiUrl}/veiculoss/${veiculoId}`);
   }
-  // Viagens por status
+  
   getViagensPorStatus(status: string): Observable<Viagem[]> {
     return this.http.get<Viagem[]>(`${this.apiUrl}/status/${status}`);
   }
 
-  // Viagens por período
+
   getViagensPorPeriodo(dataInicio: string, dataFim: string): Observable<Viagem[]> {
     return this.http.get<Viagem[]>(`${this.apiUrl}/periodo?inicio=${dataInicio}&fim=${dataFim}`);
   }

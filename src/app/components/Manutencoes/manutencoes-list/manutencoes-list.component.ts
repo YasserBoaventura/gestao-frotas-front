@@ -264,7 +264,7 @@ export class ManutencoesListComponent implements OnInit {
     this.manutencaoForm.reset();
   }
 
-  // ========== MÉTODOS DOS MODAIS DE AÇÃO ==========
+
 
   abrirModalIniciar(manutencao: Manutencao): void {
     this.manutencaoSelecionada = manutencao;
@@ -361,7 +361,6 @@ export class ManutencoesListComponent implements OnInit {
     });
   }
 
-  // Ver detalhes com SweetAlert
   verDetalhes(manutencao: Manutencao): void {
     Swal.fire({
       title: 'Detalhes da Manutenção',
@@ -393,7 +392,6 @@ export class ManutencoesListComponent implements OnInit {
   }
 }
 
-  // Excluir com SweetAlert
   excluirManutencao(manutencao: Manutencao): void {
     Swal.fire({
       title: 'Tem certeza?',
@@ -603,8 +601,7 @@ export class ManutencoesListComponent implements OnInit {
     if (this.relatoriosFiltrados.length === 0) return;
     alert('Funcionalidade de exportação para PDF em desenvolvimento');
   }
-
-  // ========== MÉTODOS AUXILIARES ==========
+//hoje em string
 
   get hojeString(): string {
     const year = this.hoje.getFullYear();
@@ -625,12 +622,12 @@ export class ManutencoesListComponent implements OnInit {
     return d.toLocaleDateString('pt-BR');
   }
 
-  formatarMoeda(valor: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor || 0);
-  }
+formatarMoeda(valor: number): string {
+  return new Intl.NumberFormat('pt-MZ', {
+    style: 'currency',
+    currency: 'MZN'
+  }).format(valor || 0);
+}
 
   getTipoManutencaoLabel(tipo: string): string {
     const labels: Record<string, string> = {

@@ -1,249 +1,256 @@
-<div class="vehicles-container">
-  <!-- Cabeçalho -->
-  <div class="header">
-    <div class="header-title">
-      <i class="bi bi-truck title-icon"></i>
+<div class="container-fluid px-3 py-3 bg-light min-vh-100">
+  <!-- Header -->
+  <div class="card mb-3 border-0 shadow-sm" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #adc0d7 100%);">
+    <div class="card-body py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-cash-stack fs-2" style="color: #4A90A0;"></i>
+
       <div>
-        <h1 class="h3 mb-1">Gestão de Veículos</h1>
-        <p class="text-muted mb-0">Gerencie a frota de veículos da empresa</p>
+              <h5 class="mb-0" style="color: #2C5F6E;">Gestão de Veículos</h5>
+              <p class="mb-0 small" style="color: #5A8A9A;">Gerencie a frota de veículos da empresa</p>
+            </div>
       </div>
-    </div>
-    <div class="header-actions">
-      <button class="btn-reload" >
-        <i class="bi bi-arrow-clockwise"></i> Atualizar
-      </button>
-      <button class="btn-add" (click)="openModal()">
-        <i class="bi bi-plus-circle"></i> Novo Veículo
-      </button>
+      <div class="d-flex gap-1">
+        <button class="btn btn-sm btn-outline-secondary" (click)="loadVeiculos()" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-arrow-clockwise"></i> Recarregar
+        </button>
+        <button class="btn btn-sm" style="background: #4a5568; color: white; border: none;" (click)="openModal()">
+          <i class="bi bi-plus-circle"></i> Novo Veículo
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="navegarPara('dashboard')" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-arrow-left"></i> Voltar
+        </button>
+      </div>
     </div>
   </div>
 
-
-
-  <!-- Conteúdo Principal -->
-  <div >
-    <!-- Filtros -->
-    <div class="search-section">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-            <i class="bi bi-funnel me-2"></i>Filtros de Busca
-          </h5>
-          <p class="card-text">Encontre veículos específicos usando os filtros abaixo</p>
-
-          <div class="row g-3">
-            <div class="col-md-3">
-              <label class="form-label">Matrícula</label>
-              <div class="input-group">
-                <span class="input-group-text">
-                  <i class="bi bi-card-text"></i>
-                </span>
-                <input type="text" class="form-control"
-                       [(ngModel)]="filtro.matricula"
-                       (input)="aplicarFiltros()"
-                       placeholder="Ex: AB-123-CD">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Modelo</label>
-              <div class="input-group">
-                <span class="input-group-text">
-                  <i class="bi bi-car-front"></i>
-                </span>
-                <input type="text" class="form-control"
-                       [(ngModel)]="filtro.modelo"
-                       (input)="aplicarFiltros()"
-                       placeholder="Ex: Hilux">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Marca</label>
-              <div class="input-group">
-                <span class="input-group-text">
-                  <i class="bi bi-building"></i>
-                </span>
-                <select class="form-control"
-                        [(ngModel)]="filtro.marca"
-                        (change)="aplicarFiltros()">
-                  <option value="">Todas as marcas</option>
-                  <option *ngFor="let marca of marcas" [value]="marca.id">{{ marca.nome }}</option>
-                </select>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Ano</label>
-              <div class="input-group">
-                <span class="input-group-text">
-                  <i class="bi bi-calendar"></i>
-                </span>
-                <select class="form-control"
-                        [(ngModel)]="filtro.ano"
-                        (change)="aplicarFiltros()">
-                  <option value="">Todos os anos</option>
-                  <option *ngFor="let ano of getAnosDisponiveis()" [value]="ano">{{ ano }}</option>
-                </select>
-                <button class="btn btn-outline-secondary" type="button" (click)="limparFiltros()">
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <small class="form-text mt-2 d-block">
-            <i class="bi bi-info-circle me-1"></i>
-            Mostrando {{ veiculosFiltrados.length }} de {{ lista?.length || 0 }} veículos
-          </small>
-        </div>
-      </div>
+  <!-- Filtros -->
+  <div class="card shadow-sm mb-3 border-0">
+    <div class="card-header bg-white py-2">
+      <h6 class="mb-0 fs-6" style="color: #2d3748;"><i class="bi bi-funnel me-2" style="color: #4a5568;"></i>Filtros de Busca</h6>
     </div>
-
-    <!-- Estatísticas -->
-    <div class="stats-container" *ngIf="lista && lista.length > 0">
-      <div class="stat-card">
-        <div class="stat-icon total">
-          <i class="bi bi-truck"></i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-number">{{ lista?.length || 0 }}</div>
-          <div class="stat-label">Total de Veículos</div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon active">
-          <i class="bi bi-fuel-pump"></i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-number">{{ getCapacidadeTotal() }} L</div>
-          <div class="stat-label">Capacidade Total</div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon admin">
-          <i class="bi bi-speedometer"></i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-number">{{ getKmTotal() }} km</div>
-          <div class="stat-label">Quilometragem Total</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tabela -->
-    <div class="table-container">
-      <div class="table-header-info">
-        <div class="d-flex justify-content-between align-items-center">
-          <div class="total-registros">
-            <i class="bi bi-table me-1"></i>
-            Total: <strong>{{ veiculosFiltrados.length }}</strong> veículos encontrados
+    <div class="card-body py-2">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold" style="color: #4a5568;">Matrícula</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+              <i class="bi bi-card-text small"></i>
+            </span>
+            <input type="text" class="form-control form-control-sm"
+                   [(ngModel)]="filtro.matricula"
+                   (input)="aplicarFiltros()"
+                   placeholder="Ex: AB-123-CD"
+                   style="border-color: #e2e8f0;">
           </div>
-          <div class="export-actions">
-            <button class="btn btn-sm btn-outline-secondary" >
-              <i class="bi bi-download me-1"></i> Exportar
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold" style="color: #4a5568;">Modelo</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+              <i class="bi bi-car-front small"></i>
+            </span>
+            <input type="text" class="form-control form-control-sm"
+                   [(ngModel)]="filtro.modelo"
+                   (input)="aplicarFiltros()"
+                   placeholder="Ex: Hilux"
+                   style="border-color: #e2e8f0;">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold" style="color: #4a5568;">Marca</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+              <i class="bi bi-building small"></i>
+            </span>
+            <select class="form-select form-select-sm"
+                    [(ngModel)]="filtro.marca"
+                    (change)="aplicarFiltros()"
+                    style="border-color: #e2e8f0; background: #fafbfc;">
+              <option value="">Todas as marcas</option>
+              <option *ngFor="let marca of marcas" [value]="marca.id">{{ marca.nome }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold" style="color: #4a5568;">Ano</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
+              <i class="bi bi-calendar small"></i>
+            </span>
+            <select class="form-select form-select-sm"
+                    [(ngModel)]="filtro.ano"
+                    (change)="aplicarFiltros()"
+                    style="border-color: #e2e8f0; background: #fafbfc;">
+              <option value="">Todos os anos</option>
+              <option *ngFor="let ano of getAnosDisponiveis()" [value]="ano">{{ ano }}</option>
+            </select>
+            <button class="btn btn-outline-secondary btn-sm" type="button" (click)="limparFiltros()" style="border-color: #cbd5e1; color: #2d3748;">
+              <i class="bi bi-eraser small"></i>
             </button>
           </div>
         </div>
       </div>
+      <div class="mt-2">
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Mostrando {{ veiculosFiltrados.length }} de {{ lista?.length || 0 }} veículos
+        </small>
+      </div>
+    </div>
+  </div>
 
-      <!-- Tabela com Dados -->
-      <div *ngIf="veiculosFiltrados.length > 0">
-        <table class="vehicles-table">
-          <thead>
-            <tr>
-              <th class="id-cell">ID</th>
-              <th>Matrícula</th>
-              <th>Modelo</th>
-              <th>Marca</th>
-              <th>Ano</th>
-              <th>Capacidade</th>
-              <th>Km Atual</th>
-              <th>status </th>
-              <th class="actions-header">Ações</th>
+  <!-- Estatísticas -->
+  <div class="row g-2 mb-3" *ngIf="lista && lista.length > 0">
+    <div class="col-md-4 col-6">
+      <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #4a5568;">
+        <div class="card-body py-2">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-truck fs-2" style="color: #4a5568; opacity: 0.6;"></i>
+            <div>
+              <div class="fw-bold fs-4" style="color: #2d3748;">{{ lista?.length || 0 }}</div>
+              <small class="text-muted">Total de Veículos</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-6">
+      <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #48bb78;">
+        <div class="card-body py-2">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-fuel-pump fs-2" style="color: #48bb78; opacity: 0.6;"></i>
+            <div>
+              <div class="fw-bold fs-4" style="color: #2d3748;">{{ getCapacidadeTotal() }} L</div>
+              <small class="text-muted">Capacidade Total</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-6">
+      <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #4299e1;">
+        <div class="card-body py-2">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-speedometer fs-2" style="color: #4299e1; opacity: 0.6;"></i>
+            <div>
+              <div class="fw-bold fs-4" style="color: #2d3748;">{{ getKmTotal() }} km</div>
+              <small class="text-muted">Quilometragem Total</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0 fs-6" style="color: #2d3748;"><i class="bi bi-table me-2" style="color: #4a5568;"></i>Lista de Veículos</h6>
+      <div class="d-flex gap-2 align-items-center">
+        <span class="badge" style="background: #4a5568;">{{ veiculosFiltrados.length }} registros</span>
+        <button class="btn btn-sm btn-outline-secondary" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-download"></i> Exportar
+        </button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr class="fs-6">
+              <th class="py-2 px-3" style="width: 50px;">ID</th>
+              <th class="py-2 px-3">Matrícula</th>
+              <th class="py-2 px-3">Modelo</th>
+              <th class="py-2 px-3">Marca</th>
+              <th class="py-2 px-3">Ano</th>
+              <th class="py-2 px-3">Capacidade</th>
+              <th class="py-2 px-3">Km Atual</th>
+              <th class="py-2 px-3">Status</th>
+              <th class="py-2 px-3 text-center" style="width: 100px;">Ações</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let v of veiculosFiltrados" class="table-row">
-              <td class="id-cell">{{ v.id }}</td>
-              <td>
-                <span class="placa-badge">
+            <tr *ngFor="let v of veiculosFiltrados" class="fs-6">
+              <td class="py-2 px-3 fw-semibold" style="color: #4a5568;">{{ v.id }}</td>
+              <td class="py-2 px-3">
+                <span class="badge" style="background: #e2e8f0; color: #2d3748; font-weight: 500; padding: 4px 12px;">
                   <i class="bi bi-card-text me-1"></i>
                   {{ v.matricula }}
                 </span>
               </td>
-              <td class="modelo-cell">
-                <i class="bi bi-car-front me-2 text-primary"></i>
+              <td class="py-2 px-3">
+                <i class="bi bi-car-front me-2" style="color: #4a5568;"></i>
                 {{ v.modelo }}
               </td>
-              <td class="marca-cell">
-                <span class="marca-badge">
+              <td class="py-2 px-3">
+                <span class="badge" style="background: #edf2f7; color: #4a5568; font-weight: 500;">
                   {{ v.marca?.nome || 'Não informada' }}
                 </span>
               </td>
-              <td class="ano-cell">
-                <span class="ano-badge">
+              <td class="py-2 px-3">
+                <span class="badge" style="background: #e2e8f0; color: #2d3748;">
                   {{ v.anoFabricacao }}
                 </span>
               </td>
-              <td>
-                <span class="capacidade-badge">
+              <td class="py-2 px-3">
+                <span class="badge" style="background: #ebf8ff; color: #2b6cb0;">
                   <i class="bi bi-fuel-pump me-1"></i>
                   {{ v.capacidadeTanque }} L
                 </span>
               </td>
-              <td>
-                <span class="km-badge">
+              <td class="py-2 px-3">
+                <span class="badge" style="background: #fefcbf; color: #975a16;">
                   <i class="bi bi-speedometer me-1"></i>
                   {{ v.kilometragemAtual | number:'1.0-0' }} km
                 </span>
               </td>
-                <td class="id-cell">{{ v.status }}</td>
-              <td class="actions-cell">
-                <button class="btn-edit" (click)="openModal(v)" title="Editar">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn-delete" (click)="deleteVeiculo(v)" title="Eliminar">
-                  <i class="bi bi-trash"></i>
+              <td class="py-2 px-3">
+                <span class="badge" [ngClass]="v.status === 'ATIVO' ? 'bg-success bg-opacity-75' : 'bg-secondary bg-opacity-75'">
+                  {{ v.status || 'ATIVO' }}
+                </span>
+              </td>
+              <td class="py-2 px-3 text-nowrap text-center">
+                <div class="d-flex justify-content-center gap-1">
+                  <button class="btn btn-sm btn-outline-secondary" (click)="openModal(v)" title="Editar" style="border-color: #cbd5e1; color: #2d3748; width: 28px; height: 28px; padding: 0;">
+                    <i class="bi bi-pencil small"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteVeiculo(v)" title="Eliminar" style="width: 28px; height: 28px; padding: 0;">
+                    <i class="bi bi-trash small"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="veiculosFiltrados.length === 0">
+              <td colspan="9" class="text-center py-4">
+                <i class="bi bi-truck display-4 text-muted d-block"></i>
+                <p class="small text-muted mt-2">Nenhum veículo encontrado</p>
+                <p class="small text-muted" *ngIf="filtro.matricula || filtro.modelo || filtro.marca || filtro.ano">
+                  Tente ajustar os filtros de busca.
+                </p>
+                <button class="btn btn-sm mt-2" style="background: #4a5568; color: white; border: none;" (click)="openModal()">
+                  <i class="bi bi-plus-circle"></i> Adicionar Primeiro Veículo
                 </button>
               </td>
-
-
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <!-- Estado Vazio -->
-      <div *ngIf="veiculosFiltrados.length === 0" class="empty-container">
-        <div class="empty-state">
-          <i class="bi bi-truck empty-icon"></i>
-          <h3>Nenhum veículo encontrado</h3>
-          <p *ngIf="filtro.matricula || filtro.modelo || filtro.marca || filtro.ano">
-            Tente ajustar os filtros de busca.
-          </p>
-          <p *ngIf="!filtro.matricula && !filtro.modelo && !filtro.marca && !filtro.ano">
-            Nenhum veículo cadastrado ainda.
-          </p>
-          <button class="btn-add-empty" (click)="openModal()">
-            <i class="bi bi-plus-circle"></i> Adicionar Primeiro Veículo
-          </button>
-        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal -->
+<!-- ==================== MODAL DE VEÍCULO ==================== -->
 <ng-template #modalVeiculoDetalhes>
-  <div class="modal-overlay">
-    <div class="modal-container">
+  <div class="modal" [class.show]="true" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050; overflow: hidden; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i class="bi bi-truck me-2"></i>
+        <div class="modal-header" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); border-bottom: 2px solid #cbd5e1;">
+          <h6 class="modal-title fs-6" style="color: #2d3748;">
+            <i class="bi bi-truck me-2" style="color: #4a5568;"></i>
             {{ isEdit ? 'Editar Veículo' : 'Cadastrar Veículo' }}
-          </h5>
-          <button type="button" class="btn-close" (click)="closeModal()"></button>
+          </h6>
+          <button type="button" class="btn-close btn-sm" (click)="closeModal()"></button>
         </div>
         <div class="modal-body">
           <app-veiculosdetalis
@@ -257,15 +264,5 @@
   </div>
 </ng-template>
 
-<!-- Toast de Notificação -->
-<div class="toast-container position-fixed top-0 end-0 p-3">
-  <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert">
-    <div class="d-flex">
-      <div class="toast-body">
-        <i class="bi bi-check-circle me-2"></i>
-        Operação realizada com sucesso!
-      </div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-    </div>
-  </div>
-</div>
+<!-- Backdrop do Modal -->
+<div class="modal-backdrop fade show" *ngIf="showModal" style="z-index: 1040;"></div>

@@ -8,7 +8,7 @@ import { MotoristadetalisComponent } from "../motoristadetalis/motoristadetalis.
 import { MdbModalRef, MdbModalService } from 'mdb-angular-ui-kit/modal';
 import { MotoristaService } from '../motorista.service';
 import Swal from 'sweetalert2';
-import { timeout } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-motoristalist',
@@ -25,6 +25,7 @@ export class MotoristalistComponent implements OnInit {
   @ViewChild("modalMotoristasDetalhes") modalMotoristasDetalhes!: TemplateRef<any>;
 
   serviceMotorista = inject(MotoristaService);
+  router = inject(Router);
 
   // Lista dos motoristas
   lista: Motorista[] = [];
@@ -37,15 +38,20 @@ export class MotoristalistComponent implements OnInit {
   termoPesquisa: string = '';
   pesquisando: boolean = false;
   pesquisaRealizada: boolean = false;
-  carregando: boolean = true; // Adicionado estado de carregamento
+  carregando: boolean = true;
+
+  // Propriedades para filtros
+  filtroCategoria: string = '';
+  filtroStatus: string = '';
+  categoriasDisponiveis: string[] = [];
 
   categoriasHabilitacao = ['A', 'B', 'C', 'D', 'E'];
-//implementar status do mo
+
   private snackBar = inject(MatSnackBar);
   private fb = inject(FormBuilder);
+  private timeoutId: any;
 
   ngOnInit(): void {
-    console.log('🚀 ngOnInit - Iniciando componente');
     this.motoristaForm = this.createForm();
     this.loadMotoristas();
   }
@@ -58,30 +64,40 @@ export class MotoristalistComponent implements OnInit {
       telefone: ['', [Validators.required]],
       dataNascimento: ['', [Validators.required]],
       categoriaHabilitacao: ['', [Validators.required]]
-
-
     });
   }
 
+  //MÉTODOS DE ESTATÍSTICAS
+
+  getMotoristasAtivos(): number {
+    return this.lista.filter(m => m.statusMotorista === 'ATIVO').length;
+  }
+
+  getMotoristasInativos(): number {
+    return this.lista.filter(m => m.statusMotorista == 'INATIVO').length;
+  }
+
+  getCategoriasUnicas(): number {
+    const categorias = new Set(this.lista.map(m => m.categoriaHabilitacao).filter(c => c));
+    return categorias.size;
+  }
+
+  // ===== MÉTODOS DE CARREGAMENTO =====
+
   loadMotoristas(): void {
-    console.log('📥 Carregando motoristas...');
     this.carregando = true;
 
     this.serviceMotorista.getMotoristas().subscribe({
       next: lista => {
-        console.log(' Motoristas recebidos do backend:', lista);
         this.lista = lista || [];
-        this.listaFiltrada = [...this.lista]; // Usar spread operator para criar nova referência
+        this.categoriasDisponiveis = [...new Set(this.lista.map(m => m.categoriaHabilitacao!).filter(c => c))];
+        this.aplicarFiltros();
         this.carregando = false;
-        console.log(' Motoristas carregados:', this.lista.length);
-        console.log(' Lista filtrada:', this.listaFiltrada.length);
       },
       error: erro => {
-        console.error(' Erro ao carregar motoristas:', erro);
         this.carregando = false;
         this.lista = [];
         this.listaFiltrada = [];
-
         Swal.fire({
           title: "Erro",
           text: "Erro ao carregar lista de motoristas",
@@ -92,68 +108,69 @@ export class MotoristalistComponent implements OnInit {
     });
   }
 
-  // Método para pesquisar motoristas pelo nome
-  pesquisarMotoristas(): void {
-    if (!this.termoPesquisa || this.termoPesquisa.trim().length ===0) {
-      this.listaFiltrada = [...this.lista];
+  // ===== MÉTODOS DE FILTRO =====
+
+  aplicarFiltros(): void {
+    let filtrados = [...this.lista];
+
+    if (this.termoPesquisa && this.termoPesquisa.trim().length >= 2) {
+      const termo = this.termoPesquisa.toLowerCase().trim();
+      filtrados = filtrados.filter(m =>
+        (m.nome?.toLowerCase().includes(termo) ?? false) ||
+        (m.email?.toLowerCase().includes(termo) ?? false) ||
+        (m.numeroCarta?.toLowerCase().includes(termo) ?? false) ||
+        (m.telefone?.includes(termo) ?? false)
+      );
+      this.pesquisaRealizada = true;
+    } else {
       this.pesquisaRealizada = false;
+    }
+
+    if (this.filtroCategoria) {
+      filtrados = filtrados.filter(m => m.categoriaHabilitacao === this.filtroCategoria);
+    }
+
+    if (this.filtroStatus) {
+      filtrados = filtrados.filter(m => m.statusMotorista === this.filtroStatus);
+    }
+
+    this.listaFiltrada = filtrados;
+  }
+
+  onPesquisaChange(): void {
+    if (!this.termoPesquisa || this.termoPesquisa.trim().length < 2) {
+      this.pesquisaRealizada = false;
+      this.aplicarFiltros();
       return;
     }
 
     this.pesquisando = true;
     this.pesquisaRealizada = true;
 
-    console.log(' Pesquisando motoristas por:', this.termoPesquisa);
-
-    this.serviceMotorista.findByNome(this.termoPesquisa).subscribe({
-      next: (motoristas: Motorista[]) => {
-        console.log(' Resultado da pesquisa:', motoristas);
-        this.listaFiltrada = motoristas || [];
-        this.pesquisando = false;
-        console.log(' Motoristas encontrados:', this.listaFiltrada.length);
-      },
-      error: (erro) => {
-        console.error(' Erro ao pesquisar motoristas:', erro);
-        this.pesquisando = false;
-        this.listaFiltrada = [];
-        Swal.fire({
-          title: "Erro",
-          text: "Erro ao pesquisar motoristas",
-          icon: "error",
-          confirmButtonText: "Ok"
-        });
-      }
-    });
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = setTimeout(() => {
+      this.aplicarFiltros();
+      this.pesquisando = false;
+    }, 300);
   }
 
-  // Pesquisa em tempo real com debounce
-  onPesquisaChange(): void {
-    if (!this.termoPesquisa || this.termoPesquisa.trim().length === 0) {
-      this.listaFiltrada = [...this.lista];
-      this.pesquisaRealizada = false;
-      return;
-    }
-
-    if (this.termoPesquisa.trim().length != null) {
-      // Adicionar um pequeno delay para evitar muitas requisições
-
-
-         this.pesquisarMotoristas();
-
-    }
-  }
-
-  // Limpar pesquisa
   limparPesquisa(): void {
     this.termoPesquisa = '';
-    this.listaFiltrada = [...this.lista];
+    this.filtroCategoria = '';
+    this.filtroStatus = '';
     this.pesquisaRealizada = false;
-
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.listaFiltrada = [...this.lista];
   }
 
-  openModal(motorista?: Motorista): void {
-    console.log('🔵 ABRIR MODAL - Clique funcionando!', motorista);
+  // ===== MÉTODOS DE MODAL =====
 
+  openModal(motorista?: Motorista): void {
+    
     if (motorista) {
       this.isEdit = true;
       this.selectedMotorista = motorista;
@@ -162,14 +179,16 @@ export class MotoristalistComponent implements OnInit {
       this.selectedMotorista = undefined;
     }
 
+    // Abrir modal com MdbModalService
     this.modalRef = this.modalService.open(this.modalMotoristasDetalhes, {
       modalClass: 'modal-lg'
     });
 
     // Recarregar a lista quando o modal fechar
     this.modalRef.onClose.subscribe(() => {
-      console.log('🔄 Modal fechado, recarregando lista...');
       this.loadMotoristas();
+      this.isEdit = false;
+      this.selectedMotorista = undefined;
     });
   }
 
@@ -177,10 +196,12 @@ export class MotoristalistComponent implements OnInit {
     if (this.modalRef) {
       this.modalRef.close();
     }
-    this.motoristaForm.reset();
     this.isEdit = false;
     this.selectedMotorista = undefined;
+    this.motoristaForm.reset();
   }
+
+  // ===== MÉTODOS DE CRUD =====
 
   deleteMotorista(motorista: Motorista): void {
     Swal.fire({
@@ -196,28 +217,21 @@ export class MotoristalistComponent implements OnInit {
       if (result.isConfirmed) {
         this.serviceMotorista.eliminar(motorista.id!).subscribe({
           next: (response: any) => {
-            // Atualizar ambas as listas
             this.lista = this.lista.filter(m => m.id !== motorista.id);
             this.listaFiltrada = this.listaFiltrada.filter(m => m.id !== motorista.id);
+            this.categoriasDisponiveis = [...new Set(this.lista.map(m => m.categoriaHabilitacao!).filter(c => c))];
 
             this.snackBar.open('Motorista eliminado com sucesso!', 'Fechar', {
               duration: 3000,
               horizontalPosition: 'center',
               verticalPosition: 'top'
             });
-            console.log(' Resposta do backend:', response);
           },
           error: (erro) => {
             console.error(' Erro ao eliminar motorista:', erro);
-            let mensagemErro = "Erro ao eliminar motorista";
-            if (erro.error && typeof erro.error === 'string') {
-              mensagemErro = erro.error;
-            } else if (erro.message) {
-              mensagemErro = erro.message;
-            }
             Swal.fire({
               title: "Erro",
-              text: mensagemErro,
+              text: "Erro ao eliminar motorista",
               icon: "error",
               confirmButtonText: "Ok"
             });
@@ -230,6 +244,8 @@ export class MotoristalistComponent implements OnInit {
   editar(motorista: Motorista) {
     this.openModal(motorista);
   }
+
+  // ===== MÉTODOS UTILITÁRIOS =====
 
   formatarData(data: string): string {
     if (!data) return 'N/A';
@@ -245,15 +261,17 @@ export class MotoristalistComponent implements OnInit {
     return `categoria-badge cat-${categoria.toLowerCase()}`;
   }
 
-  // Método para obter a descrição da categoria
-
-
-  // Método para recarregar manualmente (útil para debugging)
-  recarregarLista(): void {
-    console.log(' Recarregando lista manualmente...');
-    this.loadMotoristas();
+  getStatusClass(status: string): string {
+    if (!status) return 'badge bg-secondary';
+    return `badge bg-${status === 'ATIVO' ? 'success' : 'secondary'}`;
   }
 
+  navegarPara(path: string): void {
+    this.router.navigate([path]);
+  }
 
+  recarregarLista(): void {
 
+    this.loadMotoristas();
+  }
 }

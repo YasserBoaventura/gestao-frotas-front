@@ -119,8 +119,6 @@ export class MotoristadetalisComponent implements OnInit, OnDestroy {
         this.motoristaService.update({ ...motoristaData, id: this.motoristaParaEditar.id }, this.motoristaParaEditar.id).subscribe({
           next: (response: any) => {
             Swal.close();
-            console.log(' Motorista atualizado:', response);
-
             Swal.fire({
               title: "Sucesso!",
               text: "Motorista atualizado com sucesso",
@@ -171,7 +169,7 @@ export class MotoristadetalisComponent implements OnInit, OnDestroy {
         });
       }
     } else {
-      console.log(' Formulário inválido. Corrija os erros.');
+   
     }
   }
 

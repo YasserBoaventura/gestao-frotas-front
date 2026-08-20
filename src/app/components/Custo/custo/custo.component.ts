@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule, NgIf, NgFor, NgClass } from '@angular/common';
@@ -19,6 +19,7 @@ import { ViagensServiceService } from '../../viagens/viagens-service.service';
 import { Veiculo } from '../../Veiculos/veiculos.model';
 import { Viagem } from '../../viagens/viagem';
 import Swal from 'sweetalert2';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-custo',
@@ -31,6 +32,8 @@ import Swal from 'sweetalert2';
   styleUrls: ['./custo.component.css']
 })
 export class CustoComponent implements OnInit {
+
+  router = inject(Router);
   // Dados principais
   custos: CustoListDTO[] = [];
   custoSelecionado: CustoListDTO | null = null;
@@ -344,7 +347,7 @@ export class CustoComponent implements OnInit {
     });
 
   }
-  // ============ CUSTOS DE VIAGEM ============
+  // CUSTOS DE VIAGEM
   criarCustoViagem(): void {
     if (this.custoViagemForm.valid) {
       this.loading = true;
@@ -394,7 +397,7 @@ export class CustoComponent implements OnInit {
     }
   }
 
-  // ============ MÉTODOS AUXILIARES ============
+
   toggleForm(formType: string): void {
     this.showCriarForm = formType === 'criar';
     this.showUpdateForm = formType === 'atualizar';
@@ -419,7 +422,7 @@ export class CustoComponent implements OnInit {
     });
   }
 
-  // ============ FORMATAÇÃO ============
+
   formatarData(data: any): string {
     if (!data) return '--';
 
@@ -452,15 +455,13 @@ export class CustoComponent implements OnInit {
     }
   }
 
-  formatarMoeda(valor: number | undefined): string {
-    if (valor === undefined || valor === null) {
-      return 'R$ 0,00';
-    }
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor);
-  }
+
+formatarMoeda(valor: number): string {
+  return new Intl.NumberFormat('pt-MZ', {
+    style: 'currency',
+    currency: 'MZN'
+  }).format(valor || 0);
+}
 
   formatarTipoCusto(tipo: string): string {
     const tipoEncontrado = this.tiposCusto.find(t => t.value === tipo);
@@ -482,7 +483,7 @@ export class CustoComponent implements OnInit {
     return variacao >= 0 ? '↑' : '↓';
   }
 
-  // ============ DASHBOARD ============
+  // DASHBOARD
   private processarDashboardData(): void {
     if (!this.dashboard) return;
     this.processarCustosPorTipo();
@@ -580,7 +581,7 @@ private converterParaTipoOriginal(tipoFormatado: string): string {
 
   return mapeamento[tipoFormatado] || tipoFormatado;
 }
-  // ============ CONFIGURAÇÕES ============
+  // CONFIGURAÇÕES
   private getTiposCusto(): any[] {
     return [
       { value: 'COMBUSTIVEL', label: 'Combustível' },
@@ -596,6 +597,9 @@ private converterParaTipoOriginal(tipoFormatado: string): string {
     ];
   }
 
+    navegarPara(path: string): void {
+    this.router.navigate([path]);
+  }
   private getStatusCusto(): any[] {
     return [
       { value: StatusCusto.PAGO, label: 'Pago' },

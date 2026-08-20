@@ -11,7 +11,7 @@ import { Login } from '../auth/login';
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
-  standalone: true,                   // ✅ standalone
+  standalone: true, 
   imports: [FormsModule, MdbFormsModule]
 
 
@@ -34,18 +34,16 @@ constructor(){}
     this.router.navigate(['dashboard']);
       }},
      error: (error: any) => {
-      // A resposta de erro é uma string, então error.error é a string completa.
+   
   let errorMessage = error.error;
 
   try {
     const parsed = JSON.parse(error.error);
     errorMessage = parsed.error;
   } catch (e) {
-    // se não for JSON, usa direto
+console.log(e); 
   }
 
-
-console.log(error);
   if (errorMessage === 'PRIMEIRO_LOGIN!') {
     this.router.navigate(['/trocar-senha']);
     return;
@@ -70,7 +68,7 @@ console.log(error);
             confirmButtonText: 'OK'
           })
            return;
-      //alert('Erro ao criar conta: ' + errorMessage);
+     
     }
 
 
@@ -81,8 +79,7 @@ console.log(error);
   forgotPassword(event: Event) {
     event.preventDefault();
     this.router.navigate(['/reset-senha']);
-    console.log('Recuperar senha');
-    // lógica de recuperação de senha
+
   }
 
 register(event: Event) {

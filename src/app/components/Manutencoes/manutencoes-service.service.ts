@@ -53,7 +53,7 @@ export interface AlertaManutencao {
 export class ManutencoesServiceService {
 
  private apiUrl = "http://localhost:9001/api/manutencoes";
- //dos veicuos
+    //dos veicuos
   private veiculosUrl = 'http://localhost:9001/api/veiculos';
 
   constructor(private http: HttpClient) {}
@@ -133,7 +133,6 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
     return this.http.get<Manutencao[]>(`${this.apiUrl}/vencidas`)
   }
 
-  // Novas funcionalidades
   iniciarManutencao(id: any): Observable<Manutencao> {
     return this.http.put<Manutencao>(`${this.apiUrl}/iniciarManutencao/${id}`, {});
   }
@@ -160,7 +159,7 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
     return this.http.get<Manutencao[]>(`${this.apiUrl}/proximas/7dias`, )
   }
 
-  // ========== SERVIÇOS DE VEÍCULO ==========
+  // SERVIÇOS DE VEÍCULO 
 
   /**
    * Busca todos os veículos
@@ -184,8 +183,6 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
     return this.http.patch<Veiculo>(`${this.veiculosUrl}/${veiculoId}/kilometragem`,{})
 
   }
-
-  // ========== MÉTODOS AUXILIARES ==========
 
   /**
    * Verifica status da manutenção
@@ -330,7 +327,7 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
     };
   }
 
-  // ========== UTILITÁRIOS ==========
+  
 
   getTipoManutencaoLabel(tipo: TipoManutencao): string {
     const labels: Record<TipoManutencao, string> = {
@@ -363,10 +360,9 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
     }).format(valor);
   }
 
-  // ========== MOCK DATA (para desenvolvimento) ==========
 
 
-  // ========== ERROR HANDLING ==========
+  
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Ocorreu um erro inesperado';
@@ -475,10 +471,7 @@ update(id: number, manutencaoDTO: ManutencaoDTO): Observable<string> {
       erros
     };
   }
- // Buscar relatório por veículo
 
-  // Buscar relatório por período 
-  // Buscar relatório por período - CORRIGIDO
 getRelatorioPorPeriodo(dataInicio: Date, dataFim: Date): Observable<RelatorioManutencaoDTO []> {
   const params = {
     inicio: this.formatarDataISO(dataInicio),
@@ -491,7 +484,6 @@ getRelatorioPorPeriodo(dataInicio: Date, dataFim: Date): Observable<RelatorioMan
   );
 }
 
-  // Método auxiliar para formatar data no padrão yyyy-MM-dd
   private formatarDataISO(data: Date): string {
     const year = data.getFullYear();
     const month = (data.getMonth() + 1).toString().padStart(2, '0');
