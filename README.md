@@ -78,6 +78,8 @@ Criação e visualização de rotas, com origem, destino e paragens intermédias
 ---
 
 ### 🧳 Gestão de Viagens
+<img width="1600" height="860" alt="image" src="https://github.com/user-attachments/assets/3c772adb-ae8f-46d3-9c6e-6c1029851f36" />
+
 <img width="1600" height="843" alt="image" src="https://github.com/user-attachments/assets/642ccbde-c270-4cc7-995a-e92ad3ea593e" />
 
 
@@ -103,6 +105,10 @@ Histórico de manutenções preventivas e corretivas por veículo, com agendamen
 ---
 
 ### 💰 Relatório de Custos
+<img width="1600" height="891" alt="image" src="https://github.com/user-attachments/assets/96edf9f3-6aa5-4a29-8052-ce69cca12b71" />
+<img width="1600" height="831" alt="image" src="https://github.com/user-attachments/assets/89225af4-499d-4051-8653-66fbf1e25cf5" />
+<img width="1600" height="884" alt="image" src="https://github.com/user-attachments/assets/f610f6c4-f6b3-46ea-9461-662c7f0eb68e" />
+
 
 
 Painel consolidado de custos operacionais (combustível + manutenção + outros), filtrável por veículo, motorista ou período.
@@ -110,12 +116,19 @@ Painel consolidado de custos operacionais (combustível + manutenção + outros)
 ---
 
 ### 📍 Tracking em Tempo Real
-<!-- ![Tracking](docs/screenshots/tracking.png) -->
-`[ imagem: docs/screenshots/tracking.png ]`
+<img width="1600" height="833" alt="image" src="https://github.com/user-attachments/assets/560fc7eb-6864-444c-8e03-a6e0f68b4054" />
+<img width="1600" height="899" alt="image" src="https://github.com/user-attachments/assets/72d19886-1337-4a2a-bb8d-7d64fcea1702" />
+<img width="1600" height="853" alt="image" src="https://github.com/user-attachments/assets/02e6b5d4-3603-401d-bf11-6b01bbeb70dd" />
+<img width="1600" height="776" alt="image" src="https://github.com/user-attachments/assets/e102dfe1-0e29-48d7-8e81-6d7e41a27cfa" />
+<img width="1600" height="818" alt="image" src="https://github.com/user-attachments/assets/136558d2-adff-44b4-a128-7500055fb3f0" />
 
 Mapa (Google Maps) com a localização em tempo real dos veículos da frota, atualizada automaticamente via WebSocket.
 
 ---
+###  Usuários
+<img width="1600" height="814" alt="image" src="https://github.com/user-attachments/assets/f8f22af8-157f-47a3-be49-0ea244af2f69" />
+
+Gestão de usuários do sistema: cadastro, desativação/ativação de contas.
 
 ## ⚙️ Funcionalidades
 
@@ -156,13 +169,13 @@ Mapa (Google Maps) com a localização em tempo real dos veículos da frota, atu
 fleet-manager-frontend/
 ├── src/
 │   ├── app/
-│   │   ├── core/                  # Serviços singleton, interceptors, guards
+│   │   ├── login/                  # Serviços singleton, interceptors, guards
 │   │   │   ├── guards/
-│   │   │   ├── interceptors/
-│   │   │   └── services/
-│   │   ├── shared/                 # Componentes, pipes e diretivas reutilizáveis
-│   │   ├── auth/                   # Login, recuperação de senha
+│   │   │   ├── reset-senha/
+│   │   │   └── trocarDeSenhaPrimeiroLogin/
+│   │   ├── auth/                   # Login, recuperação de senha, guards, interceptor
 │   │   ├── veiculos/                # Módulo de veículos
+│   │   ├── Usuários/                # Gestão de usuários do sistema: cadastro, desativação/ativação de contas.
 │   │   ├── motoristas/              # Módulo de motoristas
 │   │   ├── rotas/                   # Módulo de rotas
 │   │   ├── viagens/                 # Módulo de viagens
@@ -173,13 +186,13 @@ fleet-manager-frontend/
 │   │   ├── app-routing.module.ts
 │   │   └── app.module.ts
 │   ├── assets/
-│   │   └── screenshots/            # Imagens usadas neste README
+│   │   └── screenshots/           
 │   ├── environments/
 │   │   ├── environment.ts
 │   │   └── environment.prod.ts
 │   └── index.html
 ├── docs/
-│   └── screenshots/                 # (alternativa) imagens do README
+│   └── screenshots/                 
 ├── angular.json
 ├── package.json
 ├── docker-compose.yml
@@ -187,7 +200,6 @@ fleet-manager-frontend/
 └── README.md
 ```
 
-> Ajusta os nomes das pastas conforme a organização real do teu projeto (ex.: se usas Standalone Components em vez de módulos por feature).
 
 ---
 
@@ -209,8 +221,8 @@ Edita os ficheiros de ambiente em `src/environments/` com a URL da API e a chave
 ```typescript
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/api',
-  wsUrl: 'http://localhost:8080/ws/tracking',
+  apiUrl: 'http://localhost:9001/api',
+  wsUrl: 'http://localhost:9001/ws/tracking',
   googleMapsApiKey: 'SUA_CHAVE_GOOGLE_MAPS'
 };
 ```
@@ -366,4 +378,4 @@ Este projeto está sob a licença MIT — sinta-se à vontade para usar, modific
 
 ---
 
-**Desenvolvido com 💙 e Angular.**
+**Desenvolvido com Angular.**
