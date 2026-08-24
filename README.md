@@ -49,7 +49,7 @@ Tela de autenticação do sistema. Permite ao utilizador iniciar sessão com e-m
 <img width="1600" height="899" alt="image" src="https://github.com/user-attachments/assets/c1e387e8-0d39-4c33-acd7-11f56e37da0b" />
 
 
-Visão geral da frota: número de veículos ativos, viagens em curso, alertas de manutenção pendentes e resumo de custos do período.
+Visão geral da frota: número de veículos ativos, viagens em curso, alertas de manutenção pendentes.
 
 ---
 
