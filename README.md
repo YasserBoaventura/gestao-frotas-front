@@ -159,7 +159,6 @@ Gestão de usuários do sistema: cadastro, desativação/ativação de contas.
 - **Interceptors HTTP** — anexação automática do token JWT nas requisições
 - **Docker** — contentorização da aplicação (build + Nginx)
 
-> Ajusta esta lista conforme as bibliotecas reais usadas no teu `package.json`.
 
 ---
 
