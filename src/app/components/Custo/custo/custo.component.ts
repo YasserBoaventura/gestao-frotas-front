@@ -627,7 +627,7 @@ private converterParaTipoOriginal(tipoFormatado: string): string {
   getIconePorTipo(tipo: string): string {
     const tipoEncontrado = this.tiposCustoCompletos.find(t => t.value === tipo);
     return tipoEncontrado ? tipoEncontrado.icone : 'bi-three-dots';
-  }
+  } 
 
   // ============ CÁLCULOS ============
   calcularTotalCustos(): number {

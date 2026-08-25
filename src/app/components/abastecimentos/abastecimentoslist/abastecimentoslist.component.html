@@ -1,3 +1,4 @@
+
 <div class="container-fluid px-3 py-3 bg-light min-vh-100">
   <!-- Header -->
   <div class="card mb-3 border-0 shadow-sm" style="background: linear-gradient(135deg, #E8F4F8 0%, #B8D9E8 50%, #D4E9F2 100%);">
@@ -23,10 +24,25 @@
         }
         <button class="btn btn-sm btn-outline-secondary" (click)="navegateTO('dashboard')" style="border-color: #7AB0C0; color: #2C5F6E;">
           <i class="bi bi-arrow-left"></i> Voltar
+
+<div class="abastecimentos-container">
+  <!-- Overlay e Modais -->
+  <div class="modal-overlay" *ngIf="mostrarModal || mostrarModalExclusao" (click)="fecharModal()">
+    <!-- Modal de Cadastro/Edição -->
+    <div *ngIf="mostrarModal" class="modal-form" (click)="$event.stopPropagation()">
+      <div class="modal-header" style="background: linear-gradient(135deg, #6ea8fe, #3d8bfd);">
+        <div class="modal-title">
+          <mat-icon class="modal-icon text-white">{{editando ? 'edit' : 'add'}}</mat-icon>
+          <h2 class="text-white">{{editando ? 'Editar Abastecimento' : 'Novo Abastecimento'}}</h2>
+        </div>
+        <button class="btn-close text-white" (click)="fecharModal()">
+          <mat-icon>close</mat-icon>
+
         </button>
       </div>
     </div>
   </div>
+
 
   <!-- Abas -->
   <div class="card shadow-sm mb-3 border-0">
@@ -93,6 +109,80 @@
           <div class="col-md-2">
             <label class="form-label small mb-0">Data Fim</label>
             <input type="date" class="form-control form-control-sm" [(ngModel)]="filtroDataFim" (change)="aplicarFiltros()">
+
+      <div class="modal-content p-4">
+        <form [formGroup]="abastecimentoForm" class="form-grid">
+          <!-- Veículo -->
+          <div class="form-group mb-3">
+            <label class="form-label fw-semibold mb-2">Veículo *</label>
+            <mat-select formControlName="veiculoId" class="form-control-select w-100 p-2 border rounded"
+                        (selectionChange)="onVeiculoChange($event.value)">
+              <mat-option value="">Selecione um veículo</mat-option>
+              <mat-option *ngFor="let veiculo of veiculos" [value]="veiculo.id">
+                {{veiculo.matricula}} - {{veiculo.modelo}}
+                <span *ngIf="veiculo.kilometragemAtual" class="text-muted">
+                  ({{veiculo.kilometragemAtual | number}} km)
+                </span>
+              </mat-option>
+            </mat-select>
+            <div class="text-danger small mt-1" *ngIf="abastecimentoForm.get('veiculoId')?.invalid && abastecimentoForm.get('veiculoId')?.touched">
+              Veículo é obrigatório
+            </div>
+          </div>
+
+          <!-- Viagem (Opcional) -->
+          <div class="form-group mb-3">
+            <label class="form-label fw-semibold mb-2">Viagem (Opcional)</label>
+            <mat-select formControlName="viagemId" class="form-control-select w-100 p-2 border rounded">
+              <mat-option value="">Não vinculada a viagem</mat-option>
+              <mat-option *ngFor="let viagem of viagensDoVeiculo" [value]="viagem.id">
+                #{{viagem.id}} - {{viagem.rota?.origem || 'Origem'}} → {{viagem.rota?.destino || 'Destino'}}
+              </mat-option>
+            </mat-select>
+            <!-- Debug info -->
+            <div class="debug-info small text-muted mt-1" *ngIf="debugMode">
+              <small>Viagens encontradas: {{viagensDoVeiculo.length}} | Veículo ID: {{abastecimentoForm.get('veiculoId')?.value}}</small>
+            </div>
+          </div>
+
+          <!-- Data e Hora -->
+          <div class="form-group mb-3">
+            <label class="form-label fw-semibold mb-2">Data e Hora *</label>
+            <input matInput type="datetime-local" formControlName="dataAbastecimento"
+                   class="form-control w-100 p-2 border rounded">
+            <div class="text-danger small mt-1" *ngIf="abastecimentoForm.get('dataAbastecimento')?.invalid && abastecimentoForm.get('dataAbastecimento')?.touched">
+              Data e hora são obrigatórias
+            </div>
+          </div>
+
+          <!-- Tipo de Combustível -->
+          <div class="form-group mb-3">
+            <label class="form-label fw-semibold mb-2">Tipo de Combustível *</label>
+            <mat-select formControlName="tipoCombustivel" class="form-control-select w-100 p-2 border rounded">
+              <mat-option value="">Selecione um tipo</mat-option>
+              <mat-option value="GASOLINA">Gasolina</mat-option>
+              <mat-option value="DIESEL">Diesel</mat-option>
+              <mat-option value="ETANOL">Etanol</mat-option>
+              <mat-option value="GNV">GNV</mat-option>
+              <mat-option value="ELETRICO">Elétrico</mat-option>
+            </mat-select>
+            <div class="text-danger small mt-1" *ngIf="abastecimentoForm.get('tipoCombustivel')?.invalid && abastecimentoForm.get('tipoCombustivel')?.touched">
+              Tipo de combustível é obrigatório
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="form-group mb-3">
+            <label class="form-label fw-semibold mb-2">Status *</label>
+            <mat-select formControlName="statusAbastecimento" class="form-control-select w-100 p-2 border rounded">
+              <mat-option value="">Selecione um status</mat-option>
+              <mat-option value="REALIZADA">Realizada</mat-option>
+              <mat-option value="PLANEADA">Planejada</mat-option>
+            </mat-select>
+            <div class="text-danger small mt-1" *ngIf="abastecimentoForm.get('statusAbastecimento')?.invalid && abastecimentoForm.get('statusAbastecimento')?.touched">
+              Status é obrigatório
+            </div>
+
           </div>
         </div>
         <div class="d-flex gap-2 mt-3">
@@ -158,11 +248,50 @@
                 </div>
                 <i class="bi bi-trending-up fs-1" style="color: #7AB0C0; opacity: 0.6;"></i>
               </div>
+
+          <!-- Quilometragem -->
+          <div class="form-group mb-3">
+            <label class="form-label fw-semibold mb-2">Quilometragem (km) *</label>
+            <input matInput type="number" formControlName="kilometragemVeiculo"
+                   class="form-control w-100 p-2 border rounded" (input)="calcularValorTotal()">
+            <div class="text-danger small mt-1" *ngIf="abastecimentoForm.get('kilometragemVeiculo')?.invalid && abastecimentoForm.get('kilometragemVeiculo')?.touched">
+              Quilometragem é obrigatória
+            </div>
+          </div>
+
+          <!-- Quantidade de Litros -->
+          <div class="form-group mb-3">
+            <label class="form-label fw-semibold mb-2">Quantidade (L) *</label>
+            <input matInput type="number" step="0.1" formControlName="quantidadeLitros"
+                   class="form-control w-100 p-2 border rounded" (input)="calcularValorTotal()">
+            <div class="text-danger small mt-1" *ngIf="abastecimentoForm.get('quantidadeLitros')?.invalid && abastecimentoForm.get('quantidadeLitros')?.touched">
+              Quantidade é obrigatória
+            </div>
+          </div>
+
+          <!-- Preço por Litro -->
+          <div class="form-group mb-3">
+            <label class="form-label fw-semibold mb-2">Preço por Litro (R$) *</label>
+            <input matInput type="number" step="0.01" formControlName="precoPorLitro"
+                   class="form-control w-100 p-2 border rounded" (input)="calcularValorTotal()">
+            <div class="text-danger small mt-1" *ngIf="abastecimentoForm.get('precoPorLitro')?.invalid && abastecimentoForm.get('precoPorLitro')?.touched">
+              Preço é obrigatório
+            </div>
+          </div>
+
+          <!-- Valor Total (Calculado) -->
+          <div class="form-group full-width mb-3">
+            <label class="form-label fw-semibold mb-2">Valor Total</label>
+            <div class="valor-total-display p-3 bg-light rounded d-flex align-items-center">
+              <mat-icon class="valor-icon me-2" style="color: #6ea8fe;">attach_money</mat-icon>
+              <span class="valor-text fs-4 fw-bold" style="color: #3d8bfd;">{{valorCalculado | currency:'BRL':'symbol':'1.2-2'}}</span>
+
             </div>
           </div>
         </div>
       </div>
     </div>
+
 
     <!-- Tabela -->
     <div class="table-container" *ngIf="filteredAbastecimentos && filteredAbastecimentos.length > 0; else emptyState">
@@ -270,9 +399,38 @@
             <i class="bi bi-plus-circle"></i> Novo Abastecimento
           </button>
         </div>
+
+      <div class="modal-footer p-3 border-top d-flex justify-content-end gap-2">
+        <button class="btn px-4 py-2 border rounded" style="color: #6c757d;" (click)="fecharModal()">
+          <mat-icon class="me-1" style="font-size: 18px;">cancel</mat-icon>
+          Cancelar
+        </button>
+        <button class="btn px-4 py-2 border-0 text-white rounded"
+                style="background: linear-gradient(135deg, #6ea8fe, #3d8bfd);"
+                (click)="salvarAbastecimento()"
+                [disabled]="abastecimentoForm.invalid || carregandoModal">
+          <mat-icon *ngIf="!carregandoModal" class="me-1" style="font-size: 18px;">save</mat-icon>
+          <span *ngIf="carregandoModal" class="spinner-border spinner-border-sm me-1"></span>
+          {{editando ? 'Atualizar' : 'Salvar'}}
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div *ngIf="mostrarModalExclusao" class="modal-acao" (click)="$event.stopPropagation()">
+      <div class="modal-header" style="background: linear-gradient(135deg, #ff9e9e 0%, #ff7b7b 100%);">
+        <div class="modal-title">
+          <mat-icon class="modal-icon text-white">warning</mat-icon>
+          <h2 class="text-white">Confirmar Exclusão</h2>
+        </div>
+        <button class="btn-close text-white" (click)="fecharModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+
       </div>
     </ng-template>
   </div>
+
 
   <!-- ==================== RELATÓRIO DE COMBUSTÍVEL ==================== -->
   <div *ngIf="!carregando && abaAtiva === 'relatorio'">
@@ -289,6 +447,12 @@
               <option value="veiculo">Por Veículo</option>
               <option value="periodo">Por Período</option>
             </select>
+
+      <div class="modal-content p-4">
+        <div class="acao-content text-center">
+          <div class="acao-icon mb-3" style="color: #ff7b7b; font-size: 48px;">
+            <mat-icon style="font-size: 48px; width: 48px; height: 48px;">delete_forever</mat-icon>
+
           </div>
           <div class="col-md-4">
             <label class="form-label small mb-0">Filtrar por Veículo</label>
@@ -297,11 +461,27 @@
               <option *ngFor="let veiculo of veiculos" [value]="veiculo">{{ veiculo.matricula }}</option>
             </select>
 
+
           </div>
           <div class="col-md-4 d-flex align-items-end">
             <button class="btn btn-sm btn-outline-secondary w-100" (click)="limparFiltros()">
               <i class="bi bi-eraser"></i> Limpar Filtros
             </button>
+
+          <h3 class="h5 mb-3">Excluir Abastecimento</h3>
+
+          <div class="acao-info p-3 bg-light rounded text-start mb-3" *ngIf="abastecimentoSelecionado">
+            <p class="mb-2"><strong class="text-muted">Veículo:</strong> {{getVeiculoInfo(abastecimentoSelecionado.veiculo_Id!)}}</p>
+            <p class="mb-2"><strong class="text-muted">Data:</strong> {{formatarDataHora(abastecimentoSelecionado.dataAbastecimento!)}}</p>
+            <p class="mb-2"><strong class="text-muted">Combustível:</strong> {{getTipoCombustivelIcon(abastecimentoSelecionado.tipoCombustivel)}}</p>
+            <p class="mb-2"><strong class="text-muted">Quantidade:</strong> {{abastecimentoSelecionado.quantidadeLitros}} L</p>
+            <p class="mb-0"><strong class="text-muted">Valor:</strong> {{formatarMoeda(abastecimentoSelecionado.quantidadeLitros * abastecimentoSelecionado.precoPorLitro)}}</p>
+          </div>
+
+          <div class="acao-warning d-flex align-items-center gap-2 p-3 rounded" style="background: #fff3f3;">
+            <mat-icon style="color: #ff7b7b;">error</mat-icon>
+            <span class="small text-muted">Esta ação não pode ser desfeita. O abastecimento será permanentemente excluído.</span>
+
           </div>
         </div>
         <div class="row g-2 mt-2" *ngIf="filtroAtivo === 'periodo'">
@@ -337,6 +517,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- Resumo do Relatório -->
     <div *ngIf="relatoriosFiltrados.length > 0" class="row g-3 mb-4">
@@ -391,8 +572,23 @@
             </div>
           </div>
         </div>
+
+      <div class="modal-footer p-3 border-top d-flex justify-content-end gap-2">
+        <button class="btn px-4 py-2 border rounded" style="color: #6c757d;" (click)="fecharModal()">
+          <mat-icon class="me-1" style="font-size: 18px;">cancel</mat-icon>
+          Cancelar
+        </button>
+        <button class="btn px-4 py-2 border-0 text-white rounded"
+                style="background: linear-gradient(135deg, #ff9e9e 0%, #ff7b7b 100%);"
+                (click)="confirmarExclusao()" [disabled]="carregando">
+          <mat-icon *ngIf="!carregando" class="me-1" style="font-size: 18px;">delete</mat-icon>
+          <span *ngIf="carregando" class="spinner-border spinner-border-sm me-1"></span>
+          Excluir
+        </button>
+
       </div>
     </div>
+
 
     <!-- Tabela do Relatório -->
     <div *ngIf="relatoriosFiltrados.length > 0; else emptyRelatorioState" class="card shadow-sm border-0">
@@ -454,6 +650,33 @@
           </table>
         </div>
       </div>
+
+  <!-- Header -->
+  <div class="header bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
+    <div class="header-title d-flex align-items-center gap-2">
+      <mat-icon class="title-icon" style="color: #6ea8fe;">local_gas_station</mat-icon>
+      <h2 class="h5 mb-0" style="color: #3d8bfd;">Gerenciamento de Abastecimentos</h2>
+    </div>
+    <div class="header-actions d-flex gap-2">
+      <!-- Debug button (temporário) -->
+      <button *ngIf="debugMode" class="btn p-2 rounded-circle" style="background: #f8f9fa;" title="Debug">
+        <mat-icon style="color: #6ea8fe;">bug_report</mat-icon>
+      </button>
+      <button class="btn p-2 rounded-circle" style="background: #f8f9fa;" (click)="carregarDados()" [disabled]="carregando" title="Recarregar lista">
+        <mat-icon style="color: #6ea8fe;">refresh</mat-icon>
+      </button>
+      <button class="btn d-flex align-items-center gap-1 px-3 py-2 border-0 text-white rounded"
+              style="background: linear-gradient(135deg, #6ea8fe, #3d8bfd);" (click)="novoAbastecimento()">
+        <mat-icon style="font-size: 18px;">add</mat-icon>
+        Novo Abastecimento
+      </button>
+     @if( loginService.hasRole("ADMIN")){
+       <button class="btn d-flex align-items-center gap-1 px-3 py-2 border-0 text-white rounded"
+               style="background: linear-gradient(135deg, #6ea8fe, #3d8bfd);" (click)="navegateTO('relatorioCombustivel')">
+        ver relatorio
+      </button>
+    }
+
     </div>
 
     <ng-template #emptyRelatorioState>
@@ -479,6 +702,15 @@
         </small>
       </div>
     </div>
+
+  <!-- Estado de Carregamento -->
+  <div *ngIf="carregando && abastecimentos.length === 0" class="loading-state text-center py-5">
+    <div class="spinner-border mb-3" style="color: #6ea8fe;" role="status">
+      <span class="visually-hidden">Carregando...</span>
+    </div>
+    <h3 class="h5 mb-2" style="color: #3d8bfd;">Carregando abastecimentos...</h3>
+    <p class="text-muted small">Aguarde enquanto carregamos a lista de abastecimentos</p>
+
   </div>
 </div>
 <!-- ==================== MODAL DE CADASTRO/EDIÇÃO ==================== -->
@@ -492,6 +724,7 @@
         </div>
         <button type="button" class="btn-close" (click)="fecharModal()"></button>
       </div>
+
 
       <div class="modal-body py-3">
         <form [formGroup]="abastecimentoForm" (ngSubmit)="salvarAbastecimento()">
@@ -647,8 +880,295 @@
         <div class="alert alert-warning py-1 fs-6">
           <i class="bi bi-exclamation-triangle me-1"></i>
           Esta ação não pode ser desfeita. O abastecimento será permanentemente excluído.
+
+  <!-- Conteúdo Principal (quando não está carregando) -->
+  <div *ngIf="!carregando || abastecimentos.length > 0" class="p-3">
+    <!-- Filtros -->
+    <div class="filter-section mb-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+          <h4 class="card-title d-flex align-items-center mb-3 small fw-semibold text-uppercase" style="color: #6ea8fe;">
+            <mat-icon class="me-2" style="font-size: 18px;">filter_list</mat-icon>
+            Filtros
+          </h4>
+          <div class="row g-3">
+            <!-- Veículo -->
+            <div class="col-md-3">
+              <label class="form-label small text-muted mb-1">Veículo</label>
+              <input matInput [(ngModel)]="filtroVeiculo" placeholder="Matrícula ou modelo"
+                     class="form-control form-control-sm" (keyup.enter)="aplicarFiltros()">
+            </div>
+
+            <!-- Tipo Combustível -->
+            <div class="col-md-2">
+              <label class="form-label small text-muted mb-1">Tipo de Combustível</label>
+              <mat-select [(ngModel)]="filtroTipoCombustivel" class="form-control-select form-control-sm"
+                         (selectionChange)="aplicarFiltros()">
+                <mat-option value="">Todos</mat-option>
+                <mat-option value="GASOLINA">Gasolina</mat-option>
+                <mat-option value="DIESEL">Diesel</mat-option>
+                <mat-option value="ETANOL">Etanol</mat-option>
+                <mat-option value="GNV">GNV</mat-option>
+                <mat-option value="ELETRICO">Elétrico</mat-option>
+              </mat-select>
+            </div>
+
+            <!-- Status -->
+            <div class="col-md-2">
+              <label class="form-label small text-muted mb-1">Status</label>
+              <mat-select [(ngModel)]="filtroStatus" class="form-control-select form-control-sm"
+                         (selectionChange)="aplicarFiltros()">
+                <mat-option value="">Todos</mat-option>
+                <mat-option value="REALIZADA">Realizada</mat-option>
+                <mat-option value="PLANEADA">Planejada</mat-option>
+              </mat-select>
+            </div>
+
+            <!-- Data Início -->
+            <div class="col-md-2">
+              <label class="form-label small text-muted mb-1">Data Início</label>
+              <input matInput type="date" [(ngModel)]="filtroDataInicio"
+                     class="form-control form-control-sm" (change)="aplicarFiltros()">
+            </div>
+ 
+            <!-- Data Fim -->
+            <div class="col-md-2">
+              <label class="form-label small text-muted mb-1">Data Fim</label>
+              <input matInput type="date" [(ngModel)]="filtroDataFim"
+                     class="form-control form-control-sm" (change)="aplicarFiltros()">
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-sm d-flex align-items-center gap-1 px-3"
+                    style="background: #e7f1ff; color: #3d8bfd;"
+                    (click)="aplicarFiltros()" [disabled]="carregando">
+              <mat-icon style="font-size: 16px;">search</mat-icon>
+              Aplicar Filtros
+            </button>
+            <button class="btn btn-sm d-flex align-items-center gap-1 px-3 border"
+                    style="color: #6c757d;"
+                    (click)="limparFiltros()">
+              <mat-icon style="font-size: 16px;">clear</mat-icon>
+              Limpar Filtros
+            </button>
+          </div>
         </div>
       </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="summary-section mb-4" *ngIf="abastecimentos.length > 0">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+          <div class="summary-header mb-3">
+            <h4 class="card-title d-flex align-items-center small fw-semibold text-uppercase" style="color: #6ea8fe;">
+              <mat-icon class="me-2" style="font-size: 18px;">assessment</mat-icon>
+              Estatísticas de Abastecimento
+            </h4>
+          </div>
+
+          <div class="row g-3">
+            <!-- Total de Abastecimentos -->
+            <div class="col-md-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-2" style="background: #e7f1ff;">
+                  <mat-icon style="color: #6ea8fe;">local_gas_station</mat-icon>
+                </div>
+                <div>
+                  <span class="small text-muted d-block">Total de Abastecimentos</span>
+                  <span class="h5 mb-0" style="color: #3d8bfd;">{{getTotalAbastecimentos()}}</span>
+                  <span class="small text-muted d-block">Registrados</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Litros Total -->
+            <div class="col-md-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-2" style="background: #e7f1ff;">
+                  <mat-icon style="color: #6ea8fe;">water_drop</mat-icon>
+                </div>
+                <div>
+                  <span class="small text-muted d-block">Litros Total</span>
+                  <span class="h5 mb-0" style="color: #3d8bfd;">{{estatisticas.totalLitros | number:'1.0-0'}} L</span>
+                  <span class="small text-muted d-block">Consumidos</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Custo Total -->
+            <div class="col-md-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-2" style="background: #e7f1ff;">
+                  <mat-icon style="color: #6ea8fe;">attach_money</mat-icon>
+                </div>
+                <div>
+                  <span class="small text-muted d-block">Custo Total</span>
+                  <span class="h5 mb-0" style="color: #3d8bfd;">{{formatarMoeda(estatisticas.totalGasto)}}</span>
+                  <span class="small text-muted d-block">Investido</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preço Médio -->
+            <div class="col-md-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-2" style="background: #e7f1ff;">
+                  <mat-icon style="color: #6ea8fe;">trending_up</mat-icon>
+                </div>
+                <div>
+                  <span class="small text-muted d-block">Preço Médio/L</span>
+                  <span class="h5 mb-0" style="color: #3d8bfd;">{{formatarMoeda(estatisticas.mediaPreco)}}</span>
+                  <span class="small text-muted d-block">Por litro</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="table-container" *ngIf="filteredAbastecimentos && filteredAbastecimentos.length > 0; else emptyState">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+          <div class="p-3 border-bottom bg-light">
+            <span class="small text-muted">
+              Total de abastecimentos: <strong style="color: #3d8bfd;">{{filteredAbastecimentos.length}}</strong>
+              <span class="ms-2">
+                Litros totais: {{estatisticas.totalLitros | number:'1.0-0'}} L •
+                Custo total: {{formatarMoeda(estatisticas.totalGasto)}}
+              </span>
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="px-3 py-2 small fw-semibold">Data/Hora</th>
+                  <th class="px-3 py-2 small fw-semibold">Veículo</th>
+                  <th class="px-3 py-2 small fw-semibold">Combustível</th>
+                  <th class="px-3 py-2 small fw-semibold">Quilometragem</th>
+                  <th class="px-3 py-2 small fw-semibold">Quantidade</th>
+                  <th class="px-3 py-2 small fw-semibold">Preço/L</th>
+                  <th class="px-3 py-2 small fw-semibold">Valor Total</th>
+                  <th class="px-3 py-2 small fw-semibold">Status</th>
+                  <th class="px-3 py-2 small fw-semibold text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let abastecimento of filteredAbastecimentos | slice: (pageIndex * pageSize):((pageIndex + 1) * pageSize)">
+                  <!-- Coluna Data/Hora -->
+                  <td class="px-3 py-2 small">
+                    {{formatarDataHora(abastecimento.dataAbastecimento!)}}
+                  </td>
+
+                  <!-- Coluna Veículo -->
+                  <td class="px-3 py-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <mat-icon style="color: #6ea8fe; font-size: 18px;">directions_car</mat-icon>
+                      <div>
+                        <div class="fw-semibold">{{abastecimento.veiculo?.matricula || 'N/A'}}</div>
+                        <div class="small text-muted">{{abastecimento.veiculo?.modelo || ''}}</div>
+                        <div *ngIf="debugMode" class="small text-muted">
+                          ID: {{abastecimento.veiculo_Id}}
+                        </div>
+                        <span *ngIf="abastecimento.viagemId" class="small text-muted d-flex align-items-center gap-1">
+                          <mat-icon style="font-size: 14px;">directions</mat-icon>
+                          Viagem #{{abastecimento.viagemId}}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Coluna Combustível - CORRIGIDA -->
+                  <td class="px-3 py-2">
+                    <span class="badge px-2 py-1 fw-normal"
+                          [ngStyle]="{
+                            'background-color': getTipoCombustivelColor(abastecimento.tipoCombustivel).bg,
+                            'color': getTipoCombustivelColor(abastecimento.tipoCombustivel).text
+                          }">
+                      <span class="d-flex align-items-center gap-1">
+                        <span>{{getTipoCombustivelIcon(abastecimento.tipoCombustivel)}}</span>
+
+                      </span>
+                    </span>
+                  </td>
+
+                  <!-- Coluna Quilometragem -->
+                  <td class="px-3 py-2 small">
+                    <div class="d-flex align-items-center gap-1">
+                      <mat-icon style="font-size: 16px; color: #6ea8fe;">speed</mat-icon>
+                      <span>{{abastecimento.kilometragemVeiculo | number:'1.0-0'}} km</span>
+                    </div>
+                  </td>
+
+                  <!-- Coluna Quantidade -->
+                  <td class="px-3 py-2 small">
+                    <span class="fw-semibold">{{abastecimento.quantidadeLitros | number:'1.1-1'}} L</span>
+                  </td>
+
+                  <!-- Coluna Preço por Litro -->
+                  <td class="px-3 py-2 small">
+                    {{formatarMoeda(abastecimento.precoPorLitro)}}
+                  </td>
+
+                  <!-- Coluna Valor Total -->
+                  <td class="px-3 py-2">
+                    <div class="d-flex align-items-center gap-1">
+                      <mat-icon style="font-size: 16px; color: #28a745;">attach_money</mat-icon>
+                      <strong style="color: #28a745;">{{formatarMoeda(abastecimento.quantidadeLitros * abastecimento.precoPorLitro)}}</strong>
+                    </div>
+                  </td>
+
+                  <!-- Coluna Status - CORRIGIDA -->
+                  <td class="px-3 py-2">
+                    <span class="badge px-2 py-1 fw-normal"
+                          [ngStyle]="{
+                            'background-color': getStatusColor(abastecimento.statusAbastecimento!).bg,
+                            'color': getStatusColor(abastecimento.statusAbastecimento!).text
+                          }">
+                      <span class="d-flex align-items-center gap-1">
+
+                      </span>
+                    </span>
+                  </td>
+
+                  <!-- Coluna Ações -->
+                  <td class="px-3 py-2 text-center">
+                    <div class="d-flex gap-1 justify-content-center">
+                      <button class="btn p-1 rounded-circle" style="background: #e7f1ff;"
+                              (click)="editarAbastecimento(abastecimento)" title="Editar">
+                        <mat-icon style="font-size: 18px; color: #3d8bfd;">edit</mat-icon>
+                      </button>
+                      @if(loginService.hasRole("ADMIN")){
+                      <button class="btn p-1 rounded-circle" style="background: #fff3f3;"
+                              (click)="confirmarExclusaoModal(abastecimento)" title="Excluir">
+                        <mat-icon style="font-size: 18px; color: #ff7b7b;">delete</mat-icon>
+                      </button>
+                    }
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginação -->
+          <div class="p-3 border-top">
+            <mat-paginator [length]="filteredAbastecimentos.length"
+                          [pageSize]="pageSize"
+                          [pageSizeOptions]="pageSizeOptions"
+                          [pageIndex]="pageIndex"
+                          (page)="onPageChange($event)"
+                          showFirstLastButtons
+                          class="d-flex justify-content-center">
+            </mat-paginator>
+          </div>
+
+        </div>
+      </div>
+
 
       <div class="modal-footer py-2">
         <button type="button" class="btn btn-sm btn-secondary fs-6" (click)="fecharModal()">
@@ -657,6 +1177,26 @@
         <button class="btn btn-sm fs-6" style="background: #D46A6A; color: white; border: none;" (click)="confirmarExclusao()" [disabled]="carregando">
           <span *ngIf="carregando" class="spinner-border spinner-border-sm me-1"></span>
           <i class="bi bi-trash" *ngIf="!carregando"></i> Excluir
+
+    <!-- Empty State -->
+    <ng-template #emptyState>
+      <div class="empty-state text-center py-5">
+        <div class="mb-3">
+          <mat-icon style="font-size: 48px; width: 48px; height: 48px; color: #6ea8fe;">local_gas_station</mat-icon>
+        </div>
+        <h3 class="h5 mb-2" style="color: #3d8bfd;">Nenhum abastecimento encontrado</h3>
+        <p class="small text-muted mb-3" *ngIf="filtroVeiculo || filtroTipoCombustivel || filtroStatus || filtroDataInicio">
+          Não foram encontrados abastecimentos com os filtros aplicados
+        </p>
+        <p class="small text-muted mb-3" *ngIf="!filtroVeiculo && !filtroTipoCombustivel && !filtroStatus && !filtroDataInicio">
+          Comece registrando seu primeiro abastecimento
+        </p>
+        <button class="btn d-inline-flex align-items-center gap-1 px-4 py-2 border-0 text-white rounded"
+                style="background: linear-gradient(135deg, #6ea8fe, #3d8bfd);"
+                (click)="novoAbastecimento()">
+          <mat-icon style="font-size: 18px;">add</mat-icon>
+          Novo Abastecimento
+
         </button>
       </div>
     </div>

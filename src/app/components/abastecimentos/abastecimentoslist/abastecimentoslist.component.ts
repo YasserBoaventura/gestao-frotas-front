@@ -573,6 +573,7 @@ export class AbastecimentoListComponent implements OnInit {
     return `Veículo #${veiculoId} (não encontrado)`;
   }
 
+
   getTipoCombustivelLabel(tipo: string): string {
     const tipos: { [key: string]: string } = {
       'GASOLINA': 'Gasolina',
@@ -584,21 +585,72 @@ export class AbastecimentoListComponent implements OnInit {
     return tipos[tipo] || tipo;
   }
 
-  getStatusLabel(status: string): string {
-    const statuses: { [key: string]: string } = {
-      'REALIZADA': 'Realizada',
-      'PLANEADA': 'Planejada'
-    };
-    return statuses[status] || status;
-  }
+   getViagemInfo(viagemId: any ): string {
+    console.log('Buscando info do viagen ID:', viagemId);
+    console.log('Viagem disponíveis:', this.viagens);
 
-  getStatusColor(status: string): string {
-    const cores: { [key: string]: string } = {
-      'REALIZADA': '#28a745',
-      'PLANEADA': '#ffc107'
-    };
-    return cores[status] || '#6c757d';
+    if (!viagemId || viagemId === 0) {
+      return 'Não informado';
+    }
+
+    const viagem = this.viagens.find(v => v.id === viagemId);
+    console.log('Viagem encontrado:', viagem );
+
+    if (viagem) {
+      return `${viagem.rota?.origem} - ${viagem.rota?.destino}`;
+    }
+
+    // Tentar encontrar em abastecimentos
+    const abastecimento = this.abastecimentos.find(a => a.veiculo_Id === viagemId);
+    if (abastecimento && abastecimento.veiculo) {
+      const veiculoObj = abastecimento.veiculo as any;
+      if (veiculoObj.matriculo && veiculoObj.modelo) {
+        return `${veiculoObj.matricula} - ${veiculoObj.modelo}`;
+      }
+    }
+
+    return `Viagem #${viagemId} (não encontrado)`;
   }
+ getTipoCombustivelColor(tipo: string): {bg: string, text: string} {
+  const cores : any = {
+    'GASOLINA': { bg: '#e7f1ff', text: '#3d8bfd' },
+    'DIESEL': { bg: '#e8f5e9', text: '#2e7d32' },
+    'ETANOL': { bg: '#fff3e0', text: '#ed6c02' },
+    'GNV': { bg: '#f3e5f5', text: '#7b1fa2' },
+    'ELETRICO': { bg: '#e0f2f1', text: '#00796b' }
+  };
+  return cores[tipo] || { bg: '#f5f5f5', text: '#616161' };
+}
+
+
+getStatusColor(status: string): {bg: string, text: string} {
+  const cores : any = {
+    'REALIZADA': { bg: '#e8f5e9', text: '#2e7d32' },
+    'PLANEADA': { bg: '#fff3e0', text: '#ed6c02' }
+  };
+  return cores[status] || { bg: '#f5f5f5', text: '#616161' };
+}
+
+getTipoCombustivelIcon(tipo: string): string {
+  const icons : any = {
+    'GASOLINA': '⛽',
+    'DIESEL': '🛢️',
+    'ETANOL': '🌽',
+    'GNV': '🔥',
+    'ELETRICO': '⚡'
+  };
+  return icons[tipo] || '⛽';
+}
+
+
+getStatusIcon(status: string): string {
+  const icons : any = {
+    'REALIZADA': '✅',
+    'PLANEADA': '📅'
+  };
+  return icons[status] || '•';
+}
+  // Formatação
 
   formatarMoeda(valor: number): string {
     return new Intl.NumberFormat('pt-BR', {
