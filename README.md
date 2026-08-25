@@ -137,6 +137,7 @@ Gestão de usuários do sistema: cadastro, desativação/ativação de contas.
 | 🔐 **Autenticação** | Login, logout, proteção de rotas (guards) e recuperação de senha via código enviado por e-mail |
 | 🚗 **Veículos** | CRUD completo de veículos da frota |
 | 👨‍✈️ **Motoristas** | CRUD completo de motoristas |
+| 👨‍✈️ **Usuarios** | CRUD completo de usuarios desativar e activar conta |
 | 🗺️ **Rotas** | Criação e visualização de rotas no mapa |
 | 🧳 **Viagens** | Registo e acompanhamento de viagens |
 | ⛽ **Abastecimentos** | Registo e histórico de abastecimentos |
@@ -244,8 +245,8 @@ export const environment = {
 
 **1. Clona o repositório**
 ```bash
-git clone https://github.com/teu-usuario/fleet-manager-frontend.git
-cd fleet-manager-frontend
+git clone https://github.com/YasserBoaventura/gestao-frotas-front
+cd gestao-frotas-front
 ```
 
 **2. Sobe o contentor**
@@ -273,33 +274,13 @@ RUN npm run build -- --configuration production
 
 # Etapa de produção
 FROM nginx:alpine
-COPY --from=build /app/dist/fleet-manager-frontend /usr/share/nginx/html
+COPY --from=build /app/dist/gestao-frotas-front /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-#### Exemplo de `docker-compose.yml`
 
-```yaml
-version: '3.8'
-
-services:
-  frontend:
-    build: .
-    container_name: fleet-manager-frontend
-    ports:
-      - "4200:80"
-    networks:
-      - fleet-network
-
-networks:
-  fleet-network:
-    driver: bridge
-    external: true
-```
-
-> Se o backend também usa `docker-compose`, considera unificar as duas aplicações na mesma rede Docker (`fleet-network`) para que se comuniquem entre contentores.
 
 ---
 
@@ -327,7 +308,7 @@ A aplicação ficará disponível em `http://localhost:4200`.
 ```bash
 ng build --configuration production
 ```
-Os ficheiros finais ficam em `dist/fleet-manager-frontend`.
+Os ficheiros finais ficam em `dist/gestao-frotas-front
 
 ---
 
