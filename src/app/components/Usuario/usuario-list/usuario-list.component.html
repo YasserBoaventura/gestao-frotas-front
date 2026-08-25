@@ -1,20 +1,23 @@
 <div class="container-fluid px-3 py-3 bg-light min-vh-100">
-  <!-- Cabeçalho -->
-  <div class="card bg-primary bg-opacity-75 text-white mb-3 border-0 shadow-sm">
-    <div class="card-body py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-people fs-4 text-white-50"></i>
+  <!-- Header -->
+  <div class="card mb-3 border-0 shadow-sm" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #cbd5e1 100%);">
+    <div class="card-body py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-people fs-2" style="color: #4a5568;"></i>
         <div>
-          <h1 class="h5 mb-0 text-white">Gerenciamento de Usuários</h1>
-          <p class="text-white-50 mb-0 small">Gerencie contas de usuários do sistema</p>
+          <h5 class="mb-0" style="color: #39455a;">Gerenciamento de Usuários</h5>
+          <p class="mb-0 small" style="color: #607798;">Gerencie contas de usuários do sistema</p>
         </div>
-      </div>
+      </div> 
       <div class="d-flex gap-1">
-        <button class="btn btn-sm btn-outline-light" (click)="carregarUsuarios()">
-          <i class="bi bi-arrow-clockwise"></i> Atualizar
+        <button class="btn btn-sm btn-outline-secondary" (click)="carregarUsuarios()" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-arrow-clockwise"></i> Recarregar
         </button>
-        <button class="btn btn-sm btn-light text-primary" (click)="abrirEdicao()">
-          <i class="bi bi-person-add"></i> Novo
+        <button class="btn btn-sm" style="background: #6a83ae; color: white; border: none;" (click)="abrirEdicao()">
+          <i class="bi bi-person-add"></i> Novo Usuário
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="navegarPara('dashboard')" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-arrow-left"></i> Voltar
         </button>
       </div>
     </div>
@@ -29,51 +32,52 @@
 
   <!-- Filtros -->
   <div class="card shadow-sm mb-3 border-0">
-    <div class="card-body py-3">
-      <h6 class="card-title text-primary mb-2 small fw-semibold">
-        <i class="bi bi-funnel me-1"></i>Filtros de Busca
-      </h6>
-
+    <div class="card-header bg-white py-2">
+      <h6 class="mb-0 fs-6" style="color: #2d3748;"><i class="bi bi-funnel me-2" style="color: #4a5568;"></i>Filtros de Busca</h6>
+    </div>
+    <div class="card-body py-2">
       <div class="row g-2">
         <div class="col-md-4">
-          <label class="form-label small mb-1">Buscar</label>
+          <label class="form-label small fw-semibold" style="color: #4a5568;">Buscar</label>
           <div class="input-group input-group-sm">
-            <span class="input-group-text bg-primary bg-opacity-25 text-primary border-0">
+            <span class="input-group-text" style="background: #f0f4f8; border-color: #e2e8f0; color: #4a5568;">
               <i class="bi bi-search small"></i>
             </span>
             <input type="text" class="form-control form-control-sm"
                    [(ngModel)]="filtroBusca"
                    (input)="aplicarFiltros()"
-                   placeholder="Nome, email ou NUIT...">
+                   placeholder="Nome, email ou NUIT..."
+                   style="border-color: #e2e8f0;">
           </div>
         </div>
         <div class="col-md-3">
-          <label class="form-label small mb-1">Cargo</label>
+          <label class="form-label small fw-semibold" style="color: #4a5568;">Cargo</label>
           <select class="form-select form-select-sm"
                   [(ngModel)]="filtroRole"
-                  (change)="aplicarFiltros()">
+                  (change)="aplicarFiltros()"
+                  style="border-color: #e2e8f0; background: #fafbfc;">
             <option value="TODOS">Todos</option>
             <option value="ADMIN">Administrador</option>
             <option value="USER">Usuário</option>
           </select>
         </div>
         <div class="col-md-3">
-          <label class="form-label small mb-1">Status</label>
+          <label class="form-label small fw-semibold" style="color: #4a5568;">Status</label>
           <select class="form-select form-select-sm"
                   [(ngModel)]="filtroAtivo"
-                  (change)="aplicarFiltros()">
+                  (change)="aplicarFiltros()"
+                  style="border-color: #e2e8f0; background: #fafbfc;">
             <option value="TODOS">Todos</option>
             <option value="ATIVO">Ativos</option>
             <option value="INATIVO">Inativos</option>
           </select>
         </div>
         <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-sm btn-outline-secondary w-100" (click)="limparFiltros()">
-            <i class="bi bi-x-lg"></i> Limpar
+          <button class="btn btn-sm btn-outline-secondary w-100" (click)="limparFiltros()" style="border-color: #cbd5e1; color: #2d3748;">
+            <i class="bi bi-eraser"></i> Limpar
           </button>
         </div>
       </div>
-
       <div class="mt-2">
         <small class="text-muted">
           <i class="bi bi-info-circle me-1"></i>
@@ -85,154 +89,211 @@
 
   <!-- Estatísticas -->
   <div class="row g-2 mb-3" *ngIf="usuarios.length > 0">
-    <div class="col-4">
-      <div class="card border-0 shadow-sm bg-primary bg-opacity-10">
-        <div class="card-body py-2 d-flex align-items-center gap-2">
-          <div class="bg-primary bg-opacity-25 rounded-circle p-1">
-            <i class="bi bi-people text-primary"></i>
-          </div>
-          <div>
-            <div class="fw-bold text-primary">{{ totalUsuarios }}</div>
-            <div class="small text-muted">Total</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-4">
-      <div class="card border-0 shadow-sm bg-success bg-opacity-10">
-        <div class="card-body py-2 d-flex align-items-center gap-2">
-          <div class="bg-success bg-opacity-25 rounded-circle p-1">
-            <i class="bi bi-check-circle text-success"></i>
-          </div>
-          <div>
-            <div class="fw-bold text-success">{{ usuariosAtivos }}</div>
-            <div class="small text-muted">Ativos</div>
+    <div class="col-md-4 col-6">
+      <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #4a5568;">
+        <div class="card-body py-2">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-people fs-2" style="color: #4a5568; opacity: 0.6;"></i>
+            <div>
+              <div class="fw-bold fs-4" style="color: #2d3748;">{{ totalUsuarios }}</div>
+              <small class="text-muted">Total</small>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-4">
-      <div class="card border-0 shadow-sm bg-info bg-opacity-10">
-        <div class="card-body py-2 d-flex align-items-center gap-2">
-          <div class="bg-info bg-opacity-25 rounded-circle p-1">
-            <i class="bi bi-shield-check text-info"></i>
+    <div class="col-md-4 col-6">
+      <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #48bb78;">
+        <div class="card-body py-2">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-check-circle fs-2" style="color: #48bb78; opacity: 0.6;"></i>
+            <div>
+              <div class="fw-bold fs-4" style="color: #2d3748;">{{ usuariosAtivos }}</div>
+              <small class="text-muted">Ativos</small>
+            </div>
           </div>
-          <div>
-            <div class="fw-bold text-info">{{ administradores }}</div>
-            <div class="small text-muted">Admins</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-6">
+      <div class="card shadow-sm border-0 h-100" style="border-left: 4px solid #4299e1;">
+        <div class="card-body py-2">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-shield-check fs-2" style="color: #4299e1; opacity: 0.6;"></i>
+            <div>
+              <div class="fw-bold fs-4" style="color: #2d3748;">{{ administradores }}</div>
+              <small class="text-muted">Admins</small>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Tabela compacta -->
+  <!-- Tabela -->
   <div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0 fs-6" style="color: #2d3748;"><i class="bi bi-table me-2" style="color: #4a5568;"></i>Lista de Usuários</h6>
+      <span class="badge" style="background: #4a5568;">{{ dataSource.data.length }} registros</span>
+    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-sm table-hover table-bordered mb-0">
-          <thead class="table-primary table-sm">
-            <tr class="small">
-              <th class="py-1 px-2" style="width: 50px;">ID</th>
-              <th class="py-1 px-2">Usuário</th>
-              <th class="py-1 px-2">Email</th>
-              <th class="py-1 px-2" style="width: 80px;">Cargo</th>
-              <th class="py-1 px-2">Telefone</th>
-              <th class="py-1 px-2">NUIT</th>
-              <th class="py-1 px-2" style="width: 70px;">Status</th>
-              <th class="py-1 px-2 text-center" style="width: 180px;">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let usuario of dataSource.data" class="small">
-              <td class="py-1 px-2 fw-semibold">{{ usuario.id }}</td>
-              <td class="py-1 px-2">
-                <i class="bi bi-person me-1 text-primary small"></i>
-                {{ usuario.username }}
-              </td>
-              <td class="py-1 px-2 text-truncate" style="max-width: 150px;">
-                {{ usuario.email }}
-              </td>
-              <td class="py-1 px-2">
-                <span class="badge" [ngClass]="usuario.role === 'ADMIN' ? 'bg-danger bg-opacity-75' : 'bg-primary bg-opacity-75'">
-                  {{ usuario.role === 'ADMIN' ? 'Admin' : 'User' }}
-                </span>
-              </td>
-              <td class="py-1 px-2">{{ usuario.telefone || '-' }}</td>
-              <td class="py-1 px-2">{{ usuario.nuit || '-' }}</td>
-              <td class="py-1 px-2">
-                <span class="badge" [ngClass]="usuario.ativo ? 'bg-success bg-opacity-75' : 'bg-secondary bg-opacity-75'">
-                  {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
-                </span>
-              </td>
-              <td class="py-1 px-2 text-nowrap text-center">
-                <div class="d-flex justify-content-center gap-1">
-                  <button class="btn btn-sm btn-outline-primary p-0 px-1" (click)="editarUsuario(usuario)" title="Editar" style="width: 24px; height: 24px;">
-                    <i class="bi bi-pencil small"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-warning p-0 px-1"
-                          [title]="usuario.ativo ? 'Desativar' : 'Ativar'"
-                          (click)="ativarDesativar(usuario)" style="width: 24px; height: 24px;">
-                    <i class="bi small" [ngClass]="usuario.ativo ? 'bi-toggle-off' : 'bi-toggle-on'"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-info p-0 px-1"
-                          [title]="usuario.contaBloqueada ? 'Desbloquear' : 'Bloquear'"
-                          (click)="bloquearDesbloquear(usuario)" style="width: 24px; height: 24px;">
-                    <i class="bi small" [ngClass]="usuario.contaBloqueada ? 'bi-unlock' : 'bi-lock'"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-secondary p-0 px-1" title="Resetar Senha" (click)="resetarSenha(usuario)" style="width: 24px; height: 24px;">
-                    <i class="bi bi-key small"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger p-0 px-1"
-                          title="Excluir"
-                          (click)="excluirUsuario(usuario)"
-                          [disabled]="usuario.role === 'ADMIN'" style="width: 24px; height: 24px;">
-                    <i class="bi bi-trash small"></i>
-                  </button>
+        <table mat-table [dataSource]="dataSource" matSort class="table table-hover mb-0">
+
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-3" style="width: 50px; color: #4a5568; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">ID</th>
+            <td mat-cell *matCellDef="let usuario" class="py-2 px-3 fw-semibold" style="color: #4a5568;">{{ usuario.id }}</td>
+          </ng-container>
+
+          <!-- Username Column -->
+          <ng-container matColumnDef="username">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-3" style="color: #4a5568; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Usuário</th>
+            <td mat-cell *matCellDef="let usuario" class="py-2 px-3">
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar-circle" [style.background]="usuario.role === 'ADMIN' ? '#4a5568' : '#718096'">
+                  <span class="avatar-text">{{ usuario.username?.charAt(0)?.toUpperCase() || 'U' }}</span>
                 </div>
-              </td>
-            </tr>
-            <tr *ngIf="dataSource.data.length === 0">
-              <td colspan="8" class="text-center py-3">
-                <i class="bi bi-people text-muted"></i>
-                <p class="small text-muted mb-0 mt-1">Nenhum usuário encontrado</p>
-                <button class="btn btn-sm btn-primary mt-2" (click)="abrirEdicao()">
-                  <i class="bi bi-person-add"></i> Criar usuário
+                <span class="fw-semibold" style="color: #2d3748;">{{ usuario.username }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Email Column -->
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-3" style="color: #4a5568; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Email</th>
+            <td mat-cell *matCellDef="let usuario" class="py-2 px-3 text-truncate" style="max-width: 150px; color: #4a5568;">{{ usuario.email }}</td>
+          </ng-container>
+
+          <!-- Role Column -->
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-3" style="color: #4a5568; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Cargo</th>
+            <td mat-cell *matCellDef="let usuario" class="py-2 px-3">
+              <span class="badge" [ngClass]="usuario.role === 'ADMIN' ? 'bg-danger bg-opacity-75' : 'bg-primary bg-opacity-75'">
+                {{ usuario.role === 'ADMIN' ? 'Admin' : 'User' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Telefone Column -->
+          <ng-container matColumnDef="telefone">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-3" style="color: #4a5568; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Telefone</th>
+            <td mat-cell *matCellDef="let usuario" class="py-2 px-3" style="color: #4a5568;">{{ usuario.telefone || '-' }}</td>
+          </ng-container>
+
+          <!-- NUIT Column -->
+          <ng-container matColumnDef="nuit">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-3" style="color: #4a5568; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">NUIT</th>
+            <td mat-cell *matCellDef="let usuario" class="py-2 px-3" style="color: #4a5568;">{{ usuario.nuit || '-' }}</td>
+          </ng-container>
+
+          <!-- Ativo Column -->
+          <ng-container matColumnDef="ativo">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-3" style="color: #4a5568; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Status</th>
+            <td mat-cell *matCellDef="let usuario" class="py-2 px-3">
+              <span class="badge" [ngClass]="usuario.ativo ? 'bg-success bg-opacity-75' : 'bg-secondary bg-opacity-75'">
+                {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- ContaBloqueada Column -->
+          <ng-container matColumnDef="contaBloqueada">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-3" style="color: #4a5568; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Bloqueado</th>
+            <td mat-cell *matCellDef="let usuario" class="py-2 px-3">
+              <span class="badge" [ngClass]="usuario.contaBloqueada ? 'bg-danger bg-opacity-75' : 'bg-success bg-opacity-75'">
+                {{ usuario.contaBloqueada ? 'Bloqueado' : 'Normal' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Acoes Column -->
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef class="py-2 px-3 text-center" style="color: #4a5568; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Ações</th>
+            <td mat-cell *matCellDef="let usuario" class="py-2 px-3 text-nowrap text-center">
+              <div class="d-flex justify-content-center gap-1">
+                <button class="btn btn-sm btn-outline-secondary" (click)="editarUsuario(usuario)" title="Editar" style="border-color: #cbd5e1; color: #2d3748; width: 28px; height: 28px; padding: 0;">
+                  <i class="bi bi-pencil small"></i>
                 </button>
-              </td>
-            </tr>
-          </tbody>
+                <button class="btn btn-sm btn-outline-secondary"
+                        [title]="usuario.ativo ? 'Desativar' : 'Ativar'"
+                        (click)="ativarDesativar(usuario)"
+                        style="border-color: #cbd5e1; color: #2d3748; width: 28px; height: 28px; padding: 0;">
+                  <i class="bi small" [ngClass]="usuario.ativo ? 'bi-toggle-off' : 'bi-toggle-on'"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        [title]="usuario.contaBloqueada ? 'Desbloquear' : 'Bloquear'"
+                        (click)="bloquearDesbloquear(usuario)"
+                        style="border-color: #cbd5e1; color: #2d3748; width: 28px; height: 28px; padding: 0;">
+                  <i class="bi small" [ngClass]="usuario.contaBloqueada ? 'bi-unlock' : 'bi-lock'"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" title="Resetar Senha" (click)="resetarSenha(usuario)" style="border-color: #cbd5e1; color: #2d3748; width: 28px; height: 28px; padding: 0;">
+                  <i class="bi bi-key small"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                        title="Excluir"
+                        (click)="excluirUsuario(usuario)"
+                        [disabled]="usuario.role === 'ADMIN'"
+                        style="width: 28px; height: 28px; padding: 0;">
+                  <i class="bi bi-trash small"></i>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="colunasExibidas"></tr>
+          <tr mat-row *matRowDef="let row; columns: colunasExibidas;"></tr>
+
+          <!-- Empty State -->
+          <tr *matNoDataRow>
+            <td [attr.colspan]="colunasExibidas.length" class="text-center py-4">
+              <i class="bi bi-people display-4 text-muted d-block"></i>
+              <p class="small text-muted mt-2">Nenhum usuário encontrado</p>
+              <button class="btn btn-sm mt-2" style="background: #4a5568; color: white; border: none;" (click)="abrirEdicao()">
+                <i class="bi bi-person-add"></i> Criar usuário
+              </button>
+            </td>
+          </tr>
         </table>
+      </div>
+
+      <!-- Paginator -->
+      <div class="d-flex justify-content-between align-items-center p-2 border-top">
+        <small class="text-muted">
+          Mostrando {{ dataSource.data.length }} de {{ usuarios.length }} registros
+        </small>
+        <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal Menor e Compacto - COM Z-INDEX CORRETO -->
-<div class="modal" [class.show]="editando" [style.display]="editando ? 'block' : 'none'" tabindex="-1" *ngIf="editando" style="z-index: 1050;">
-  <div class="modal-dialog modal-sm">
+<!-- ==================== MODAL DE USUÁRIO ==================== -->
+<div class="modal" [class.show]="editando" [style.display]="editando ? 'block' : 'none'" tabindex="-1" role="dialog" aria-hidden="true" *ngIf="editando">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-primary bg-opacity-75 text-white py-2">
-        <h6 class="modal-title">
-          <i class="bi bi-person me-1"></i>
+      <div class="modal-header" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); border-bottom: 2px solid #cbd5e1;">
+        <h6 class="modal-title fs-6" style="color: #2d3748;">
+          <i class="bi bi-person me-2" style="color: #4a5568;"></i>
           {{ usuarioSelecionado?.id ? 'Editar Usuário' : 'Novo Usuário' }}
         </h6>
-        <button type="button" class="btn-close btn-close-white btn-sm" (click)="fecharEdicao()"></button>
+        <button type="button" class="btn-close btn-sm" (click)="fecharEdicao()"></button>
       </div>
-      <div class="modal-body py-2">
+      <div class="modal-body">
         <form (ngSubmit)="salvarUsuario()" #usuarioForm="ngForm">
           <!-- ID (apenas edição) -->
           <div *ngIf="usuarioSelecionado?.id" class="mb-2">
-            <label class="form-label small mb-0">ID</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">ID</label>
             <input type="text" class="form-control form-control-sm bg-light" [value]="usuarioSelecionado?.id" readonly>
           </div>
 
           <!-- Username -->
           <div class="mb-2">
-            <label class="form-label small mb-0 fw-semibold">Username *</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Username *</label>
             <input type="text" class="form-control form-control-sm"
                    [(ngModel)]="usuarioSelecionado!.username"
-                   name="username" #username="ngModel" required>
+                   name="username" #username="ngModel" required
+                   [class.is-invalid]="username.invalid && username.touched">
             <div class="invalid-feedback small" *ngIf="username.invalid && username.touched">
               Username obrigatório
             </div>
@@ -240,10 +301,11 @@
 
           <!-- Email -->
           <div class="mb-2">
-            <label class="form-label small mb-0 fw-semibold">Email *</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Email *</label>
             <input type="email" class="form-control form-control-sm"
                    [(ngModel)]="usuarioSelecionado!.email"
-                   name="email" #email="ngModel" required email>
+                   name="email" #email="ngModel" required email
+                   [class.is-invalid]="email.invalid && email.touched">
             <div class="invalid-feedback small" *ngIf="email.invalid && email.touched">
               Email válido obrigatório
             </div>
@@ -251,7 +313,7 @@
 
           <!-- Telefone -->
           <div class="mb-2">
-            <label class="form-label small mb-0">Telefone</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Telefone</label>
             <input type="text" class="form-control form-control-sm"
                    [(ngModel)]="usuarioSelecionado!.telefone"
                    name="telefone">
@@ -259,7 +321,7 @@
 
           <!-- NUIT -->
           <div class="mb-2">
-            <label class="form-label small mb-0">NUIT</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">NUIT</label>
             <input type="text" class="form-control form-control-sm"
                    [(ngModel)]="usuarioSelecionado!.nuit"
                    name="nuit">
@@ -267,7 +329,7 @@
 
           <!-- Data Nascimento -->
           <div class="mb-2">
-            <label class="form-label small mb-0">Data Nascimento</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Data Nascimento</label>
             <input type="date" class="form-control form-control-sm"
                    [(ngModel)]="usuarioSelecionado!.dataNascimento"
                    name="dataNascimento">
@@ -275,7 +337,7 @@
 
           <!-- Cargo -->
           <div class="mb-2">
-            <label class="form-label small mb-0 fw-semibold">Cargo</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Cargo</label>
             <select class="form-select form-select-sm"
                     [(ngModel)]="usuarioSelecionado!.role"
                     name="role" required>
@@ -286,7 +348,7 @@
 
           <!-- Pergunta Segurança -->
           <div class="mb-2">
-            <label class="form-label small mb-0">Pergunta Segurança</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Pergunta Segurança</label>
             <select class="form-select form-select-sm" [(ngModel)]="usuarioSelecionado!.perguntaSeguranca" name="perguntaSeguranca">
               <option value="">Selecione...</option>
               <option value="Qual o nome do seu primeiro pet?">Nome do primeiro pet?</option>
@@ -298,7 +360,7 @@
 
           <!-- Resposta Segurança -->
           <div class="mb-2">
-            <label class="form-label small mb-0">Resposta Segurança</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Resposta Segurança</label>
             <input type="text" class="form-control form-control-sm"
                    [(ngModel)]="usuarioSelecionado!.respostaSeguranca"
                    name="respostaSeguranca">
@@ -306,13 +368,13 @@
 
           <!-- Status -->
           <div class="mb-2">
-            <label class="form-label small mb-1">Status</label>
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Status</label>
             <div class="d-flex gap-3">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="ativoCheck"
                        [(ngModel)]="usuarioSelecionado!.ativo"
                        name="ativo">
-                <label class="form-check-label small" for="ativoCheck">
+                <label class="form-check-label small" for="ativoCheck" style="color: #4a5568;">
                   Ativo
                 </label>
               </div>
@@ -320,7 +382,7 @@
                 <input class="form-check-input" type="checkbox" id="bloqueadoCheck"
                        [(ngModel)]="usuarioSelecionado!.contaBloqueada"
                        name="contaBloqueada">
-                <label class="form-check-label small" for="bloqueadoCheck">
+                <label class="form-check-label small" for="bloqueadoCheck" style="color: #4a5568;">
                   Bloqueado
                 </label>
               </div>
@@ -330,10 +392,8 @@
           <hr class="my-2">
 
           <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-sm btn-secondary" (click)="fecharEdicao()">
-              Cancelar
-            </button>
-            <button type="submit" class="btn btn-sm btn-primary" [disabled]="usuarioForm.invalid">
+            <button type="button" class="btn btn-sm btn-secondary" (click)="fecharEdicao()">Cancelar</button>
+            <button type="submit" class="btn btn-sm" style="background: #4a5568; color: white; border: none;" [disabled]="usuarioForm.invalid">
               <i class="bi bi-save"></i>
               {{ usuarioSelecionado?.id ? 'Atualizar' : 'Criar' }}
             </button>
@@ -344,5 +404,5 @@
   </div>
 </div>
 
-<!-- Backdrop do Modal - COM Z-INDEX CORRETO -->
+<!-- Backdrop do Modal -->
 <div class="modal-backdrop fade show" *ngIf="editando" style="z-index: 1040;"></div>

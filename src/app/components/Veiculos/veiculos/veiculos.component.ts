@@ -12,6 +12,7 @@ import { VeiculosService } from '../veiculos.service';
 import { Veiculo } from '../veiculos.model';
 import { Marca } from '../../marca/marca';
 import Swal from 'sweetalert2';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-veiculos',
@@ -30,6 +31,8 @@ import Swal from 'sweetalert2';
 })
 export class VeiculosComponent {
 
+
+  router = inject(Router);
   modalServic = inject(MdbModalService);
   modalRef!: MdbModalRef<any>;
 
@@ -56,8 +59,8 @@ export class VeiculosComponent {
     ano: ''
   };
   constructor(private fb: FormBuilder) {
-    console.log('🚗 CONSTRUCTOR - Componente standalone');
-    this.loadVeiculos(); // carrega todos os veiculos
+
+    this.loadVeiculos(); 
 
     this.veiculoForm = this.fb.group({
       modelo: ['', [Validators.required, Validators.minLength(2)]],
@@ -70,7 +73,6 @@ export class VeiculosComponent {
   }
 
   ngOnInit() {
-    console.log('🚀 ngOnInit - Carregando dados...');
     this.loadVeiculos();
     this.loadMotoristas();
   }
@@ -80,7 +82,7 @@ export class VeiculosComponent {
   }
 
   openModal(veiculo?: Veiculo) {
-    console.log(' ABRIR MODAL - Clique funcionando!', veiculo);
+
 
     if (veiculo) {
       this.isEdit = true;
@@ -94,20 +96,21 @@ export class VeiculosComponent {
       modalClass: 'modal-lg'
     });
 
-    // Aguardar o componente ser inicializado e passar os dados
+
     setTimeout(() => {
       if (this.veiculosDetalhesComponent && veiculo) {
            this.loadVeiculos();
       }
-    }, 100);
+    }, 90);
 
     // Recarregar a lista quando o modal fechar
     this.modalRef.onClose.subscribe(() => {
       this.loadVeiculos();
     });
 
-    console.log(' Modal aberto:', this.showModal);
   }
+
+
 
   closeModal() {
     console.log(' FECHAR MODAL');
@@ -160,7 +163,6 @@ export class VeiculosComponent {
   }
 
   private showErrorMessage(error: any) {
-    console.error('Erro ao apagar veículo:', error);
     Swal.fire({
       title: "Erro",
       text: "Ocorreu um erro, mas os dados podem ter sido atualizados",
@@ -224,7 +226,7 @@ export class VeiculosComponent {
       marca: '',
       ano: ''
     };
-   // this. = [...this.lista];
+
   }
 
   getAnosDisponiveis(): number[] {
@@ -245,5 +247,8 @@ export class VeiculosComponent {
     return this.lista.reduce((total, veiculo) =>
       total + (veiculo.kilometragemAtual || 0), 0);
   }
+navegarPara(router: string):  void{
+  this.router.navigate([router]);
 
+}
 }

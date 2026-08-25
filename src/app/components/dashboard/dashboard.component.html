@@ -1,64 +1,340 @@
-<div class="dashboard">
-  <h1>Bem-vindo ao Sistema de Gestão de Frotas</h1>
-
-  <div class="cards">
-    <div class="card" >
-      <div class="icon">🚚</div>
-      <h3>Veículos Disponíveis</h3>
-      <p class="count">{{ vehiclesAvailable }}</p>
+<div class="d-flex min-vh-100" style="background: #f7fafc;">
+  <!-- Sidebar - Design Sênior -->
+  <aside class="sidebar" style="width: 260px; min-height: 100vh; background: linear-gradient(180deg, #1a202c 0%, #2d3748 100%); position: sticky; top: 0; height: 100vh; overflow-y: auto; box-shadow: 4px 0 20px rgba(0,0,0,0.08); transition: all 0.3s ease;">
+    <!-- Logo -->
+    <div class="sidebar-header px-4 py-4" style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+      <div class="d-flex align-items-center gap-3">
+        <div style="background: linear-gradient(135deg, #4fd1c5, #38b2ac); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(56,178,172,0.3);">
+          <i class="bi bi-truck fs-5" style="color: white;"></i>
+        </div>
+        <div>
+          <h6 class="mb-0" style="color: white; font-weight: 700; letter-spacing: -0.5px; font-size: 1rem;">FleetManager</h6>
+          <small style="color: rgba(255,255,255,0.4); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px;">Sistema de Gestão</small>
+        </div>
+      </div>
     </div>
 
-    <div class="card" (click)="navigateTo('vehicles')">
-      <div class="icon">🛠️</div>
-      <h3>Em Manutenção</h3>
-      <p class="count">{{ vehiclesMaintenance }}</p>
+    <!-- Perfil do Usuário -->
+    <div class="sidebar-user px-4 py-3" style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+      <div class="d-flex align-items-center gap-3">
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #4fd1c5, #38b2ac); display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; font-size: 0.9rem; box-shadow: 0 2px 8px rgba(56,178,172,0.3);">
+          {{ serviceLogin.getUsername()?.charAt(0)?.toUpperCase() || 'U' }}
+        </div>
+        <div style="flex: 1; min-width: 0;">
+          <p class="mb-0" style="color: white; font-weight: 500; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            {{ serviceLogin.getUsername() }}
+          </p>
+          <small style="color: rgba(255,255,255,0.4); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.3px;">
+            <i class="bi bi-circle-fill me-1" style="color: #4fd1c5; font-size: 0.4rem;"></i>
+            Online
+          </small>
+        </div>
+        <button class="btn btn-sm p-0" style="color: rgba(255,255,255,0.3); transition: all 0.2s ease;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">
+          <i class="bi bi-three-dots-vertical"></i>
+        </button>
+      </div>
     </div>
 
-    <div class="card" (click)="navigateTo('routes')">
-      <div class="icon">🗺️</div>
-      <h3>Rotas Próximas</h3>
-      <p class="count">{{ upcomingRoutes }}</p>
+    <!-- Navegação -->
+    <nav class="sidebar-nav px-3 py-3">
+      <div class="px-2 mb-2">
+        <small style="color: rgba(255,255,255,0.25); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600;">Principal</small>
+      </div>
+
+      <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('dashboard')" style="border-radius: 10px; color: white; text-decoration: none; cursor: pointer; background: rgba(79,209,197,0.15); transition: all 0.2s ease;" onmouseover="this.style.background='rgba(79,209,197,0.2)'" onmouseout="if(!this.classList.contains('active')) this.style.background='transparent'">
+        <i class="bi bi-grid-1x2-fill" style="color: #4fd1c5; font-size: 1.1rem;"></i>
+        <span style="font-weight: 500; font-size: 0.85rem;">Dashboard</span>
+        <span class="ms-auto" style="background: #4fd1c5; color: #1a202c; font-size: 0.55rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Ativo</span>
+      </a>
+
+      <div class="px-2 mt-3 mb-2">
+        <small style="color: rgba(255,255,255,0.25); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600;">Gestão</small>
+      </div>
+
+      <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('veiculos')" style="border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='transparent'">
+        <i class="bi bi-truck" style="font-size: 1.1rem;"></i>
+        <span style="font-weight: 500; font-size: 0.85rem;">Veículos</span>
+        <span class="ms-auto" style="background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); font-size: 0.55rem; padding: 2px 8px; border-radius: 12px;">{{ vehiclesAvailable || 0 }}</span>
+      </a>
+
+      <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('drivers')" style="border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='transparent'">
+        <i class="bi bi-people" style="font-size: 1.1rem;"></i>
+        <span style="font-weight: 500; font-size: 0.85rem;">Motoristas</span>
+      </a>
+
+      <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('RotasList')" style="border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='transparent'">
+        <i class="bi bi-geo-alt" style="font-size: 1.1rem;"></i>
+        <span style="font-weight: 500; font-size: 0.85rem;">Rotas</span>
+        <span class="ms-auto" style="background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); font-size: 0.55rem; padding: 2px 8px; border-radius: 12px;">{{ upcomingRoutes || 0 }}</span>
+      </a>
+
+      <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('viagenslist')" style="border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='transparent'">
+        <i class="bi bi-car-front" style="font-size: 1.1rem;"></i>
+        <span style="font-weight: 500; font-size: 0.85rem;">Viagens</span>
+        <span class="ms-auto" style="background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); font-size: 0.55rem; padding: 2px 8px; border-radius: 12px;">{{ totalViagens || 0 }}</span>
+      </a>
+
+      <div class="px-2 mt-3 mb-2">
+        <small style="color: rgba(255,255,255,0.25); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600;">Operações</small>
+      </div>
+
+      <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('abastecimentoslist')" style="border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='transparent'">
+        <i class="bi bi-fuel-pump" style="font-size: 1.1rem;"></i>
+        <span style="font-weight: 500; font-size: 0.85rem;">Abastecimentos</span>
+        <span class="ms-auto" style="background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); font-size: 0.55rem; padding: 2px 8px; border-radius: 12px;">{{ fuelEntriesToday || 0 }}</span>
+      </a>
+
+      <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('manutencoes')" style="border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='transparent'">
+        <i class="bi bi-tools" style="font-size: 1.1rem;"></i>
+        <span style="font-weight: 500; font-size: 0.85rem;">Manutenções</span>
+        <span class="ms-auto" style="background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); font-size: 0.55rem; padding: 2px 8px; border-radius: 12px;">{{ vehiclesMaintenance || 0 }}</span>
+      </a>
+
+      <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('Tracking')" style="border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='transparent'">
+        <i class="bi bi-map" style="font-size: 1.1rem;"></i>
+        <span style="font-weight: 500; font-size: 0.85rem;">Tracking</span>
+        <span class="ms-auto" style="background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); font-size: 0.55rem; padding: 2px 8px; border-radius: 12px;">{{ veiculosEmRota || 0 }}</span>
+      </a>
+
+      <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('CustoList')" style="border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='transparent'">
+        <i class="bi bi-cash-stack" style="font-size: 1.1rem;"></i>
+        <span style="font-weight: 500; font-size: 0.85rem;">Custos</span>
+      </a>
+
+      <!-- Admin Only -->
+      <ng-container *ngIf="serviceLogin.hasRole('ADMIN')">
+        <div class="px-2 mt-3 mb-2">
+          <small style="color: rgba(255,255,255,0.25); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600;">Administrativo</small>
+        </div>
+
+        <a class="nav-item d-flex align-items-center gap-3 px-3 py-2 mb-1" (click)="navigateTo('userlist')" style="border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='transparent'">
+          <i class="bi bi-shield-lock" style="font-size: 1.1rem;"></i>
+          <span style="font-weight: 500; font-size: 0.85rem;">Usuários</span>
+        </a>
+
+
+
+
+
+      </ng-container>
+
+      <!-- Rodapé da Sidebar -->
+      <div class="sidebar-footer px-3 mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+     
+        <a class="d-flex align-items-center gap-3 px-3 py-2" (click)="navigateTo('login')" style="border-radius: 10px; color: rgba(255,255,255,0.4); text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.color='#fc8181'; this.style.background='rgba(252,129,129,0.1)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'; this.style.background='transparent'">
+          <i class="bi bi-box-arrow-right" style="font-size: 1.1rem;"></i>
+          <span style="font-weight: 500; font-size: 0.85rem;">Sair</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Conteúdo Principal -->
+  <div class="flex-grow-1 px-4 py-4" style="background: #f7fafc; min-height: 100vh; overflow-y: auto;">
+    <!-- Header com Saudação - Design Clean e Sofisticado -->
+    <div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%); border-radius: 20px; backdrop-filter: blur(10px);">
+      <div class="card-body py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="dashboard-icon-wrapper" style="background: rgba(56,178,172,0.08); padding: 10px; border-radius: 14px; border: 1px solid rgba(56,178,172,0.1);">
+            <i class="bi bi-speedometer2 fs-4" style="color: #38b2ac;"></i>
+          </div>
+          <div>
+            <h6 class="mb-0" style="color: #2d3748; font-weight: 600; letter-spacing: -0.3px; font-size: 1rem;">
+              Olá, {{ serviceLogin.getUsername() }}! 👋
+            </h6>
+            <p class="mb-0 small" style="color: #718096; font-size: 0.75rem;">
+              <i class="bi bi-calendar3 me-1"></i>
+              {{ currentDate | date:'EEEE, dd/MM/yyyy' }}
+            </p>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm" (click)="carregarDados()" [disabled]="carregando" style="background: white; border: 1px solid #e2e8f0; color: #4a5568; border-radius: 10px; padding: 6px 14px; font-size: 0.75rem; font-weight: 500; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.02);" onmouseover="this.style.background='#f7fafc'; this.style.borderColor='#cbd5e0'" onmouseout="this.style.background='white'; this.style.borderColor='#e2e8f0'">
+            <i class="bi bi-arrow-clockwise" [class.spin]="carregando" style="font-size: 0.8rem;"></i>
+            {{ carregando ? 'Carregando...' : 'Atualizar' }}
+          </button>
+          <button class="btn btn-sm" (click)="navigateTo('dashboard')" style="background: white; border: 1px solid #e2e8f0; color: #4a5568; border-radius: 10px; padding: 6px 12px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.02);" onmouseover="this.style.background='#f7fafc'; this.style.borderColor='#cbd5e0'" onmouseout="this.style.background='white'; this.style.borderColor='#e2e8f0'">
+            <i class="bi bi-house"></i>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="card" (click)="navigateTo('vehicles')">
-      <div class="icon">🟢</div>
-      <h3>Veículos em Uso</h3>
-      <p class="count">{{ vehiclesInUse }}</p>
+    <!-- Estado de Carregamento -->
+    <div *ngIf="carregando" class="text-center py-5">
+      <div class="spinner-border" role="status" style="color: #38b2ac; width: 50px; height: 50px; border-width: 3px;">
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+      <h6 class="mt-3" style="color: #4a5568; font-weight: 400; font-size: 0.9rem;">Carregando dados do dashboard...</h6>
     </div>
 
-    <div class="card fuel-card" (click)="navigateTo('fuel')">
-      <div class="icon">⛽</div>
-      <h3>Abastecimentos Hoje</h3>
-      <p class="count">{{ fuelEntriesToday }} registros</p>
-      <p>Total: {{ fuelTotalLiters }} L</p>
-    </div>
-  </div>
+    <!-- Conteúdo -->
+    <div *ngIf="!carregando">
+      <!-- Cards de Estatísticas - Primeira Linha -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+          <div class="card border-0 h-100" style="border-radius: 16px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: all 0.25s ease;" (click)="navigateTo('veiculos')" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div style="font-size: 18px; margin-bottom: 4px;">🚚</div>
+                  <div class="fw-bold fs-3" style="color: #2d3748; font-weight: 700; letter-spacing: -0.5px;">{{ vehiclesAvailable }}</div>
+                  <small style="font-weight: 500; color: #a0aec0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px;">Veículos Disponíveis</small>
+                </div>
+                <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #4a5568; border: 1px solid #edf2f7;">
+                  <i class="bi bi-truck fs-5"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  <div class="quick-links">
-    <h2>Ações Rápidas</h2>
-    <div class="links">
-      <button (click)="navigateTo('veiculos')">Gerenciar Veículos</button>
-      <button (click)="navigateTo('drivers')">Gerenciar Motoristas</button>
-      <button (click)="navigateTo('RotasList')">Rotas</button>
-      <button (click)="navigateTo('viagenslist')">Gerenciar Viagens</button>
-     @if(serviceLogin.hasRole("ADMIN")){
-      <button (click)="navigateTo('relatoriosViagem')"> Relatorios Viagem</button>
-     }
-      @if(serviceLogin.hasRole("ADMIN")){
-      <button (click)="navigateTo('userlist')"> gerenciamento de usuarios</button>
-      }
-<button (click)="navigateTo('abastecimentoslist')">Gerenciar abastecimentos</button>
-        <button (click)="navigateTo('manutencoes')">Gerenciar manutencoes</button>
-     @if(serviceLogin.hasRole("ADMIN")){
-       <button (click)="navigateTo('relatorioCombustivel')">relatorio Combustivel </button>
+        <div class="col-md-3 col-6">
+          <div class="card border-0 h-100" style="border-radius: 16px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: all 0.25s ease;" (click)="navigateTo('veiculos')" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div style="font-size: 18px; margin-bottom: 4px;">✅</div>
+                  <div class="fw-bold fs-3" style="color: #2d3748; font-weight: 700; letter-spacing: -0.5px;">{{ vehiclesInUse }}</div>
+                  <small style="font-weight: 500; color: #a0aec0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px;">Em Uso</small>
+                </div>
+                <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #4a5568; border: 1px solid #edf2f7;">
+                  <i class="bi bi-check-circle fs-5"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+          <div class="card border-0 h-100" style="border-radius: 16px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: all 0.25s ease;" (click)="navigateTo('manutencoes')" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div style="font-size: 18px; margin-bottom: 4px;">🔧</div>
+                  <div class="fw-bold fs-3" style="color: #2d3748; font-weight: 700; letter-spacing: -0.5px;">{{ vehiclesMaintenance }}</div>
+                  <small style="font-weight: 500; color: #a0aec0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px;">Em Manutenção</small>
+                </div>
+                <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #4a5568; border: 1px solid #edf2f7;">
+                  <i class="bi bi-tools fs-5"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+          <div class="card border-0 h-100" style="border-radius: 16px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: all 0.25s ease;" (click)="navigateTo('RotasList')" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div style="font-size: 18px; margin-bottom: 4px;">🗺️</div>
+                  <div class="fw-bold fs-3" style="color: #2d3748; font-weight: 700; letter-spacing: -0.5px;">{{ upcomingRoutes }}</div>
+                  <small style="font-weight: 500; color: #a0aec0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px;">Rotas Ativas</small>
+                </div>
+                <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #4a5568; border: 1px solid #edf2f7;">
+                  <i class="bi bi-geo-alt fs-5"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cards de Estatísticas - Segunda Linha -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card border-0 h-100" style="border-radius: 16px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: all 0.25s ease;" (click)="navigateTo('abastecimentoslist')" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div style="font-size: 18px; margin-bottom: 4px;">⛽</div>
+                  <div class="fw-bold fs-3" style="color: #2d3748; font-weight: 700; letter-spacing: -0.5px;">{{ fuelEntriesToday }}</div>
+                  <small style="font-weight: 500; color: #a0aec0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px;">Abastecimentos Hoje</small>
+                  <div class="mt-2">
+                    <span style="background: #f7fafc; padding: 2px 12px; border-radius: 20px; font-size: 0.7rem; color: #4a5568; border: 1px solid #edf2f7;">
+                      Total: <strong style="color: #2d3748;">{{ fuelTotalLiters }} L</strong>
+                    </span>
+                  </div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #4a5568; border: 1px solid #edf2f7;">
+                  <i class="bi bi-fuel-pump fs-5"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card border-0 h-100" style="border-radius: 16px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: all 0.25s ease;" (click)="navigateTo('viagenslist')" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div style="font-size: 18px; margin-bottom: 4px;">🚗</div>
+                  <div class="fw-bold fs-3" style="color: #2d3748; font-weight: 700; letter-spacing: -0.5px;">{{ totalViagens }}</div>
+                  <small style="font-weight: 500; color: #a0aec0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px;">Viagens Hoje</small>
+                  <div class="mt-2">
+                    <span style="background: #f7fafc; padding: 2px 12px; border-radius: 20px; font-size: 0.7rem; color: #4a5568; border: 1px solid #edf2f7;">
+                      Concluídas: <strong style="color: #2d3748;">{{ viagensConcluidas }}</strong>
+                    </span>
+                  </div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #4a5568; border: 1px solid #edf2f7;">
+                  <i class="bi bi-car-front fs-5"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card border-0 h-100" style="border-radius: 16px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: all 0.25s ease;" (click)="navigateTo('Tracking')" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div style="font-size: 18px; margin-bottom: 4px;">📍</div>
+                  <div class="fw-bold fs-3" style="color: #2d3748; font-weight: 700; letter-spacing: -0.5px;">{{ veiculosEmRota }}</div>
+                  <small style="font-weight: 500; color: #a0aec0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px;">Veículos em Rota</small>
+                  <div class="mt-2">
+                    <span style="background: #f7fafc; padding: 2px 12px; border-radius: 20px; font-size: 0.7rem; color: #4a5568; border: 1px solid #edf2f7;">
+                      Online: <strong style="color: #2d3748;">{{ veiculosOnline }}</strong>
+                    </span>
+                  </div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #4a5568; border: 1px solid #edf2f7;">
+                  <i class="bi bi-map fs-5"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
 
-         <button (click)="navigateTo('relatorioManutencao')">relatorio Manutencao </button>
-     }
-          @if(serviceLogin.hasRole("ADMIN")){
-          <button (click)="navigateTo('CustoList')">Custos</button>
-          }
-          <button (click)="navigateTo('Tracking')">Tracking</button>
+
+
+      <!-- Rodapé centralizado -->
+      <footer class="footer mt-6 pt-4 border-top" style="border-color: #edf2f7 !important;">
+        <div class="text-center">
+          <p class="mb-2" style="color: #4a5568; font-weight: 500; font-size: 0.85rem;">
+            <i class="bi bi-heart-fill me-1" style="color: #fc8181;"></i>
+            © 2024 Sistema de Gestão de Frotas. Todos os direitos reservados.
+            <i class="bi bi-heart-fill ms-1" style="color: #fc8181;"></i>
+          </p>
+          <div class="d-flex justify-content-center align-items-center gap-3">
+            <span style="color: #a0aec0; font-size: 0.75rem; background: #f7fafc; padding: 4px 16px; border-radius: 20px; border: 1px solid #edf2f7;">
+              <i class="bi bi-code-slash me-1"></i>
+              Pixel Software
+            </span>
+            <span style="color: #a0aec0; font-size: 0.7rem;">
+              <i class="bi bi-dot"></i> v1.0.0
+            </span>
+            <span style="color: #a0aec0; font-size: 0.7rem;">
+              <i class="bi bi-shield-check me-1"></i> Seguro
+            </span>
+          </div>
+        </div>
+      </footer>
     </div>
   </div>
 </div>

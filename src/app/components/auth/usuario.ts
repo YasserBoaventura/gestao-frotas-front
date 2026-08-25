@@ -9,17 +9,17 @@ export class Usuarios {
   restTokenExpiry!: string;
   tokenUtilizado!: string;
   perguntaSeguranca!: string;
-  respostaSeguranca!: string; // Corrigi o nome (era "respostaSegurancao")
+  respostaSeguranca!: string; 
   telefone!: string;
   nuit!: string;
   dataNascimento!: string;
-  ativo!: boolean; // Mudei para boolean
+  ativo!: boolean; 
   dataCriacao!: string;
   ultimoAcesso!: string;
   tentativasLogin!: number;
-  contaBloqueada!: boolean; // Mudei para boolean
+  contaBloqueada!: boolean; 
     primeiroLogin!: boolean;
-  // Método para criar um objeto seguro para exibição (sem dados sensíveis)
+  
   toTableData(): any {
     return {
       id: this.id,
@@ -35,7 +35,7 @@ export class Usuarios {
       tentativasLogin: this.tentativasLogin,
       contaBloqueada: this.contaBloqueada,
       perguntaSeguranca: this.perguntaSeguranca
-      // NÃO inclui: password, resetToken, respostaSeguranca
+
     };
   }
 }

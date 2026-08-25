@@ -1,15 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { MatIconModule, MatIcon } from '@angular/material/icon';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LoginService } from '../../auth/login.service';
-import { Router } from '@angular/router';
+
 import { CommonModule, NgIf } from '@angular/common';
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-reset-senha',
   standalone: true,
   imports: [   CommonModule,
-    ReactiveFormsModule, // ← ADICIONE ESTE
-    MatIconModule ,    // ← Use MatIconModule em vez de MatIcon
+    ReactiveFormsModule,
+    MatIconModule ,    
 
 
    ],
@@ -18,7 +19,8 @@ import { CommonModule, NgIf } from '@angular/common';
 })
 export class ResetSenhaComponent {
 
-    validationForm!: FormGroup;
+ 
+  validationForm!: FormGroup;
   resetForm!: FormGroup;
 
   currentStep = 1;
@@ -50,13 +52,13 @@ export class ResetSenhaComponent {
     });
   }
 
-  // Form para redefinição de senha - AGORA INCLUI TOKEN
+  // Form para redefinição de senha 
   createResetForm(): FormGroup {
     return this.fb.group({
-      token: ['', [Validators.required]], // ← CAMPO TOKEN ADICIONADO
+      token: ['', [Validators.required]],
       respostaSeguranca: ['', [Validators.required]],
       nuit: ['', [Validators.required]],
-      codigoVerificacao: ['', [Validators.required]], // ← CAMPO CODIGO DE VERIFICAÇÃO ADICIONADO
+      codigoVerificacao: ['', [Validators.required]], 
       novaSenha: ['', [Validators.required, Validators.minLength(6)]],
       confirmarSenha: ['', [Validators.required]]
     }, {
@@ -76,14 +78,14 @@ export class ResetSenhaComponent {
     return novaSenha.value === confirmarSenha.value ? null : { passwordsMismatch: true };
   }
 
-  // Step 1: Validar usuário e email - AGORA RECEBE PERGUNTA E TOKEN
+  //  RECEBE PERGUNTA E TOKEN
   onValidateUser(): void {
     if (this.validationForm.valid) {
       this.isLoading = true;
 
       const validationData = this.validationForm.value;
 
-      console.log(' Validando usuário:', validationData.username);
+    
 
       this.authService.validateUserForPasswordReset(validationData).subscribe({
         next: (response: any) => {
@@ -105,7 +107,7 @@ export class ResetSenhaComponent {
               token: this.tokenGerado
             });
 
-            // Avança para o passo 2
+         
             this.currentStep = 2;
           }else if(response.status=== 'Usuario nao pode fazer altercoes. sua conta esta inativa')  {
             alert(response.mensagem || 'Usuario nao pode fazer altercoes. sua conta esta inativa');
@@ -136,8 +138,7 @@ export class ResetSenhaComponent {
     }
   }
 
-  // Step 2: Redefinir senha
-// Step 2: Redefinir senha - ATUALIZADO
+
 onResetPassword(): void {
   if (this.resetForm.valid) {
     this.isLoading = true;
@@ -153,17 +154,15 @@ onResetPassword(): void {
       novaSenha: this.resetForm.get('novaSenha')?.value
     };
 
-    console.log(' Dados enviados para reset:', resetData);
+   
 
     this.authService.resetPassword(resetData).subscribe({
       next: (response: string) => {
         this.isLoading = false;
-        console.log(' Senha redefinida com sucesso:', response);
-
-
+  
         alert('Senha redefinida com sucesso!');
         this.router.navigate(['/login']);
-      },
+      }, 
       error: (error) => {
         this.isLoading = false;
         console.error(' Erro ao redefinir senha:', error);
@@ -206,4 +205,7 @@ onResetPassword(): void {
       control?.markAsTouched();
     });
   }
+navegarPara(path: string) :void{
+  this.router.navigate([path]); 
+}
 }

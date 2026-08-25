@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Rotas } from '../rotas';
 import Swal from 'sweetalert2';
 import { RotasServiceService } from '../rotas-service.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-rotas-list',
@@ -12,9 +13,9 @@ import { CommonModule } from '@angular/common';
   templateUrl: './rotas-list.component.html',
   styleUrl: './rotas-list.component.css'
 })
-export class RotasListComponent {
+export class RotasListComponent implements OnInit {
 
-   rotas: Rotas[] = [];
+  rotas: Rotas[] = [];
   rotaSelecionada: Rotas = new Rotas();
   modoEdicao = false;
   mostrarModal = false;
@@ -25,16 +26,28 @@ export class RotasListComponent {
     destino: ''
   };
 
-  constructor(private rotaService: RotasServiceService) {}
+  // Seleção múltipla
+  rotasSelecionadas: number[] = [];
+
+  constructor(
+    private rotaService: RotasServiceService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.carregarRotas();
   }
 
+  // ===== MÉTODOS DE NAVEGAÇÃO =====
+
+  navegarPara(path: string): void {
+    this.router.navigate([path]);
+  }
+
   carregarRotas(): void {
     this.rotaService.getAll().subscribe({
       next: (data) => {
-        console.log(data)
+        console.log('📦 Rotas carregadas:', data);
         this.rotas = data;
       },
       error: (error) => {
@@ -44,11 +57,35 @@ export class RotasListComponent {
     });
   }
 
+  // ===== MÉTODOS DE FILTRO =====
+
+  get rotasFiltradas(): Rotas[] {
+    return this.rotas.filter(rota => {
+      const origemMatch = !this.filtro.origem ||
+        rota.origem?.toLowerCase().includes(this.filtro.origem.toLowerCase());
+      const destinoMatch = !this.filtro.destino ||
+        rota.destino?.toLowerCase().includes(this.filtro.destino.toLowerCase());
+      return origemMatch && destinoMatch;
+    });
+  }
+
+  aplicarFiltros(): void {
+    // O filtro é aplicado automaticamente pelo getter rotasFiltradas
+  }
+
+  limparFiltros(): void {
+    this.filtro = {
+      origem: '',
+      destino: ''
+    };
+  }
+
+  // ===== MÉTODOS DE MODAL =====
+
   abrirModalCriar(): void {
     this.rotaSelecionada = new Rotas();
     this.modoEdicao = false;
     this.mostrarModal = true;
-    this.salvarRota();
   }
 
   abrirModalEditar(rota: Rotas): void {
@@ -57,13 +94,21 @@ export class RotasListComponent {
     this.mostrarModal = true;
   }
 
+  fecharModal(): void {
+    this.mostrarModal = false;
+    this.rotaSelecionada = new Rotas();
+    this.modoEdicao = false;
+  }
+
+  // ===== MÉTODOS DE CRUD =====
+
   salvarRota(): void {
     if (!this.validarFormulario()) {
       return;
     }
 
     const operacao = this.modoEdicao
-      ? this.rotaService.update(this.rotaSelecionada,this.rotaSelecionada.id!)
+      ? this.rotaService.update(this.rotaSelecionada, this.rotaSelecionada.id!)
       : this.rotaService.create(this.rotaSelecionada);
 
     operacao.subscribe({
@@ -93,7 +138,7 @@ export class RotasListComponent {
       if (result.isConfirmed) {
         this.rotaService.delete(id).subscribe({
           next: (response) => {
-            Swal.fire(response);
+            Swal.fire('Sucesso!', 'Rota excluída com sucesso.', 'success');
             this.carregarRotas();
           },
           error: (error) => {
@@ -105,18 +150,15 @@ export class RotasListComponent {
     });
   }
 
-  fecharModal(): void {
-    this.mostrarModal = false;
-    this.rotaSelecionada = new Rotas();
-  }
+  // ===== VALIDAÇÃO =====
 
   private validarFormulario(): boolean {
-    if (!this.rotaSelecionada.origem.trim()) {
+    if (!this.rotaSelecionada.origem?.trim()) {
       Swal.fire('Atenção!', 'O campo Origem é obrigatório.', 'warning');
       return false;
     }
 
-    if (!this.rotaSelecionada.destino.trim()) {
+    if (!this.rotaSelecionada.destino?.trim()) {
       Swal.fire('Atenção!', 'O campo Destino é obrigatório.', 'warning');
       return false;
     }
@@ -134,80 +176,59 @@ export class RotasListComponent {
     return true;
   }
 
-  get rotasFiltradas(): Rotas[] {
-    return this.rotas.filter(rota => {
-      const origemMatch = !this.filtro.origem ||
-        rota.origem.toLowerCase().includes(this.filtro.origem.toLowerCase());
-      const destinoMatch = !this.filtro.destino ||
-        rota.destino.toLowerCase().includes(this.filtro.destino.toLowerCase());
-      return origemMatch && destinoMatch;
-    });
+  // ===== MÉTODOS DE ESTATÍSTICAS =====
+
+  getTotalViagensAtivas(): number {
+    return this.rotas?.reduce((total, rota) => total + (rota.totalViagens || 0), 0) || 0;
   }
 
-
-  // Adicione estas funções ao seu component.ts
-
-// Métodos auxiliares para as estatísticas
-getTotalViagensAtivas(): number {
-  return this.rotas?.reduce((total, rota) => total + (rota.distanciaKm || 0), 0) || 0;
-
-}
-
-getDistanciaTotal(): number {
-  return this.rotas?.reduce((total, rota) => total + (rota.distanciaKm || 0), 0) || 0;
-}
-
-getTempoTotal(): number {
-  return this.rotas?.reduce((total, rota) => total + (rota.tempoEstimadoHoras || 0), 0) || 0;
-}
-
-// Métodos para seleção múltipla
-rotasSelecionadas: number[] = [];
-
-isSelecionada(id: number): boolean {
-  return this.rotasSelecionadas.includes(id);
-}
-
-toggleSelecao(id: number): void {
-  const index = this.rotasSelecionadas.indexOf(id);
-  if (index === -1) {
-    this.rotasSelecionadas.push(id);
-  } else {
-    this.rotasSelecionadas.splice(index, 1);
+  getDistanciaTotal(): number {
+    return this.rotas?.reduce((total, rota) => total + (rota.distanciaKm || 0), 0) || 0;
   }
-}
 
-selecionarTodos(event: any): void {
-  if (event.target.checked) {
-    this.rotasSelecionadas = this.rotasFiltradas.map(r => r.id!);
-  } else {
-    this.rotasSelecionadas = [];
+  getTempoTotal(): number {
+    return this.rotas?.reduce((total, rota) => total + (rota.tempoEstimadoHoras || 0), 0) || 0;
   }
-}
 
-// Métodos extras
-limparFiltros(): void {
-  this.filtro = {
-    origem: '',
-    destino: '',
+  // ===== MÉTODOS DE SELEÇÃO MÚLTIPLA =====
 
-  };
-}
+  isSelecionada(id: number): boolean {
+    return this.rotasSelecionadas.includes(id);
+  }
 
-visualizarRota(rota: Rotas): void {
-  // Implemente a visualização detalhada
-  console.log('Visualizar rota:', rota);
-}
+  toggleSelecao(id: number): void {
+    const index = this.rotasSelecionadas.indexOf(id);
+    if (index === -1) {
+      this.rotasSelecionadas.push(id);
+    } else {
+      this.rotasSelecionadas.splice(index, 1);
+    }
+  }
 
-exportarParaCSV(): void {
-  // Implemente exportação para CSV
-  console.log('Exportar rotas');
-}
+  selecionarTodos(event: any): void {
+    if (event.target.checked) {
+      this.rotasSelecionadas = this.rotasFiltradas.map(r => r.id!);
+    } else {
+      this.rotasSelecionadas = [];
+    }
+  }
 
-getViagensBadgeClass(viagens: number): string {
-  if (viagens === 0) return 'viagens-badge viagens-0';
-  if (viagens >= 1 && viagens <= 5) return 'viagens-badge viagens-1-5';
-  if (viagens >= 6 && viagens <= 10) return 'viagens-badge viagens-6-10';
-  return 'viagens-badge viagens-11';
-}
+  // ===== MÉTODOS AUXILIARES =====
+
+  visualizarRota(rota: Rotas): void {
+    console.log('Visualizar rota:', rota);
+    // Implementar visualização detalhada
+  }
+
+  exportarParaCSV(): void {
+    console.log('Exportar rotas para CSV');
+    // Implementar exportação para CSV
+  }
+
+  getViagensBadgeClass(viagens: number): string {
+    if (viagens === 0) return 'bg-secondary bg-opacity-50';
+    if (viagens >= 1 && viagens <= 5) return 'bg-info bg-opacity-75';
+    if (viagens >= 6 && viagens <= 10) return 'bg-warning text-dark';
+    return 'bg-success bg-opacity-75';
+  }
 }

@@ -29,3 +29,11 @@ export enum TipoManutencao {
   REVISAO = 'REVISAO'
 
 }
+
+export interface RelatorioManutencaoDTO {
+  veiculo: string;
+  totalManutencoes: number;
+  custoTotal: number;
+  custoMedio: number;
+  status: string;
+}

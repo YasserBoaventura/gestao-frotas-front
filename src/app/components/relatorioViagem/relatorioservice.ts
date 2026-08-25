@@ -14,7 +14,6 @@ export class relatorioservice {
   private apiUrl = 'http://localhost:9001/api/viagens';
   private http = inject(HttpClient);
 
-  // Testar conexão com a API
   testarConexao(): Observable<boolean> {
     return new Observable(observer => {
       this.http.get(`${this.apiUrl}/test`, { observe: 'response' })
@@ -25,7 +24,7 @@ export class relatorioservice {
         });
     });
   }
-  // relatorio por periodo-motorista
+
 getRelatorioMotoristaPeriodo(inicio: string, fim: string): Observable<RelatorioMotoristaDTO[]> {
 
   return this.http.get<RelatorioMotoristaDTO[]>(
@@ -33,7 +32,7 @@ getRelatorioMotoristaPeriodo(inicio: string, fim: string): Observable<RelatorioM
     { params: { inicio, fim } }
   );
 }
-//relatorio por-veiculoPeriodo
+
 getRelatorioVeiculoPeriodo(inicio: string, fim: string): Observable<RelatorioPorVeiculoDTO[]> {
   return this.http.get<RelatorioPorVeiculoDTO[]>(
     `${this.apiUrl}/relatorio-periodo-por-veiculo`,
@@ -41,14 +40,10 @@ getRelatorioVeiculoPeriodo(inicio: string, fim: string): Observable<RelatorioPor
   );
 }
 
-
-
-  // Relatório por veículo
   getRelatorioVeiculo(): Observable<RelatorioPorVeiculoDTO[]> {
     return this.http.get<RelatorioPorVeiculoDTO[]>(`${this.apiUrl}/veiculos`);
   }
 
-  // Relatório diário
   getRelatorioDiario(dataInicio: string, dataFim: string): Observable<RelatorioDiarioDTO[]> {
     const params = new HttpParams()
       .set('dataInicio', dataInicio)
@@ -56,7 +51,6 @@ getRelatorioVeiculoPeriodo(inicio: string, fim: string): Observable<RelatorioPor
     return this.http.get<RelatorioDiarioDTO[]>(`${this.apiUrl}/diario`, { params });
   }
 
-  // Relatório mensal
   getRelatorioMensal(dataInicio: string, dataFim: string): Observable<RelatorioMensalDTO[]> {
     const params = new HttpParams()
       .set('dataInicio', dataInicio)
@@ -64,7 +58,6 @@ getRelatorioVeiculoPeriodo(inicio: string, fim: string): Observable<RelatorioPor
     return this.http.get<RelatorioMensalDTO[]>(`${this.apiUrl}/mensal`, { params });
   }
 
-  // Relatório geral
   getRelatorioGeral(dataInicio: string, dataFim: string): Observable<RelatorioGeralDTO> {
     const params = new HttpParams()
       .set('dataInicio', dataInicio)
@@ -72,7 +65,7 @@ getRelatorioVeiculoPeriodo(inicio: string, fim: string): Observable<RelatorioPor
     return this.http.get<RelatorioGeralDTO>(`${this.apiUrl}/geral`, { params });
   }
 
-  // Top motoristas
+  
   getTopMotoristas(dataInicio: string, dataFim: string): Observable<RelatorioTopMotoristasDTO[]> {
     const params = new HttpParams()
       .set('dataInicio', dataInicio)
@@ -80,7 +73,7 @@ getRelatorioVeiculoPeriodo(inicio: string, fim: string): Observable<RelatorioPor
     return this.http.get<RelatorioTopMotoristasDTO[]>(`${this.apiUrl}/top-motoristas`, { params });
   }
 
-  // Lista de viagens
+  
   getViagens(dataInicio?: string, dataFim?: string, status?: string): Observable<Viagem[]> {
     let params = new HttpParams();
     if (dataInicio) params = params.set('dataInicio', dataInicio);

@@ -18,7 +18,7 @@ private apiUrl = 'http://localhost:9001/api/manutencoes';
     return this.http.get<RelatorioManutencaoDTO []>(`${this.apiUrl}/por-veiculo`);
   }
 
-  // Buscar relatório por período
+  // Buscar relatório por período 
   // Buscar relatório por período - CORRIGIDO
 getRelatorioPorPeriodo(dataInicio: Date, dataFim: Date): Observable<RelatorioManutencaoDTO []> {
   const params = {

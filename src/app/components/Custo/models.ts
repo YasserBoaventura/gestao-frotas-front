@@ -3,7 +3,7 @@ import { Veiculo } from "../Veiculos/veiculos.model";
   export interface Custo {
   id?: number;
   data: Date;
-  descricao: string;
+  descricao?: string;
   valor: number;
   tipo: TipoCusto;
   status: StatusCusto;
@@ -108,7 +108,7 @@ export interface RelatorioFilterDTO {
   dataInicioTop5VeiculosMaisCarro?: Date;
   dataFimTop5VeiculosMaisCarro?: Date;
 }
- 
+
 export interface DashboardCustosDTO {
   mensagem: string;
   totalMesAtual: number;

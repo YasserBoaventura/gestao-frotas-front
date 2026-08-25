@@ -12,13 +12,11 @@ export class RelatorioCombustivelService {
       }
 private apiUrl = 'http://localhost:9001/api/abastecimentos';
 
-  // Buscar relatório por veículo
+ 
   getRelatorioPorVeiculo(): Observable<RelatorioCombustivelDTO[]> {
     return this.http.get<RelatorioCombustivelDTO[]>(`${this.apiUrl}/por-veiculo`);
   }
 
-  // Buscar relatório por período
-  // Buscar relatório por período - CORRIGIDO
 getRelatorioPorPeriodo(dataInicio: Date, dataFim: Date): Observable<RelatorioCombustivelDTO[]> {
   const params = {
     inicio: this.formatarDataISO(dataInicio),

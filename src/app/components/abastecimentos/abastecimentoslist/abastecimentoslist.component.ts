@@ -13,8 +13,6 @@ import { ViagensServiceService } from '../../viagens/viagens-service.service';
 import { PageEvent, MatPaginatorModule } from '@angular/material/paginator';
 import Swal from 'sweetalert2';
 import { forkJoin, map } from 'rxjs';
-
-// Importações do Angular Material
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -27,7 +25,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
 import { LoginService } from '../../auth/login.service';
-
+import { RelatorioCombustivelDTO } from '../../relatorioCombustivel/relatorio-combustivel-dto';
+import { RelatorioCombustivelService } from '../../relatorioCombustivel/relatorio-combustivel.service';
 
 @Component({
   selector: 'app-abastecimento-list',
@@ -55,10 +54,11 @@ import { LoginService } from '../../auth/login.service';
 })
 export class AbastecimentoListComponent implements OnInit {
 
-router = inject(Router);
+  router = inject(Router);
 
-//login Service
- loginService = inject(LoginService);
+  //login Service
+  loginService = inject(LoginService);
+
   // Forms
   abastecimentoForm!: FormGroup;
 
@@ -76,7 +76,7 @@ router = inject(Router);
   mostrarModal = false;
   mostrarModalExclusao = false;
   valorCalculado = 0;
-  debugMode = true; // Modo debug para ver logs
+  debugMode = true;
 
   // Filtros
   filtroVeiculo = '';
@@ -104,12 +104,30 @@ router = inject(Router);
   // Abastecimento selecionado
   abastecimentoSelecionado: Abastecimento | null = null;
 
+
+  // Variáveis do Relatório
+  abaAtiva: string = 'lista';
+  relatorios: RelatorioCombustivelDTO[] = [];
+  relatoriosFiltrados: RelatorioCombustivelDTO[] = [];
+  dataInicio: string = '';
+  dataFim: string = '';
+  filtroAtivo: string = 'veiculo';
+  veiculoSelecionado: string = '';
+  veiculosRelatorio: string[] = [];
+  erroRelatorio: string = '';
+  hoje = new Date();
+
+  // Variáveis para totais do relatório
+  totalGeralLitros: number = 0;
+  totalGeralGasto: number = 0;
+
   constructor(
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
     private abastecimentoService: AbastecimentoService,
     private veiculoService: VeiculosService,
-    private viagemService: ViagensServiceService
+    private viagemService: ViagensServiceService,
+    private relatorioService: RelatorioCombustivelService
   ) {}
 
   ngOnInit(): void {
@@ -125,7 +143,7 @@ router = inject(Router);
       id: [null],
       veiculoId: [null, Validators.required],
       viagemId: [null],
-      dataAbastecimento: [dataFormatada, Validators.required],
+      dataAbastecimento: [ Validators.required],
       statusAbastecimento: ['REALIZADA', Validators.required],
       tipoCombustivel: ['GASOLINA', Validators.required],
       kilometragemVeiculo: [null, [Validators.required, Validators.min(0)]],
@@ -153,100 +171,81 @@ router = inject(Router);
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
- carregarDados(): void {
-  this.carregando = true;
+  carregarDados(): void {
+    this.carregando = true;
 
-  forkJoin({
-    veiculos: this.veiculoService.getVehicles(),
-    abastecimentos: this.abastecimentoService.getAbastecimentos(),
-    viagens: this.viagemService.getViagens()
-  }).subscribe({
-    next: ({ veiculos, abastecimentos, viagens }) => {
-      console.log('Dados carregados:', { veiculos, abastecimentos, viagens });
+    forkJoin({
+      veiculos: this.veiculoService.getVehicles(),
+      abastecimentos: this.abastecimentoService.getAbastecimentos(),
+      viagens: this.viagemService.getViagens()
+    }).subscribe({
+      next: ({ veiculos, abastecimentos, viagens }) => {
+        console.log('Dados carregados:', { veiculos, abastecimentos, viagens });
 
-      this.veiculos = veiculos;
-      this.viagens = viagens;
+        this.veiculos = veiculos;
+        this.viagens = viagens;
 
-      // Processar abastecimentos para garantir que temos o veiculoId
-      this.abastecimentos = abastecimentos.map(abastecimento => {
-        // Extrair veiculoId de diferentes formas possíveis
-        let veiculoId = 0;
-        if (abastecimento.veiculoId) {
-          veiculoId = abastecimento.veiculoId;
-        } else if (abastecimento.veiculo && abastecimento.veiculo.id) {
-          veiculoId = abastecimento.veiculo.id;
-        } else if (abastecimento.veiculo && typeof abastecimento.veiculo === 'object') {
-          // Tentar extrair ID do objeto veiculo
-          const veiculoObj = abastecimento.veiculo as any;
-          veiculoId = veiculoObj.id || 0;
-        }
+        // Processar abastecimentos para garantir que temos o veiculoId
+        this.abastecimentos = abastecimentos.map(abastecimento => {
+          let veiculoId = 0;
+          if (abastecimento.veiculoId) {
+            veiculoId = abastecimento.veiculoId;
+          } else if (abastecimento.veiculo && abastecimento.veiculo.id) {
+            veiculoId = abastecimento.veiculo.id;
+          } else if (abastecimento.veiculo && typeof abastecimento.veiculo === 'object') {
+            const veiculoObj = abastecimento.veiculo as any;
+            veiculoId = veiculoObj.id || 0;
+          }
 
-        // Encontrar o veículo completo na lista de veículos
-        const veiculoCompleto = this.veiculos.find(v => v.id === veiculoId);
+          const veiculoCompleto = this.veiculos.find(v => v.id === veiculoId);
 
-        // Extrair viagemId de forma similar
-        let viagemId = null;
-        if (abastecimento.viagemId) {
-          viagemId = abastecimento.viagemId;
-        } else if (abastecimento.viagem && abastecimento.viagem.id) {
-          viagemId = abastecimento.viagem.id;
-        }
+          let viagemId = null;
+          if (abastecimento.viagemId) {
+            viagemId = abastecimento.viagemId;
+          } else if (abastecimento.viagem && abastecimento.viagem.id) {
+            viagemId = abastecimento.viagem.id;
+          }
 
-        // Encontrar a viagem completa se existir
-        const viagemCompleta = viagemId ? this.viagens.find(v => v.id === viagemId) : null;
+          const viagemCompleta = viagemId ? this.viagens.find(v => v.id === viagemId) : null;
 
-        return {
-          ...abastecimento,
-          veiculoId: veiculoId,
-          viagemId: viagemId,
-          statusAbastecimento: abastecimento.statusAbastecimento || 'PLANEADA',
-          // ADICIONE ESTAS LINHAS:
-          veiculo: veiculoCompleto || {
-            id: veiculoId,
-            matricula: `VCL-${veiculoId}`,
-            modelo: 'Veículo não encontrado',
-            kilometragemAtual: 0
-          },
-          viagem: viagemCompleta
-        };
-      });
-
-      console.log('Abastecimentos processados:', this.abastecimentos);
-
-      // DEBUG: Verificar se os veículos estão sendo vinculados
-      this.abastecimentos.forEach((abast, index) => {
-        console.log(`Abastecimento ${index}:`, {
-          id: abast.id,
-          veiculoId: abast.veiculo_Id,
-          veiculo: abast.veiculo,
-          temVeiculo: !!abast.veiculo
+          return {
+            ...abastecimento,
+            veiculoId: veiculoId,
+            viagemId: viagemId,
+            statusAbastecimento: abastecimento.statusAbastecimento || 'PLANEADA',
+            veiculo: veiculoCompleto || {
+              id: veiculoId,
+              matricula: `VCL-${veiculoId}`,
+              modelo: 'Veículo não encontrado',
+              kilometragemAtual: 0
+            },
+            viagem: viagemCompleta
+          };
         });
-      });
 
-      this.filteredAbastecimentos = [...this.abastecimentos];
-      this.calcularEstatisticas();
-      this.carregando = false;
-    },
-    error: (error) => {
-      console.error('Erro ao carregar dados:', error);
-      this.mostrarErro('Erro ao carregar dados: ' + error.message);
-      this.carregando = false;
-    }
-  });
-}
+        console.log('Abastecimentos processados:', this.abastecimentos);
+
+        this.filteredAbastecimentos = [...this.abastecimentos];
+        this.calcularEstatisticas();
+        this.carregando = false;
+      },
+      error: (error) => {
+        console.error('Erro ao carregar dados:', error);
+        this.mostrarErro('Erro ao carregar dados: ' + error.message);
+        this.carregando = false;
+      }
+    });
+  }
 
   onVeiculoChange(veiculoId: number | null): void {
     console.log('Veículo selecionado ID:', veiculoId);
 
     if (veiculoId) {
-      // Buscar viagens do veículo da API
-      console.log('Buscando viagens para veículo ID:', veiculoId);
       this.abastecimentoService.getViagensPorVeiculo(veiculoId).subscribe({
         next: (viagens) => {
           console.log('Viagens retornadas da API:', viagens);
           this.viagensDoVeiculo = viagens;
 
-          // Atualizar o cache de viagens
           viagens.forEach(viagem => {
             if (!this.viagens.find(v => v.id === viagem.id)) {
               this.viagens.push(viagem);
@@ -256,7 +255,6 @@ router = inject(Router);
         error: (error) => {
           console.error('Erro ao buscar viagens do veículo:', error);
           this.viagensDoVeiculo = [];
-          // Tentar filtrar do cache se a API falhar
           this.viagensDoVeiculo = this.viagens.filter(viagem => {
             const viagemVeiculoId = viagem.veiculo?.id || viagem.veiculo;
             return viagemVeiculoId === veiculoId;
@@ -302,9 +300,7 @@ router = inject(Router);
   }
 
   editarAbastecimento(abastecimento: Abastecimento): void {
-    console.log('=== EDITANDO ABASTECIMENTO ===');
     console.log('Dados do abastecimento:', abastecimento);
-    console.log('Veículos disponíveis:', this.veiculos);
 
     if (this.veiculos.length === 0) {
       this.mostrarErro('Não há veículos disponíveis.');
@@ -314,7 +310,6 @@ router = inject(Router);
     this.editando = true;
     this.mostrarModal = true;
 
-    // Extrair veiculoId corretamente
     let veiculoId = 0;
     if (abastecimento.veiculo_Id) {
       veiculoId = abastecimento.veiculo_Id;
@@ -325,10 +320,6 @@ router = inject(Router);
       veiculoId = veiculoObj.id || 0;
     }
 
-    console.log('Veículo ID extraído:', veiculoId);
-    console.log('Veículo correspondente:', this.veiculos.find(v => v.id === veiculoId));
-
-    // Extrair viagemId corretamente
     let viagemId = null;
     if (abastecimento.viagemId) {
       viagemId = abastecimento.viagemId;
@@ -336,16 +327,13 @@ router = inject(Router);
       viagemId = abastecimento.viagem.id;
     }
 
-    // Limpar o formulário primeiro
     this.abastecimentoForm.reset();
     this.viagensDoVeiculo = [];
 
-    // Carregar viagens do veículo primeiro
     if (veiculoId) {
       this.onVeiculoChange(veiculoId);
     }
 
-    // Usar setTimeout para garantir que as viagens foram carregadas
     setTimeout(() => {
       const dataFormatada = this.formatarDataParaInput(new Date(abastecimento.dataAbastecimento!));
 
@@ -361,16 +349,11 @@ router = inject(Router);
         precoPorLitro: abastecimento.precoPorLitro
       });
 
-      console.log('Formulário preenchido:', this.abastecimentoForm.value);
-      console.log('Viagens disponíveis para seleção:', this.viagensDoVeiculo);
-      console.log('Viagem ID a ser selecionada:', viagemId);
-
       this.calcularValorTotal();
     }, 500);
   }
 
   salvarAbastecimento(): void {
-    // Marcar todos os campos como tocados para mostrar erros
     Object.keys(this.abastecimentoForm.controls).forEach(key => {
       const control = this.abastecimentoForm.get(key);
       control?.markAsTouched();
@@ -384,11 +367,9 @@ router = inject(Router);
     this.carregandoModal = true;
     const formValue = this.abastecimentoForm.value;
 
-    // Converter data para ISO string
     const dataLocal = new Date(formValue.dataAbastecimento);
     const dataISO = dataLocal.toISOString();
 
-    // Preparar objeto abastecimento para envio
     const abastecimentoParaEnviar: any = {
       veiculoId: formValue.veiculoId,
       viagemId: formValue.viagemId || null,
@@ -400,7 +381,6 @@ router = inject(Router);
       precoPorLitro: formValue.precoPorLitro
     };
 
-    // Se estiver editando, adicionar ID
     if (this.editando && formValue.id) {
       abastecimentoParaEnviar.id = formValue.id;
     }
@@ -493,7 +473,6 @@ router = inject(Router);
 
   aplicarFiltros(): void {
     this.filteredAbastecimentos = this.abastecimentos.filter(abastecimento => {
-      // Filtro por veículo
       if (this.filtroVeiculo) {
         const veiculoInfo = this.getVeiculoInfo(abastecimento.veiculo_Id!).toLowerCase();
         if (!veiculoInfo.includes(this.filtroVeiculo.toLowerCase())) {
@@ -501,17 +480,14 @@ router = inject(Router);
         }
       }
 
-      // Filtro por tipo de combustível
       if (this.filtroTipoCombustivel && abastecimento.tipoCombustivel !== this.filtroTipoCombustivel) {
         return false;
       }
 
-      // Filtro por status
       if (this.filtroStatus && abastecimento.statusAbastecimento !== this.filtroStatus) {
         return false;
       }
 
-      // Filtro por data
       const dataAbastecimento = new Date(abastecimento.dataAbastecimento!);
 
       if (this.filtroDataInicio) {
@@ -563,7 +539,7 @@ router = inject(Router);
       totalGasto,
       totalLitros,
       mediaPreco,
-      consumoMedio: 0 // Removido o cálculo complexo por enquanto
+      consumoMedio: 0
     };
   }
 
@@ -576,23 +552,16 @@ router = inject(Router);
     this.pageSize = event.pageSize;
   }
 
-  // Método para obter informações do veículo
-  getVeiculoInfo(veiculoId: any ): string {
-    console.log('Buscando info do veículo ID:', veiculoId);
-    console.log('Veículos disponíveis:', this.veiculos);
-
+  getVeiculoInfo(veiculoId: any): string {
     if (!veiculoId || veiculoId === 0) {
       return 'Não informado';
     }
 
     const veiculo = this.veiculos.find(v => v.id === veiculoId);
-    console.log('Veículo encontrado:', veiculo);
-
     if (veiculo) {
       return `${veiculo.matricula} - ${veiculo.modelo}`;
     }
 
-    // Tentar encontrar em abastecimentos
     const abastecimento = this.abastecimentos.find(a => a.veiculo_Id === veiculoId);
     if (abastecimento && abastecimento.veiculo) {
       const veiculoObj = abastecimento.veiculo as any;
@@ -602,6 +571,18 @@ router = inject(Router);
     }
 
     return `Veículo #${veiculoId} (não encontrado)`;
+  }
+
+
+  getTipoCombustivelLabel(tipo: string): string {
+    const tipos: { [key: string]: string } = {
+      'GASOLINA': 'Gasolina',
+      'DIESEL': 'Diesel',
+      'ETANOL': 'Etanol',
+      'GNV': 'GNV',
+      'ELETRICO': 'Elétrico'
+    };
+    return tipos[tipo] || tipo;
   }
 
    getViagemInfo(viagemId: any ): string {
@@ -641,6 +622,7 @@ router = inject(Router);
   return cores[tipo] || { bg: '#f5f5f5', text: '#616161' };
 }
 
+
 getStatusColor(status: string): {bg: string, text: string} {
   const cores : any = {
     'REALIZADA': { bg: '#e8f5e9', text: '#2e7d32' },
@@ -660,6 +642,7 @@ getTipoCombustivelIcon(tipo: string): string {
   return icons[tipo] || '⛽';
 }
 
+
 getStatusIcon(status: string): string {
   const icons : any = {
     'REALIZADA': '✅',
@@ -668,10 +651,11 @@ getStatusIcon(status: string): string {
   return icons[status] || '•';
 }
   // Formatação
+
   formatarMoeda(valor: number): string {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL'
+      currency: 'MZN'
     }).format(valor || 0);
   }
 
@@ -693,8 +677,6 @@ getStatusIcon(status: string): string {
     }
   }
 
-  // Método de debug
-  // Mensagens
   mostrarSucesso(mensagem: string): void {
     this.snackBar.open(mensagem, 'Fechar', {
       duration: 3000,
@@ -709,15 +691,254 @@ getStatusIcon(status: string): string {
     });
   }
 
+  navegateTO(path: string): void {
+    this.router.navigate([path]);
+  }
+
+  // ==================== MÉTODOS DO RELATÓRIO DE COMBUSTÍVEL ====================
+
+  carregarRelatorioPorVeiculo(): void {
+    this.carregando = true;
+    this.erroRelatorio = '';
+    this.filtroAtivo = 'veiculo';
+
+    console.log('Buscando relatório por veículo...');
+
+    this.relatorioService.getRelatorioPorVeiculo().subscribe({
+      next: (data) => {
+        console.log('Dados recebidos:', data);
+        this.relatorios = data;
+        this.relatoriosFiltrados = [...data];
+        this.extrairVeiculosRelatorio();
+        this.calcularTotaisRelatorio();
+        this.carregando = false;
+      },
+      error: (error) => {
+        console.error('Erro ao carregar relatório por veículo:', error);
+        this.erroRelatorio = 'Erro ao carregar relatório. Tente novamente.';
+        this.carregando = false;
+      },
+      complete: () => {
+        console.log('Requisição por veículo concluída');
+      }
+    });
+  }
+
+  carregarRelatorioPorPeriodo(): void {
+    if (!this.dataInicio || !this.dataFim) {
+      this.erroRelatorio = 'Selecione ambas as datas (início e fim)';
+      return;
+    }
+
+    const inicioDate = new Date(this.dataInicio);
+    const fimDate = new Date(this.dataFim);
+
+    if (inicioDate > fimDate) {
+      this.erroRelatorio = 'Data de início não pode ser maior que data de fim';
+      return;
+    }
+
+    this.carregando = true;
+    this.erroRelatorio = '';
+    this.filtroAtivo = 'periodo';
+
+    console.log('Buscando relatório por período:', {
+      inicio: this.dataInicio,
+      fim: this.dataFim
+    });
+
+    this.relatorioService.getRelatorioPorPeriodo(new Date(this.dataInicio), new Date(this.dataFim)).subscribe({
+      next: (data) => {
+        console.log('Dados recebidos por período:', data);
+        this.relatorios = data;
+        this.relatoriosFiltrados = [...data];
+        this.extrairVeiculosRelatorio();
+        this.calcularTotaisRelatorio();
+        this.carregando = false;
+      },
+      error: (error) => {
+        console.error('Erro detalhado:', error);
+        this.erroRelatorio = 'Erro ao carregar relatório. Verifique as datas e tente novamente.';
+        this.carregando = false;
+      },
+      complete: () => {
+        console.log('Requisição por período concluída');
+      }
+    });
+  }
+
+  extrairVeiculosRelatorio(): void {
+    const veiculosUnicos = new Set<string>();
+    this.relatorios.forEach(relatorio => {
+      if (relatorio.matricula) {
+        veiculosUnicos.add(relatorio.matricula);
+      }
+    });
+    this.veiculosRelatorio = Array.from(veiculosUnicos).sort();
+  }
+
+  aplicarFiltroVeiculo(): void {
+    if (this.veiculoSelecionado) {
+      this.relatoriosFiltrados = this.relatorios.filter(relatorio =>
+        relatorio.matricula === this.veiculoSelecionado
+      );
+    } else {
+      this.relatoriosFiltrados = [...this.relatorios];
+    }
+    this.calcularTotaisRelatorio();
+  }
+
+  limparFiltroVeiculo(): void {
+    this.veiculoSelecionado = '';
+    this.relatoriosFiltrados = [...this.relatorios];
+    this.calcularTotaisRelatorio();
+  }
+
+  calcularTotaisRelatorio(): void {
+    this.totalGeralLitros = this.relatoriosFiltrados.reduce((total, relatorio) =>
+      total + (relatorio.totalLitros || 0), 0);
+
+    this.totalGeralGasto = this.relatoriosFiltrados.reduce((total, relatorio) =>
+      total + (relatorio.valorTotal || 0), 0);
+  }
+
+  limparFiltrosRelatorio(): void {
+    this.dataInicio = '';
+    this.dataFim = '';
+    this.veiculoSelecionado = '';
+    this.erroRelatorio = '';
+    this.relatoriosFiltrados = [...this.relatorios];
+    this.calcularTotaisRelatorio();
+  }
+
+  formatarData(data: string | Date | null): string {
+    if (!data) return '';
+
+    let dataObj: Date;
+    if (typeof data === 'string') {
+      dataObj = new Date(data);
+    } else {
+      dataObj = data;
+    }
+
+    return dataObj.toLocaleDateString('pt-BR');
+  }
+
+  get hojeString(): string {
+    return this.formatarDataParaInputRelatorio(this.hoje);
+  }
+
+  formatarDataParaInputRelatorio(data: Date | null): string {
+    if (!data) return '';
+    const year = data.getFullYear();
+    const month = (data.getMonth() + 1).toString().padStart(2, '0');
+    const day = data.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  ordenarPor(coluna: string): void {
+    this.relatoriosFiltrados.sort((a, b) => {
+      switch(coluna) {
+        case 'veiculo':
+          return a.matricula.localeCompare(b.matricula);
+        case 'totalLitros':
+          return (b.totalLitros || 0) - (a.totalLitros || 0);
+        case 'totalGasto':
+          return (b.valorTotal || 0) - (a.valorTotal || 0);
+        case 'mediaPorLitro':
+          return (b.mediaPorLitro || 0) - (a.mediaPorLitro || 0);
+        default:
+          return 0;
+      }
+    });
+  }
+
+  imprimirRelatorio(): void {
+    window.print();
+  }
+
+  exportarParaExcel(): void {
+    if (this.relatoriosFiltrados.length === 0) return;
+
+    const data = this.relatoriosFiltrados.map(item => ({
+      'Veículo': item.matricula || 'Não informado',
+      'Total Litros': item.totalLitros,
+      'Total Gasto': item.valorTotal,
+      'Média por Litro': item.mediaPorLitro,
+      'Total Litros Formatado': item.getTotalLitrosFormatado ? item.getTotalLitrosFormatado() : '',
+      'Total Gasto Formatado': item.getTotalGastoFormatado ? item.getTotalGastoFormatado() : '',
+      'Média por Litro Formatado': item.getMediaPorLitroFormatado ? item.getMediaPorLitroFormatado() : ''
+    }));
+
+    console.log('Exportando para Excel:', data);
+    alert('Funcionalidade de exportação para Excel em desenvolvimento');
+  }
+
+  exportarParaPDF(): void {
+    if (this.relatoriosFiltrados.length === 0) return;
+
+    console.log('Exportando para PDF');
+    alert('Funcionalidade de exportação para PDF em desenvolvimento');
+  }
+
+  temTendenciaPositiva(): boolean {
+    return true;
+  }
+
+  getVeiculosUnicos(): number {
+    const veiculos = new Set(this.relatoriosFiltrados.map(r => r.matricula));
+    return veiculos.size;
+  }
+
+  onTipoRelatorioChange(): void {
+    if (this.filtroAtivo === 'veiculo') {
+      this.carregarRelatorioPorVeiculo();
+    } else {
+      this.dataInicio = '';
+      this.dataFim = '';
+    }
+    this.veiculoSelecionado = '';
+  }
+
+  // Método auxiliar para formatação de data
+  formatarDataHoraRelatorio(dataString: string | Date): string {
+    try {
+      const data = new Date(dataString);
+      if (isNaN(data.getTime())) {
+        return 'Data inválida';
+      }
+      return data.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Data inválida';
+    }
+  }
+
+  // Método para obter viagem info
+  getViagemInfo(viagemId: any): string {
+    if (!viagemId || viagemId === 0) {
+      return 'Não informado';
+    }
+
+    const viagem = this.viagens.find(v => v.id === viagemId);
+    if (viagem) {
+      return `${viagem.rota?.origem} - ${viagem.rota?.destino}`;
+    }
+
+    return `Viagem #${viagemId} (não encontrado)`;
+  }
+
+  // Métodos para exportação (mantidos do original)
   exportarExcel(): void {
     this.mostrarSucesso('Funcionalidade de exportação Excel em desenvolvimento');
   }
 
   exportarPDF(): void {
     this.mostrarSucesso('Funcionalidade de exportação PDF em desenvolvimento');
-  }
-  //router
-  navegateTO(path: string){
-    this.router.navigate([path]);
   }
 }

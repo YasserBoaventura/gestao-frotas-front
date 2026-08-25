@@ -1,3 +1,24 @@
+
+
+<div class="container-fluid px-3 py-3 bg-light min-vh-100">
+
+  <!-- Header -->
+  <div class="card mb-3 border-0 shadow-sm" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #cbd5e1 100%);">
+    <div class="card-body py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-geo-alt fs-2" style="color: #4a5568;"></i>
+        <div>
+          <h5 class="mb-0" style="color: #2d3748;">Rastreamento Veicular</h5>
+          <p class="mb-0 small" style="color: #718096;">Acompanhe a localização e consumo da frota</p>
+        </div>
+      </div>
+      <div class="d-flex gap-1">
+        <button class="btn btn-sm btn-outline-secondary" (click)="carregarDadosIniciais()" [disabled]="isLoading" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-arrow-clockwise"></i> Recarregar
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="navegateTO('dashboard')" style="border-color: #cbd5e1; color: #2d3748;">
+          <i class="bi bi-arrow-left"></i> Voltar
+        </button>
 <!-- src/app/tracking/tracking.component.html -->
 <div class="container-fluid p-0 vh-100 d-flex overflow-hidden">
   <!-- Sidebar -->
@@ -21,8 +42,32 @@
 
       <div *ngIf="selectedPlate" class="small">
         Placa: <strong>{{ selectedPlate }}</strong>
+
       </div>
     </div>
+  </div>
+
+
+  <!-- Abas -->
+  <div class="card shadow-sm mb-3 border-0">
+    <div class="card-body py-2">
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <a class="nav-link fs-6" [class.active]="activeTab === 0" (click)="activeTab = 0" style="cursor: pointer; color: #2d3748;">
+            <i class="bi bi-map me-1"></i> Mapa
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link fs-6" [class.active]="activeTab === 1" (click)="activeTab = 1" style="cursor: pointer; color: #2d3748;">
+            <i class="bi bi-fuel-pump me-1"></i> Combustível
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link fs-6" [class.active]="activeTab === 2" (click)="activeTab = 2" style="cursor: pointer; color: #2d3748;">
+            <i class="bi bi-bar-chart me-1"></i> Estatísticas
+          </a>
+        </li>
+      </ul>
 
     <!-- Tabs de navegação com azul mais claro -->
     <div class="d-flex p-2 gap-1 border-bottom">
@@ -47,7 +92,189 @@
         (click)="activeTab = 2">
         📊 Estatísticas
       </button>
+
     </div>
+  </div>
+
+
+  <!-- Estado de Carregamento (apenas no carregamento inicial, antes de termos veículos) -->
+  <div *ngIf="isLoading && vehicleOptions.length === 0" class="text-center py-5">
+    <div class="spinner-border" role="status" style="color: #4a5568;">
+      <span class="visually-hidden">Carregando...</span>
+    </div>
+    <h6 class="mt-3 text-muted fs-6">Carregando dados...</h6>
+  </div>
+
+  <!-- ===== TAB 0: MAPA ===== -->
+  <div *ngIf="activeTab === 0">
+    <div class="row g-3">
+      <!-- Sidebar com informações -->
+      <div class="col-lg-4 col-xl-3">
+        <!-- Seletor de veículo -->
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-body py-2">
+            <div class="vehicle-selector">
+              <label class="form-label small fw-semibold" style="color: #4a5568;">Veículo</label>
+              <select
+                [ngModel]="veiculoId"
+                (ngModelChange)="changeVehicle($event)"
+                class="form-select form-select-sm">
+                <option *ngFor="let v of vehicleOptions" [value]="v.id">
+                  {{ v.plate }}
+                </option>
+              </select>
+            </div>
+            <div class="selected-plate mt-2" *ngIf="selectedPlate">
+              <span class="plate-label">Placa</span>
+              <strong>{{ selectedPlate }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Localização atual -->
+        <div *ngIf="currentLocation" class="card shadow-sm border-0 mb-3">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <i class="bi bi-geo-alt-fill" style="color: #4a5568;"></i>
+              <h6 class="mb-0 fs-6" style="color: #2d3748;">Localização Atual</h6>
+              <span class="ms-auto">
+                <span class="badge" [ngClass]="currentLocation.status === 'moving' ? 'bg-success' : 'bg-secondary'">
+                  {{ currentLocation.status === 'moving' ? 'Em movimento' : 'Parado' }}
+                </span>
+              </span>
+            </div>
+            <p class="small text-muted mb-2">{{ formatarTimestamp(currentLocation.timestamp) }}</p>
+            <div class="row g-1">
+              <div class="col-6">
+                <div class="bg-light rounded p-1 text-center">
+                  <small class="d-block text-muted">Latitude</small>
+                  <span class="fw-semibold" style="color: #2d3748; font-size: 0.85rem;">{{ currentLocation.latitude | number:'1.6-6' }}</span>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="bg-light rounded p-1 text-center">
+                  <small class="d-block text-muted">Longitude</small>
+                  <span class="fw-semibold" style="color: #2d3748; font-size: 0.85rem;">{{ currentLocation.longitude | number:'1.6-6' }}</span>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="bg-light rounded p-1 text-center">
+                  <small class="d-block text-muted">Velocidade</small>
+                  <span class="fw-semibold" style="color: #2d3748; font-size: 0.85rem;">{{ currentLocation.speed?.toFixed(1) || 0 }} km/h</span>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="bg-light rounded p-1 text-center">
+                  <small class="d-block text-muted">Combustível</small>
+                  <span class="fw-semibold" [style.color]="getNivelColor()">{{ nivelCombustivel.toFixed(1) }}%</span>
+                </div>
+              </div>
+            </div>
+            <div class="trajectory-status mt-2" *ngIf="showTrajectory">
+              <span class="badge bg-info">⏺ Trajeto ativo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botões de ação -->
+        <div class="card shadow-sm border-0">
+          <div class="card-body py-2">
+            <div class="d-flex flex-wrap gap-1">
+              <button (click)="simulateLocationUpdate()" class="btn btn-sm btn-primary">
+                <i class="bi bi-play-fill"></i> Simular
+              </button>
+              <button (click)="abrirModalHistorico()" class="btn btn-sm btn-secondary">
+                <i class="bi bi-clock-history"></i> Histórico
+              </button>
+              <button *ngIf="locationHistory.length > 0"
+                      (click)="toggleTrajectory()"
+                      class="btn btn-sm btn-outline-secondary">
+                <i class="bi" [ngClass]="showTrajectory ? 'bi-eye-slash' : 'bi-eye'"></i>
+                {{ showTrajectory ? 'Ocultar' : 'Mostrar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mapa -->
+      <div class="col-lg-8 col-xl-9">
+        <div class="card shadow-sm border-0">
+          <div class="card-body p-0" style="height: 65vh; position: relative;">
+            <div #mapContainer class="map-container" style="width: 100%; height: 100%;"></div>
+            <div *ngIf="!mapInitialized" class="map-loading">
+              <div class="spinner-border" style="color: #4a5568;"></div>
+              <p class="mt-2 text-muted">Inicializando mapa...</p>
+            </div>
+            <button (click)="centralizarEmMocambique()" class="btn-center-map">
+              <i class="bi bi-geo-alt"></i> Centralizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB 1: COMBUSTÍVEL ===== -->
+  <div *ngIf="activeTab === 1">
+    <div class="row g-3">
+      <div class="col-lg-5 col-xl-4">
+        <!-- Card principal de combustível -->
+        <div class="card shadow-sm border-0 mb-3 fuel-main-card" [class.border-warning]="nivelCombustivel < 20">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <div class="fuel-icon-wrapper">
+                <i class="bi bi-fuel-pump fs-4" style="color: #4a5568;"></i>
+              </div>
+              <h6 class="mb-0 fs-6" style="color: #2d3748;">Nível de Combustível</h6>
+              <span class="ms-auto fw-bold fs-5 fuel-percent" [style.color]="getNivelColor()">{{ nivelCombustivel.toFixed(1) }}%</span>
+            </div>
+
+            <!-- Barra de combustível -->
+            <div class="fuel-bar-container mb-3">
+              <div class="fuel-bar"
+                   [style.width]="nivelCombustivel + '%'"
+                   [style.background]="getBarColor()">
+                <span class="fuel-bar-label">{{ nivelCombustivel.toFixed(0) }}%</span>
+              </div>
+            </div>
+
+            <!-- Estatísticas em grid -->
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <div class="fuel-stat-item">
+                  <i class="bi bi-speedometer2 text-muted"></i>
+                  <div>
+                    <small class="d-block text-muted">Autonomia</small>
+                    <span class="fw-semibold" style="color: #2d3748;">{{ autonomia.toFixed(0) }} km</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="fuel-stat-item">
+                  <i class="bi bi-graph-up-arrow text-muted"></i>
+                  <div>
+                    <small class="d-block text-muted">Consumo</small>
+                    <span class="fw-semibold" style="color: #2d3748;">{{ consumoMedio.toFixed(2) }} km/l</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="fuel-stat-item">
+                  <i class="bi bi-droplet text-muted"></i>
+                  <div>
+                    <small class="d-block text-muted">Tanque</small>
+                    <span class="fw-semibold" style="color: #2d3748;">{{ capacidadeTanque }} L</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6" *ngIf="ultimoAbastecimento">
+                <div class="fuel-stat-item">
+                  <i class="bi bi-calendar3 text-muted"></i>
+                  <div>
+                    <small class="d-block text-muted">Último</small>
+                    <span class="fw-semibold" style="color: #2d3748;">{{ formatarData(ultimoAbastecimento.dataAbastecimento) }}</span>
+                  </div>
 
     <!-- Conteúdo das Tabs -->
     <div class="flex-grow-1 overflow-auto p-3">
@@ -164,19 +391,33 @@
                 <div class="col-6" *ngIf="ultimoAbastecimento">
                   <div class="small text-muted">Último abastecimento</div>
                   <div class="fw-semibold">{{ ultimoAbastecimento.dataAbastecimento | date:'dd/MM/yyyy' }}</div>
+
                 </div>
               </div>
             </div>
+
+            <button class="btn btn-primary w-100 btn-register" (click)="abrirModalAbastecimento()">
+              <i class="bi bi-plus-circle"></i> Registrar Abastecimento
 
             <!-- Botão para registrar abastecimento -->
             <button class="btn w-100 d-flex align-items-center justify-content-center gap-2 text-white border-0"
                     style="background: linear-gradient(135deg, #28a745, #34ce57);"
                     (click)="abrirModalAbastecimento()">
               <span>⛽</span> Registrar Abastecimento
+
             </button>
           </div>
         </div>
 
+
+        <!-- Alerta crítico -->
+        <div class="card shadow-sm border-0 border-danger alert-card" *ngIf="nivelCombustivel < 15">
+          <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+              <div>
+                <strong style="color: #991b1b;">Nível crítico!</strong>
+                <p class="mb-0 small" style="color: #991b1b;">Autonomia de apenas {{ autonomia.toFixed(0) }} km.</p>
         <!-- Últimos Abastecimentos -->
         <div class="card shadow-sm mb-3 border-0" *ngIf="abastecimentos.length > 0">
           <div class="card-body">
@@ -191,20 +432,124 @@
                   <span class="badge bg-success">{{ formatarMoeda(ab.quantidadeLitros * ab.precoPorLitro) }}</span>
                   <span class="badge bg-secondary">{{ ab.kilometragemVeiculo }} km</span>
                 </div>
+
               </div>
             </div>
           </div>
         </div>
+      </div>
 
+
+      <div class="col-lg-7 col-xl-8">
+        <!-- Últimos registros -->
+        <div class="card shadow-sm border-0 mb-3" *ngIf="abastecimentosDoVeiculoAtual.length > 0">
+          <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fs-6" style="color: #2d3748;"><i class="bi bi-list-ul me-2" style="color: #4a5568;"></i>Últimos registros</h6>
+            <span class="badge" style="background: #4a5568;">{{ abastecimentosDoVeiculoAtual.length }}</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Data</th>
+                    <th>Litros</th>
+                    <th>Valor</th>
+                    <th>Km</th>
+                    <th>Tipo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let ab of abastecimentosDoVeiculoAtual.slice(0, 10)">
+                    <td>{{ ab.dataAbastecimento?.toString() }}</td>
+                    <td><span class="fw-semibold">{{ ab.quantidadeLitros }} L</span></td>
+                    <td><span class="fw-semibold text-success">{{ formatarMoeda(ab.quantidadeLitros * ab.precoPorLitro) }}</span></td>
+                    <td>{{ ab.kilometragemVeiculo }} km</td>
+                    <td><span class="badge fuel-type-badge">{{ ab.tipoCombustivel }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensagem sem registros -->
+        <div class="card shadow-sm border-0 empty-state" *ngIf="abastecimentosDoVeiculoAtual.length === 0">
+          <div class="card-body text-center py-4">
+            <i class="bi bi-inbox display-4 text-muted"></i>
+            <h6 class="mt-2 text-muted">Nenhum abastecimento registrado</h6>
+            <p class="small text-muted">Registre o primeiro abastecimento para começar</p>
         <!-- Alerta de combustível baixo -->
         <div class="alert alert-danger d-flex align-items-center gap-3" *ngIf="nivelCombustivel < 15">
           <span class="fs-4">⚠️</span>
           <div>
             <strong>Combustível crítico!</strong>
             <p class="mb-0 small">Autonomia de apenas {{ autonomia.toFixed(0) }} km. Abasteça em breve.</p>
+
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+
+  <!-- ===== TAB 2: ESTATÍSTICAS ===== -->
+  <div *ngIf="activeTab === 2">
+    <div class="row g-3">
+      <!-- Cards de estatísticas -->
+      <div class="col-12">
+        <div class="row g-2">
+          <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 h-100 stat-card" style="border-left: 4px solid #4a5568;">
+              <div class="card-body py-2 text-center">
+                <span class="stat-icon">⛽</span>
+                <div class="fw-bold fs-4" style="color: #2d3748;">{{ fuelStats.totalAbastecimentos }}</div>
+                <small class="text-muted">Total</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 h-100 stat-card" style="border-left: 4px solid #718096;">
+              <div class="card-body py-2 text-center">
+                <span class="stat-icon">💰</span>
+                <div class="fw-bold fs-4 text-success">{{ formatarMoeda(fuelStats.totalGasto) }}</div>
+                <small class="text-muted">Total Gasto</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 h-100 stat-card" style="border-left: 4px solid #4a5568;">
+              <div class="card-body py-2 text-center">
+                <span class="stat-icon">🛢️</span>
+                <div class="fw-bold fs-4" style="color: #2d3748;">{{ fuelStats.totalLitros.toFixed(1) }} L</div>
+                <small class="text-muted">Total Litros</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 h-100 stat-card" style="border-left: 4px solid #718096;">
+              <div class="card-body py-2 text-center">
+                <span class="stat-icon">📊</span>
+                <div class="fw-bold fs-4" style="color: #2d3748;">{{ formatarMoeda(fuelStats.mediaPreco) }}/L</div>
+                <small class="text-muted">Preço Médio</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 h-100 stat-card" style="border-left: 4px solid #4a5568;">
+              <div class="card-body py-2 text-center">
+                <span class="stat-icon">📈</span>
+                <div class="fw-bold fs-4" style="color: #2d3748;">{{ fuelStats.consumoMedio.toFixed(2) }} km/l</div>
+                <small class="text-muted">Consumo Médio</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 h-100 stat-card" style="border-left: 4px solid #718096;">
+              <div class="card-body py-2 text-center">
+                <span class="stat-icon">⚡</span>
+                <div class="fw-bold fs-4" style="color: #2d3748;">{{ formatarMoeda(fuelStats.custoPorKm) }}</div>
+                <small class="text-muted">Custo/km</small>
 
       <!-- ===== TAB 2: ESTATÍSTICAS ===== -->
       <div *ngIf="activeTab === 2 && !isLoading">
@@ -266,10 +611,29 @@
                 <div class="fs-2 mb-2">💵</div>
                 <div class="small text-muted">Custo por km</div>
                 <div class="h4 mb-0" style="color: #6ea8fe;">{{ formatarMoeda(fuelStats.custoPorKm) }}</div>
+
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Gráfico mensal -->
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0 chart-card">
+          <div class="card-header bg-white py-2">
+            <h6 class="mb-0 fs-6" style="color: #2d3748;"><i class="bi bi-graph-up me-2" style="color: #4a5568;"></i>Consumo Mensal (Litros)</h6>
+          </div>
+          <div class="card-body">
+            <div class="chart-bars">
+              <div class="chart-bar-item" *ngFor="let mes of meses; let i = index">
+                <div class="chart-bar-wrapper">
+                  <div class="chart-bar"
+                       [style.height]="(consumoMensal[i] / 100) * 120 + 'px'">
+                    <span class="bar-value" *ngIf="consumoMensal[i] > 0">{{ consumoMensal[i] }}</span>
+                  </div>
+                </div>
+                <span class="chart-label">{{ mes }}</span>
 
         <!-- Gráfico de consumo mensal (simulado) -->
         <div class="card shadow-sm mb-3 border-0">
@@ -284,10 +648,25 @@
                      style="background: linear-gradient(180deg, #6ea8fe, #3d8bfd);">
                 </div>
                 <span class="small text-muted mt-2 d-block">{{ mes }}</span>
+
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+
+      <!-- Histórico completo -->
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0 history-card">
+          <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fs-6" style="color: #2d3748;"><i class="bi bi-table me-2" style="color: #4a5568;"></i>Histórico Completo</h6>
+            <span class="badge" style="background: #4a5568;">{{ abastecimentosDoVeiculoAtual.length }} registros</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+              <table class="table table-hover mb-0">
+                <thead class="table-light sticky-top">
 
         <!-- Tabela de abastecimentos -->
         <div class="card shadow-sm border-0">
@@ -297,15 +676,29 @@
             <div class="table-responsive">
               <table class="table table-hover table-sm">
                 <thead class="table-light">
+
                   <tr>
                     <th>Data</th>
                     <th>Litros</th>
                     <th>Valor</th>
+
+
                     <th>Preço/L</th>
+
                     <th>Km</th>
                   </tr>
                 </thead>
                 <tbody>
+
+                  <tr *ngFor="let ab of abastecimentosDoVeiculoAtual">
+                    <td>{{ab.dataAbastecimento?.toString()}}</td>
+                    <td><span class="fw-semibold">{{ ab.quantidadeLitros }} L</span></td>
+                    <td><span class="fw-semibold text-success">{{ formatarMoeda(ab.quantidadeLitros * ab.precoPorLitro) }}</span></td>
+                    <td>{{ ab.kilometragemVeiculo }} km</td>
+                  </tr>
+                  <tr *ngIf="abastecimentosDoVeiculoAtual.length === 0">
+                    <td colspan="4" class="text-center text-muted py-3">Nenhum registro encontrado</td>
+
                   <tr *ngFor="let ab of abastecimentos">
                     <td>{{ ab.dataAbastecimento | date:'dd/MM/yyyy' }}</td>
                     <td>{{ ab.quantidadeLitros }} L</td>
@@ -317,15 +710,69 @@
                     <td colspan="5" class="text-center text-muted py-4">
                       Nenhum abastecimento registrado
                     </td>
+
                   </tr>
                 </tbody>
               </table>
             </div>
+
+          </div>  
+
           </div>
+
         </div>
       </div>
     </div>
   </div>
+</div>
+
+<!-- ==================== MODAL HISTÓRICO ==================== -->
+<div class="modal fade" [class.show]="showHistory" [style.display]="showHistory ? 'block' : 'none'" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); border-bottom: 2px solid #cbd5e1;">
+        <h6 class="modal-title fs-6" style="color: #2d3748;"><i class="bi bi-clock-history me-2" style="color: #4a5568;"></i>Histórico do Veículo {{ selectedPlate }}</h6>
+        <button type="button" class="btn-close btn-sm" (click)="closeHistory()"></button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <div class="history-filters mb-3">
+          <label class="form-label small fw-semibold" style="color: #4a5568;">Período</label>
+          <select [(ngModel)]="selectedPeriod" (change)="loadHistory()" class="form-select form-select-sm" style="max-width: 200px;">
+            <option value="1h">Última hora</option>
+            <option value="24h">Últimas 24h</option>
+            <option value="today">Hoje</option>
+          </select>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Data/Hora</th>
+                <th>Latitude</th>
+                <th>Longitude</th>
+                <th>Velocidade</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of filteredHistory; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ item.timestamp.toString() }}</td>
+                <td>{{ item.latitude }}</td>
+                <td>{{ item.longitude }}</td>
+                <td>{{ item.speed }} km/h</td>
+                <td>
+                  <span class="badge" [ngClass]="item.status === 'moving' ? 'bg-success' : 'bg-secondary'">
+                    {{ item.status === 'moving' ? 'Movimento' : 'Parado' }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="filteredHistory.length === 0">
+                <td colspan="6" class="text-center text-muted py-3">Nenhum dado disponível</td>
+              </tr>
+            </tbody>
+          </table>
 
   <!-- Mapa -->
   <div #mapContainer class="flex-grow-1 bg-light"></div>
@@ -387,10 +834,70 @@
               </tbody>
             </table>
           </div>
+
         </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeHistory()">Fechar</button>
       </div>
     </div>
   </div>
+</div>
+
+
+<!-- ==================== MODAL ABASTECIMENTO ==================== -->
+<div class="modal fade" [class.show]="showAbastecimentoModal" [style.display]="showAbastecimentoModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); border-bottom: 2px solid #cbd5e1;">
+        <h6 class="modal-title fs-6" style="color: #2d3748;"><i class="bi bi-fuel-pump me-2" style="color: #4a5568;"></i>Registrar Abastecimento</h6>
+        <button type="button" class="btn-close btn-sm" (click)="fecharModalAbastecimento()"></button>
+      </div>
+      <div class="modal-body">
+        <form #abastecimentoForm="ngForm" (ngSubmit)="registrarAbastecimento()">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Data e Hora</label>
+            <input type="datetime-local"
+                   [(ngModel)]="novoAbastecimento.data"
+                   name="data"
+                   required
+                   class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Odômetro (km)</label>
+            <input type="number"
+                   [(ngModel)]="novoAbastecimento.odometro"
+                   name="odometro"
+                   required
+                   class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Tipo de Combustível</label>
+            <select [(ngModel)]="novoAbastecimento.tipoCombustivel"
+                    name="tipoCombustivel"
+                    required
+                    class="form-select form-select-sm">
+              <option value="GASOLINA">Gasolina</option>
+              <option value="ETANOL">Etanol</option>
+              <option value="DIESEL">Diesel</option>
+            </select>
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <div class="mb-2">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">Litros</label>
+                <input type="number"
+                       [(ngModel)]="novoAbastecimento.litros"
+                       name="litros"
+                       required
+                       step="0.001"
+                       class="form-control form-control-sm"
+                       (input)="calcularValorTotal()">
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="mb-2">
+                <label class="form-label small fw-semibold" style="color: #4a5568;">Preço/L (MT)</label>
 
   <!-- Modal de Abastecimento -->
   <div class="modal fade" [class.show]="showAbastecimentoModal" [style.display]="showAbastecimentoModal ? 'block' : 'none'" tabindex="-1">
@@ -449,11 +956,43 @@
 
               <div class="col-md-6 mb-3">
                 <label class="form-label fw-semibold">Preço por Litro (R$):</label>
+
                 <input type="number"
                        [(ngModel)]="novoAbastecimento.precoPorLitro"
                        name="precoPorLitro"
                        required
                        step="0.001"
+
+                       class="form-control form-control-sm"
+                       (input)="calcularValorTotal()">
+              </div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Valor Total (MT)</label>
+            <input type="number"
+                   [(ngModel)]="novoAbastecimento.valorTotal"
+                   name="valorTotal"
+                   required
+                   step="0.01"
+                   class="form-control form-control-sm"
+                   readonly>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold" style="color: #4a5568;">Posto (opcional)</label>
+            <input type="text"
+                   [(ngModel)]="novoAbastecimento.posto"
+                   name="posto"
+                   class="form-control form-control-sm">
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" class="btn btn-sm btn-secondary" (click)="fecharModalAbastecimento()">Cancelar</button>
+            <button type="submit" class="btn btn-sm btn-primary" [disabled]="!abastecimentoForm.form.valid">
+              <i class="bi bi-save"></i> Registrar
+            </button>
+          </div>
+        </form>
+
                        class="form-control"
                        (input)="calcularValorTotal()">
               </div>
@@ -488,6 +1027,7 @@
             </div>
           </form>
         </div>
+
       </div>
     </div>
   </div>

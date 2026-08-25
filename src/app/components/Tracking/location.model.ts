@@ -1,6 +1,6 @@
 export interface LocationDTO {
   vehicleId: number;
-  latitude: number;  
+  latitude: number;
   longitude: number;
   speed?: number;
   status?: string;
@@ -17,11 +17,11 @@ export interface VehicleLocation {
   longitude: number;
   speed: number;
   status: string;
-  timestamp: Date;
+  timestamp: string;
 }
 export interface LocationHistoryItem{
     id: number;
-  time: string;
+  timestamp: string;
   latitude: string;
   longitude: string;
   speed: string;

@@ -12,7 +12,7 @@ export class MotoristaService {
 
    constructor(private http: HttpClient) {}
 
-   //Busca os motoristas do
+
    getMotoristas(): Observable<Motorista[]> {
       return this.http.get<Motorista[]>(this.apiUrl+"/findAll" );
     }
@@ -21,15 +21,15 @@ export class MotoristaService {
     return this.http.post(this.apiUrl+"/save", motorista, {
       responseType: 'text' as 'json'
     });
-    // Não especifique responseType, deixe o Angular detectar como JSON (padrão)
+
   }
  eliminar(id: number): Observable<any> {
-  // Se o backend espera DELETE na rota "/delete/{id}"
+
   return this.http.delete(`${this.apiUrl}/delete/${id}`, {
     responseType: 'text' // Importante: esperamos texto como resposta
   });
 }
-//atualiza os DADOS
+
 update(motorista: Motorista, id: number): Observable<string>{
   return this.http.put<string>(this.apiUrl+"/update/"+id , motorista,{responseType: 'text' as 'json'});
 }
